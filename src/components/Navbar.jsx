@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useLocation } from 'react-router-dom';
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -13,60 +15,90 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Determina a cor de fundo baseado na rota e scroll
+  const getNavbarBg = () => {
+    if (location.pathname === '/') {
+      // Na home: começa com o fundo verde do hero, muda para roxo ao scroll
+      return isScrolled
+        ? 'bg-[#2d2a5f] shadow-lg'
+        : 'bg-transparent';
+    } else if (location.pathname === '/como-fazemos') {
+      // Em como fazemos: sempre roxo para fazer parte do header
+      return 'bg-[#2d2a5f]';
+    }
+    // Default: roxo
+    return 'bg-[#2d2a5f] shadow-lg';
+  };
+
   const menuItems = [
-    { name: 'HOME', href: '#home' },
-    { name: 'COMO FAZEMOS', href: '#como-fazemos' },
-    { name: 'SOBRE', href: '#sobre' },
-    { name: 'AULAS', href: '#aulas' },
-    { name: 'MATERIAL', href: '#material' },
-    { name: 'TURMAS', href: '#turmas' },
-    { name: 'GALERIA', href: '#galeria' },
-    { name: 'RECONHECIMENTOS', href: '#reconhecimentos' },
-    { name: 'CONTATO', href: '#contato' },
+    { name: 'HOME', href: '/', type: 'route' },
+    { name: 'COMO FAZEMOS', href: '/como-fazemos', type: 'route' },
+    { name: 'SOBRE', href: '#sobre', type: 'anchor' },
+    { name: 'AULAS', href: '#aulas', type: 'anchor' },
+    { name: 'MATERIAL', href: '#material', type: 'anchor' },
+    { name: 'TURMAS', href: '#turmas', type: 'anchor' },
+    { name: 'GALERIA', href: '#galeria', type: 'anchor' },
+    { name: 'RECONHECIMENTOS', href: '#reconhecimentos', type: 'anchor' },
+    { name: 'CONTATO', href: '#contato', type: 'anchor' },
   ];
 
   return (
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'bg-[#2d2a5f]/95 backdrop-blur-lg shadow-lg shadow-favela-green-500/20'
-          : 'bg-transparent'
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${getNavbarBg()}`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <motion.a
-            href="#home"
-            className="flex items-center space-x-2"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <div className="text-2xl font-bold text-white">
-              FavelaWare
-            </div>
-          </motion.a>
+          <Link to="/">
+            <motion.div
+              className="flex items-center space-x-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <div className="text-2xl font-bold text-white">
+                FavelaWare
+              </div>
+            </motion.div>
+          </Link>
 
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center space-x-1">
             {menuItems.map((item, index) => (
-              <motion.a
-                key={item.name}
-                href={item.href}
-                className="relative px-3 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors group"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {item.name}
-                <motion.span
-                  className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-favela-green-500 to-favela-blue-500 group-hover:w-full transition-all duration-300"
-                />
-              </motion.a>
+              item.type === 'route' ? (
+                <Link key={item.name} to={item.href}>
+                  <motion.div
+                    className="relative px-3 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors group"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {item.name}
+                    <motion.span
+                      className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-favela-green-500 to-favela-blue-500 group-hover:w-full transition-all duration-300"
+                    />
+                  </motion.div>
+                </Link>
+              ) : (
+                <motion.a
+                  key={item.name}
+                  href={item.href}
+                  className="relative px-3 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors group"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {item.name}
+                  <motion.span
+                    className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-favela-green-500 to-favela-blue-500 group-hover:w-full transition-all duration-300"
+                  />
+                </motion.a>
+              )
             ))}
           </div>
 
@@ -105,18 +137,32 @@ const Navbar = () => {
           >
             <div className="px-4 py-6 space-y-3">
               {menuItems.map((item, index) => (
-                <motion.a
-                  key={item.name}
-                  href={item.href}
-                  className="block px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  whileHover={{ x: 10 }}
-                >
-                  {item.name}
-                </motion.a>
+                item.type === 'route' ? (
+                  <Link key={item.name} to={item.href} onClick={() => setIsMobileMenuOpen(false)}>
+                    <motion.div
+                      className="block px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      whileHover={{ x: 10 }}
+                    >
+                      {item.name}
+                    </motion.div>
+                  </Link>
+                ) : (
+                  <motion.a
+                    key={item.name}
+                    href={item.href}
+                    className="block px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    whileHover={{ x: 10 }}
+                  >
+                    {item.name}
+                  </motion.a>
+                )
               ))}
             </div>
           </motion.div>
