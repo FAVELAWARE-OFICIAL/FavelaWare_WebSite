@@ -1,3 +1,18 @@
+/**
+ * ============================================
+ * COMPONENTE PARTNERS (IDEALIZADORES)
+ * ============================================
+ *
+ * Exibe os parceiros e idealizadores do projeto.
+ *
+ * Funcionalidades:
+ * - Grid de logos dos parceiros
+ * - Animações escalonadas (aparecem um de cada vez)
+ * - Efeito hover em cada card
+ * - Fallback para emojis caso a imagem não carregue
+ */
+
+// Importa ferramentas de animação
 import { motion } from 'framer-motion';
 
 const Partners = () => {

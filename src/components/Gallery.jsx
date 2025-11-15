@@ -1,3 +1,18 @@
+/**
+ * ============================================
+ * COMPONENTE GALLERY (GALERIA DE FOTOS)
+ * ============================================
+ *
+ * Exibe uma galeria de fotos do projeto FavelaWare.
+ *
+ * Funcionalidades:
+ * - Grid de fotos responsivo
+ * - Informações aparecem ao passar o mouse
+ * - Animações de entrada
+ * - Categorização das imagens
+ */
+
+// Importa ferramentas de animação
 import { motion } from 'framer-motion';
 
 const Gallery = () => {

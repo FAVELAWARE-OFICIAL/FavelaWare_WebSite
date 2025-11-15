@@ -1,3 +1,19 @@
+/**
+ * ============================================
+ * COMPONENTE FOOTER (RODAPÉ)
+ * ============================================
+ *
+ * Rodapé do site com informações de contato e links.
+ *
+ * Funcionalidades:
+ * - Links para redes sociais
+ * - Menu de navegação rápida
+ * - Informações de contato
+ * - Animações ao aparecer na tela
+ * - Partículas flutuantes decorativas
+ */
+
+// Importa ferramentas de animação
 import { motion } from 'framer-motion';
 
 const Footer = () => {
