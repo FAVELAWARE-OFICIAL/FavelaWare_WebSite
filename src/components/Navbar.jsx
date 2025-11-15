@@ -1,5 +1,33 @@
+/**
+ * ============================================
+ * COMPONENTE NAVBAR (BARRA DE NAVEGAÇÃO)
+ * ============================================
+ *
+ * Este componente cria a barra de navegação do topo do site.
+ *
+ * Funcionalidades:
+ * - Menu responsivo (adapta para desktop e mobile)
+ * - Mudança de cor ao rolar a página
+ * - Animações suaves ao aparecer
+ * - Menu hambúrguer para dispositivos móveis
+ *
+ * Estados (informações que mudam):
+ * - isMobileMenuOpen: controla se o menu mobile está aberto/fechado
+ * - isScrolled: detecta se a página foi rolada (para mudar cor do navbar)
+ *
+ * Hooks do React usados:
+ * - useState: cria variáveis que podem mudar e atualizar a tela
+ * - useEffect: executa código quando o componente aparece na tela
+ * - useLocation: detecta em qual página estamos
+ */
+
+// Importa ferramentas do React para criar estados e efeitos
 import { useState, useEffect } from 'react';
+
+// Importa ferramentas de animação do Framer Motion
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Importa ferramentas de navegação do React Router
 import { Link, useLocation } from 'react-router-dom';
 
 const Navbar = () => {
@@ -22,8 +50,8 @@ const Navbar = () => {
       return isScrolled
         ? 'bg-[#2d2a5f] shadow-lg'
         : 'bg-transparent';
-    } else if (location.pathname === '/como-fazemos') {
-      // Em como fazemos: sempre roxo para fazer parte do header
+    } else if (location.pathname === '/como-fazemos' || location.pathname === '/sobre' || location.pathname === '/hall-da-fama') {
+      // Em como fazemos, sobre e hall da fama: sempre roxo para fazer parte do header
       return 'bg-[#2d2a5f]';
     }
     // Default: roxo
@@ -33,7 +61,7 @@ const Navbar = () => {
   const menuItems = [
     { name: 'HOME', href: '/', type: 'route' },
     { name: 'COMO FAZEMOS', href: '/como-fazemos', type: 'route' },
-    { name: 'SOBRE', href: '#sobre', type: 'anchor' },
+    { name: 'SOBRE', href: '/sobre', type: 'route' },
     { name: 'AULAS', href: '#aulas', type: 'anchor' },
     { name: 'MATERIAL', href: '#material', type: 'anchor' },
     { name: 'TURMAS', href: '#turmas', type: 'anchor' },

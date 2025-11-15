@@ -1,4 +1,26 @@
+/**
+ * ============================================
+ * COMPONENTE HERO (SEÇÃO PRINCIPAL DA HOME)
+ * ============================================
+ *
+ * Este é o primeiro conteúdo que aparece na página inicial.
+ * Contém o logo, título, descrição e botão principal do projeto.
+ *
+ * Funcionalidades:
+ * - Animações de entrada dos elementos
+ * - Partículas de código flutuando no fundo
+ * - Logo com animação de flutuação
+ * - Botão com efeito hover interativo
+ * - Estatísticas do projeto (alunos, turmas, anos)
+ *
+ * Estados:
+ * - isButtonHovered: controla a animação do botão ao passar o mouse
+ */
+
+// Importa ferramentas de animação
 import { motion } from 'framer-motion';
+
+// Importa ferramenta para criar estados
 import { useState } from 'react';
 
 const Hero = () => {

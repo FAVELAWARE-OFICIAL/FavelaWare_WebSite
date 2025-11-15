@@ -1,4 +1,21 @@
+/**
+ * ============================================
+ * PÁGINA COMO FAZEMOS (TRILHAS DE ENSINO)
+ * ============================================
+ *
+ * Esta página detalha o conteúdo programático do projeto.
+ * Mostra todas as trilhas de ensino e edições anteriores.
+ *
+ * Conteúdo:
+ * - Trilhas de ensino (Cultura, Desenvolvimento Web, Forge, etc)
+ * - Módulos de cada trilha com duração e tópicos
+ * - Links para edições anteriores
+ */
+
+// Importa ferramentas de animação
 import { motion } from 'framer-motion';
+
+// Importa componentes reutilizáveis
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
