@@ -23,6 +23,9 @@ import Home from './pages/Home';               // Página inicial
 import ComoFazemos from './pages/ComoFazemos'; // Página que explica as trilhas de ensino
 import Sobre from './pages/Sobre';             // Página sobre o projeto
 import HallDaFama from './pages/HallDaFama';   // Página com equipes anteriores
+import Material from './pages/Material';       // Página de materiais e entrega de atividades
+import Reconhecimentos from './pages/Reconhecimentos'; // Página de reconhecimentos e prêmios
+import Contato from './pages/Contato';         // Página de contato
 
 /**
  * COMPONENTE APP
@@ -55,6 +58,15 @@ const App: React.FC = () => {
 
         {/* Rota da página Hall da Fama (/hall-da-fama) */}
         <Route path="/hall-da-fama" element={<HallDaFama />} />
+
+        {/* Rota da página Material (/material) */}
+        <Route path="/material" element={<Material />} />
+
+        {/* Rota da página Reconhecimentos (/reconhecimentos) */}
+        <Route path="/reconhecimentos" element={<Reconhecimentos />} />
+
+        {/* Rota da página Contato (/contato) */}
+        <Route path="/contato" element={<Contato />} />
       </Routes>
     </Router>
   );
