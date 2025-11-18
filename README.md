@@ -10,6 +10,7 @@ O FavelaWare é focado na formação técnica e de soft skills de jovens de 15 a
 
 Este projeto foi desenvolvido com tecnologias modernas de desenvolvimento web:
 
+- **TypeScript** - Superset do JavaScript com tipagem estática
 - **React.js** - Biblioteca JavaScript para criar interfaces de usuário
 - **Vite** - Ferramenta de build rápida e moderna
 - **Tailwind CSS** - Framework CSS utilitário para estilização
@@ -21,19 +22,20 @@ Este projeto foi desenvolvido com tecnologias modernas de desenvolvimento web:
 ```
 src/
 ├── components/         # Componentes reutilizáveis
-│   ├── Navbar.jsx     # Barra de navegação
-│   ├── Hero.jsx       # Seção principal da home
-│   ├── Footer.jsx     # Rodapé
-│   ├── Gallery.jsx    # Galeria de fotos
-│   ├── Partners.jsx   # Parceiros e idealizadores
-│   └── MacroTimeline.jsx  # Cronograma visual
+│   ├── Navbar.tsx     # Barra de navegação
+│   ├── Hero.tsx       # Seção principal da home
+│   ├── Footer.tsx     # Rodapé
+│   ├── Gallery.tsx    # Galeria de fotos
+│   ├── Partners.tsx   # Parceiros e idealizadores
+│   └── MacroTimeline.tsx  # Cronograma visual
 ├── pages/             # Páginas do site
-│   ├── Home.jsx       # Página inicial
-│   ├── ComoFazemos.jsx  # Trilhas de ensino
-│   ├── Sobre.jsx      # Informações do projeto
-│   └── HallDaFama.jsx # Equipes anteriores
-├── App.jsx            # Componente principal com rotas
-├── main.jsx           # Ponto de entrada da aplicação
+│   ├── Home.tsx       # Página inicial
+│   ├── ComoFazemos.tsx  # Trilhas de ensino
+│   ├── Sobre.tsx      # Informações do projeto
+│   └── HallDaFama.tsx # Equipes anteriores
+├── App.tsx            # Componente principal com rotas
+├── main.tsx           # Ponto de entrada da aplicação
+├── types.ts           # Definições de tipos TypeScript
 └── index.css          # Estilos globais
 ```
 
@@ -50,6 +52,13 @@ Ao invés de escrever CSS tradicional, o Tailwind permite estilizar elementos us
 
 ### O que são Rotas?
 Rotas permitem ter várias "páginas" no site sem precisar recarregar. Quando você clica em um link, o React Router muda apenas o conteúdo, mantendo o resto igual.
+
+### O que é TypeScript?
+TypeScript é como JavaScript, mas com "superpoderes". Ele adiciona tipos aos dados, ajudando a prevenir erros antes mesmo de executar o código. Por exemplo:
+- `const nome: string = "FavelaWare"` - garante que nome é sempre texto
+- `const idade: number = 4` - garante que idade é sempre número
+- Interfaces definem a estrutura de objetos complexos
+- O editor mostra erros em tempo real
 
 ## Como Executar o Projeto
 

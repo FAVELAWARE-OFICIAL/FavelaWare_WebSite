@@ -21,7 +21,12 @@ import Gallery from '../components/Gallery'; // Galeria de imagens
 import Partners from '../components/Partners'; // Parceiros do projeto
 import Footer from '../components/Footer';   // Rodapé
 
-const Home = () => {
+/**
+ * COMPONENTE HOME (TypeScript)
+ * React.FC indica que é um Functional Component
+ * Não recebe props, então não precisamos definir interface
+ */
+const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />

@@ -14,10 +14,16 @@
 
 // Importa ferramentas de animação
 import { motion } from 'framer-motion';
+// Importa tipos customizados
+import type { Partner } from '../types';
 
-const Partners = () => {
-  // Logos dos parceiros
-  const partners = [
+/**
+ * COMPONENTE PARTNERS (TypeScript)
+ * React.FC indica que é um Functional Component
+ */
+const Partners: React.FC = () => {
+  // Logos dos parceiros - array tipado com interface Partner
+  const partners: Partner[] = [
     { name: 'Mundiale', logo: '🌍', image: '/imgs/partners/Mundiale.png' },
     { name: 'Ânima Lab', logo: '🎨', image: '/imgs/partners/ânima.png' },
     { name: 'AOPA', logo: '👥', image: '/imgs/partners/AOPA.png' },

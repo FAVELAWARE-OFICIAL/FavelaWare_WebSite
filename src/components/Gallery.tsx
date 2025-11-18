@@ -14,10 +14,16 @@
 
 // Importa ferramentas de animação
 import { motion } from 'framer-motion';
+// Importa tipos customizados
+import type { Photo } from '../types';
 
-const Gallery = () => {
-  // Galeria de fotos
-  const photos = [
+/**
+ * COMPONENTE GALLERY (TypeScript)
+ * React.FC indica que é um Functional Component
+ */
+const Gallery: React.FC = () => {
+  // Galeria de fotos - array tipado com interface Photo
+  const photos: Photo[] = [
     {
       id: 1,
       title: 'Abertura do Projeto 2022',
