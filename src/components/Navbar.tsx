@@ -50,8 +50,8 @@ const Navbar = () => {
       return isScrolled
         ? 'bg-[#2d2a5f] shadow-lg'
         : 'bg-transparent';
-    } else if (location.pathname === '/como-fazemos' || location.pathname === '/sobre' || location.pathname === '/hall-da-fama') {
-      // Em como fazemos, sobre e hall da fama: sempre roxo para fazer parte do header
+    } else if (location.pathname === '/como-fazemos' || location.pathname === '/sobre' || location.pathname === '/hall-da-fama' || location.pathname === '/material' || location.pathname === '/reconhecimentos' || location.pathname === '/contato') {
+      // Em todas as páginas internas: sempre roxo para fazer parte do header
       return 'bg-[#2d2a5f]';
     }
     // Default: roxo
@@ -63,11 +63,11 @@ const Navbar = () => {
     { name: 'COMO FAZEMOS', href: '/como-fazemos', type: 'route' },
     { name: 'SOBRE', href: '/sobre', type: 'route' },
     { name: 'AULAS', href: '#aulas', type: 'anchor' },
-    { name: 'MATERIAL', href: '#material', type: 'anchor' },
+    { name: 'MATERIAL', href: '/material', type: 'route' },
     { name: 'TURMAS', href: '#turmas', type: 'anchor' },
     { name: 'GALERIA', href: '#galeria', type: 'anchor' },
-    { name: 'RECONHECIMENTOS', href: '#reconhecimentos', type: 'anchor' },
-    { name: 'CONTATO', href: '#contato', type: 'anchor' },
+    { name: 'RECONHECIMENTOS', href: '/reconhecimentos', type: 'route' },
+    { name: 'CONTATO', href: '/contato', type: 'route' },
   ];
 
   return (

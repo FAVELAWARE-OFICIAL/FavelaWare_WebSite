@@ -161,3 +161,67 @@ export interface Estatistica {
   number: string;          // Número (ex: "150+")
   label: string;           // Rótulo (ex: "Alunos")
 }
+
+/**
+ * TIPO: Material/Recurso Educacional
+ * Define materiais disponíveis para download (Google Drive, Gitbook, etc)
+ */
+export interface Material {
+  id: number;              // ID único
+  titulo: string;          // Título do material
+  descricao: string;       // Descrição breve
+  plataforma: 'drive' | 'gitbook'; // Plataforma onde está hospedado
+  link: string;            // URL do material
+  icone: string;           // Emoji ou ícone
+}
+
+/**
+ * TIPO: Entrega de Atividade
+ * Define as informações de uma entrega de atividade pelo aluno
+ */
+export interface Entrega {
+  nomeAluno: string;       // Nome do aluno
+  emailAluno: string;      // Email do aluno
+  nomeAtividade: string;   // Nome/título da atividade
+  arquivo: File;           // Arquivo PDF da atividade
+  dataEntrega: Date;       // Data e hora da entrega
+}
+
+/**
+ * TIPO: Artigo Científico
+ * Define artigos publicados sobre o projeto
+ */
+export interface ArtigoCientifico {
+  id: number;              // ID único
+  titulo: string;          // Título do artigo
+  descricao: string;       // Descrição/resumo
+  doi: string;             // DOI ou link do artigo
+  ano: string;             // Ano de publicação
+  icone: string;           // Emoji ou ícone
+}
+
+/**
+ * TIPO: Prêmio/Reconhecimento
+ * Define prêmios e reconhecimentos recebidos
+ */
+export interface Premio {
+  id: number;              // ID único
+  titulo: string;          // Nome do prêmio
+  descricao: string;       // Descrição do prêmio
+  ano: string;             // Ano de recebimento
+  link?: string;           // Link para mais informações (opcional)
+  imagens: string[];       // Array de caminhos de imagens
+  icone: string;           // Emoji ou ícone
+}
+
+/**
+ * TIPO: Informação de Contato
+ * Define dados de contato (email, telefone, endereço)
+ */
+export interface ContatoInfo {
+  tipo: 'email' | 'telefone' | 'endereco'; // Tipo de contato
+  titulo: string;          // Título da seção
+  valor: string;           // Valor do contato (email, número, endereço)
+  link?: string;           // Link (mailto:, tel:, etc) - opcional
+  icone: string;           // Emoji ou ícone
+}
