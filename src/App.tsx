@@ -29,8 +29,10 @@ import HallDaFama from './pages/HallDaFama';   // Página com equipes anteriores
  *
  * Função principal que retorna a estrutura de rotas do site.
  * Em React, componentes são funções que retornam código HTML/JSX.
+ *
+ * TypeScript: Usamos React.FC (Functional Component) para tipar o componente
  */
-function App() {
+const App: React.FC = () => {
   return (
     // Router: ativa o sistema de rotas na aplicação
     <Router>
@@ -56,7 +58,7 @@ function App() {
       </Routes>
     </Router>
   );
-}
+};
 
 // Exporta o componente para ser usado em outros arquivos
 export default App;
