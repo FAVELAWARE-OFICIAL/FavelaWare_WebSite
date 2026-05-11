@@ -1,5 +1,5 @@
 /* ============================================
-   RECONHECIMENTOS — modal de imagem ampliada
+   RECONHECIMENTOS: modal de imagem ampliada
    ============================================ */
 
 (function () {

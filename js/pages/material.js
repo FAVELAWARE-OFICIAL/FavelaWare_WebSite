@@ -1,5 +1,5 @@
 /* ============================================
-   MATERIAL — validação e envio do formulário
+   MATERIAL: validação e envio do formulário
    ============================================ */
 
 (function () {
