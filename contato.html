@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contato — FavelaWare</title>
+  <meta name="description" content="Entre em contato com o projeto FavelaWare.">
+
+  <link rel="icon" type="image/png" href="imgs/logo/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/contato.css">
+
+  <script src="js/components.js" defer></script>
+  <script src="js/main.js" defer></script>
+</head>
+<body>
+  <site-navbar current="contato"></site-navbar>
+
+  <header class="page-header">
+    <div class="container">
+      <h1 class="page-header__title">CONTATO</h1>
+      <p class="page-header__subtitle">Entre em contato conosco</p>
+    </div>
+  </header>
+
+  <main class="contact">
+    <div class="contact__inner">
+
+      <section class="contact-cards" aria-label="Informações de contato">
+        <div class="contact-card">
+          <div class="contact-card__icon" aria-hidden="true">✉️</div>
+          <h3 class="contact-card__title">Email</h3>
+          <a class="contact-card__value" href="mailto:favelaware@gmail.com">favelaware@gmail.com</a>
+        </div>
+
+        <div class="contact-card">
+          <div class="contact-card__icon" aria-hidden="true">📞</div>
+          <h3 class="contact-card__title">Telefone</h3>
+          <a class="contact-card__value" href="tel:+553125171450">(31) 2517-1450</a>
+        </div>
+
+        <div class="contact-card">
+          <div class="contact-card__icon" aria-hidden="true">📍</div>
+          <h3 class="contact-card__title">Endereço</h3>
+          <a class="contact-card__value" href="https://www.google.com/maps/search/?api=1&query=R.+Dias+de+Toledo,+99+-+Concórdia,+Belo+Horizonte+-+MG" target="_blank" rel="noopener">
+            R. Dias de Toledo, 99 - Concórdia, Belo Horizonte - MG, 31110-060
+          </a>
+        </div>
+      </section>
+
+      <section class="pavoniana">
+        <h2 class="pavoniana__title-h2">OBRAS PAVONIANAS</h2>
+        <p class="pavoniana__subtitle">Instituição parceira do projeto FavelaWare</p>
+
+        <div class="pavoniana__icon" aria-hidden="true">📞</div>
+        <p class="pavoniana__label">Telefone</p>
+        <a class="pavoniana__phone" href="tel:+553125171450">(31) 2517-1450</a>
+      </section>
+
+      <section class="address">
+        <h2 class="address__title">📍 ENDEREÇO</h2>
+        <p class="address__line">R. Dias de Toledo, 99 - Concórdia, Belo Horizonte - MG</p>
+
+        <div class="address__map">
+          <!-- Substituir pelo iframe real do Google Maps quando disponível -->
+          <div class="address__map-placeholder">
+            <span aria-hidden="true">🗺️</span>
+            <h3>Mapa do Google Maps</h3>
+            <p>Para adicionar o mapa real, obtenha o código de incorporação no Google Maps e substitua este bloco por um &lt;iframe&gt; com a classe <code>.address__map-iframe</code>.</p>
+          </div>
+        </div>
+
+        <div class="address__cta">
+          <a class="btn" href="https://www.google.com/maps/search/?api=1&query=R.+Dias+de+Toledo,+99+-+Concórdia,+Belo+Horizonte+-+MG" target="_blank" rel="noopener">
+            🗺️ Abrir no Google Maps →
+          </a>
+        </div>
+      </section>
+
+      <section class="socials-block">
+        <h2 class="socials-block__title">💬 Siga-nos nas Redes Sociais</h2>
+        <p class="socials-block__lead">Fique por dentro das novidades e acompanhe nosso trabalho</p>
+
+        <div class="socials-block__list">
+          <a class="socials-block__item" href="https://instagram.com/favelaware" target="_blank" rel="noopener" aria-label="Instagram">📷</a>
+          <a class="socials-block__item" href="mailto:favelaware@gmail.com" aria-label="Email">✉️</a>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <site-footer></site-footer>
+</body>
+</html>
