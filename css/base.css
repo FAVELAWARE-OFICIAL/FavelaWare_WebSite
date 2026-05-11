@@ -1,9 +1,9 @@
 /* ============================================
-   BASE — Reset, variáveis e tipografia global
+   BASE: Reset, variáveis e tipografia global
    ============================================ */
 
 :root {
-  /* Verdes — cor primária */
+  /* Verdes: cor primária */
   --green-50:  #f0fdf4;
   --green-100: #dcfce7;
   --green-200: #bbf7d0;
@@ -21,17 +21,17 @@
   --blue-600: #2563eb;
   --blue-700: #1e3a8a;
 
-  /* Roxos — header/navbar */
+  /* Roxos: header e navbar */
   --purple-500: #8b5cf6;
   --purple-600: #7c3aed;
   --purple-700: #25255c;
   --purple-900: #2d2a5f;
 
-  /* Rosa — destaque */
+  /* Rosa: destaque */
   --pink-500: #ec4899;
   --pink-600: #db2777;
 
-  /* Laranja/Amarelo — prêmios */
+  /* Laranja e amarelo: prêmios */
   --yellow-50:  #fefce8;
   --orange-50:  #fff7ed;
   --orange-200: #fed7aa;
@@ -139,7 +139,7 @@ input, textarea, select {
   .container { padding-left: 2rem; padding-right: 2rem; }
 }
 
-/* Utilitários — texto em gradiente */
+/* Utilitários: texto em gradiente */
 .text-gradient {
   background: linear-gradient(90deg, var(--green-500), var(--blue-500), var(--green-500));
   -webkit-background-clip: text;
@@ -148,7 +148,7 @@ input, textarea, select {
   color: transparent;
 }
 
-/* Acessibilidade — esconder visualmente mantendo no DOM */
+/* Acessibilidade: esconder visualmente mantendo no DOM */
 .sr-only {
   position: absolute;
   width: 1px;

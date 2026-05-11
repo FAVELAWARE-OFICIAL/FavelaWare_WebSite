@@ -1,5 +1,5 @@
 /* ============================================
-   MAIN — scripts globais usados em todas as páginas
+   MAIN: scripts globais usados em todas as páginas
    ============================================ */
 
 // Inicializa AOS (animações de scroll) se a lib estiver carregada na página.
