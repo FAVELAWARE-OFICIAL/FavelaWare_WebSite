@@ -1,9 +1,9 @@
 /* ============================================
-   CONTATO: cards, mapa e redes sociais
+   CONTATO: cards, telefone Pavoniana e redes sociais
    ============================================ */
 
 .contact {
-  padding: 4rem 0;
+  padding-block: var(--section-py);
 }
 
 .contact__inner {
@@ -12,161 +12,174 @@
   padding: 0 1rem;
   display: flex;
   flex-direction: column;
-  gap: 4rem;
+  gap: var(--space-16);
 }
 
 .contact-cards {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2rem;
+  gap: var(--space-5);
   max-width: 64rem;
   margin: 0 auto;
+  width: 100%;
 }
 
-@media (min-width: 768px) {
-  .contact-cards { grid-template-columns: repeat(3, 1fr); }
-}
+@media (min-width: 768px) { .contact-cards { grid-template-columns: repeat(3, 1fr); } }
 
 .contact-card {
   background-color: var(--white);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  padding: 2rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
   text-align: center;
-  border: 2px solid transparent;
-  transition: border-color var(--transition-base), transform var(--transition-base);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base);
 }
 
 .contact-card:hover {
-  border-color: var(--green-500);
-  transform: translateY(-5px) scale(1.03);
+  border-color: var(--green-300);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
 }
 
-.contact-card__icon { font-size: 3rem; margin-bottom: 1rem; }
-.contact-card__title { font-size: 1.25rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.75rem; }
-.contact-card__value { color: var(--green-600); font-weight: 500; }
+.contact-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--radius-md);
+  background-color: var(--green-50);
+  font-size: 1.75rem;
+  margin-bottom: var(--space-4);
+}
+
+.contact-card__title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-3);
+}
+
+.contact-card__value {
+  color: var(--purple-900);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-base);
+  word-break: break-word;
+  line-height: var(--leading-snug);
+  transition: color var(--transition-fast);
+}
+
 .contact-card__value:hover { color: var(--green-700); }
 
-/* Bloco Pavoniana */
+/* ---------- Bloco Pavoniana ---------- */
 .pavoniana {
-  max-width: 48rem;
+  max-width: 44rem;
   margin: 0 auto;
-  background: linear-gradient(135deg, var(--blue-50), #ecfdf5);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  padding: 2rem;
+  width: 100%;
+  background-color: var(--white);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+  padding: var(--space-8);
   text-align: center;
 }
 
 .pavoniana__title-h2 {
-  font-size: clamp(1.875rem, 4vw, 2.5rem);
-  font-weight: 700;
-  color: var(--gray-900);
-  margin-bottom: 1rem;
-  text-align: center;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-black);
+  color: var(--purple-900);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-3);
 }
 
-.pavoniana__subtitle { color: var(--gray-600); font-size: 1.125rem; margin-bottom: 2rem; text-align: center; }
+.pavoniana__subtitle {
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  margin-bottom: var(--space-8);
+}
 
-.pavoniana__icon { font-size: 2.5rem; margin-bottom: 1rem; }
-.pavoniana__label { font-size: 1.5rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.5rem; }
+.pavoniana__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-md);
+  background-color: var(--green-50);
+  font-size: 1.5rem;
+  margin-bottom: var(--space-3);
+}
+
+.pavoniana__label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
 .pavoniana__phone {
   display: inline-block;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--green-600);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--purple-900);
+  letter-spacing: -0.01em;
   transition: color var(--transition-fast);
 }
+
 .pavoniana__phone:hover { color: var(--green-700); }
 
-/* Endereço + mapa */
-.address__title {
-  font-size: clamp(1.875rem, 4vw, 2.5rem);
-  font-weight: 700;
-  color: var(--gray-900);
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.address__line {
-  color: var(--gray-600);
-  font-size: 1.125rem;
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.address__map {
-  max-width: 64rem;
-  margin: 0 auto;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow: var(--shadow-2xl);
-  border: 4px solid var(--white);
-  background: linear-gradient(135deg, var(--gray-200), var(--gray-300));
-}
-
-.address__map-iframe {
-  width: 100%;
-  height: 24rem;
-  border: 0;
-  display: block;
-}
-
-.address__map-placeholder {
-  padding: 4rem 2rem;
-  text-align: center;
-}
-
-.address__map-placeholder span { font-size: 4rem; }
-.address__map-placeholder h3 { font-size: 1.5rem; font-weight: 700; color: var(--gray-700); margin: 1rem 0; }
-.address__map-placeholder p { color: var(--gray-600); margin-bottom: 1rem; }
-
-.address__cta {
-  text-align: center;
-  margin-top: 1.5rem;
-}
-
-.address__cta .btn {
-  background: linear-gradient(90deg, var(--green-600), var(--blue-600));
-  color: var(--white);
-  box-shadow: var(--shadow-lg);
-  padding: 1rem 2rem;
-}
-
-/* Redes sociais */
+/* ---------- Bloco redes sociais ---------- */
 .socials-block {
-  max-width: 48rem;
+  max-width: 44rem;
   margin: 0 auto;
-  background: linear-gradient(90deg, #f3e8ff, #fce7f3);
+  width: 100%;
+  background-color: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  padding: 3rem;
+  padding: var(--space-10) var(--space-8);
   text-align: center;
 }
 
 .socials-block__title {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: var(--gray-900);
-  margin-bottom: 1rem;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-black);
+  color: var(--purple-900);
+  letter-spacing: -0.01em;
+  margin-bottom: var(--space-3);
 }
 
 .socials-block__lead {
-  color: var(--gray-700);
-  font-size: 1.125rem;
-  margin-bottom: 1.5rem;
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  margin-bottom: var(--space-6);
 }
 
 .socials-block__list {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
+  gap: var(--space-4);
 }
 
 .socials-block__item {
-  font-size: 3rem;
-  display: inline-block;
-  transition: transform var(--transition-base);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-full);
+  background-color: var(--white);
+  border: 1px solid var(--border-subtle);
+  font-size: 1.5rem;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
-.socials-block__item:hover { transform: scale(1.1) rotate(5deg); }
+.socials-block__item:hover {
+  background-color: var(--green-500);
+  border-color: var(--green-500);
+  transform: translateY(-3px);
+}
