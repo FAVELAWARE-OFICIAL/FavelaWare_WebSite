@@ -11,10 +11,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/pages/home.css">
 
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
   <script src="js/components.js" defer></script>
   <script src="js/main.js" defer></script>
 </head>
@@ -45,24 +47,24 @@
         </div>
 
         <div class="hero__content">
-          <h1 class="hero__title">
+          <h1 class="hero__title" data-aos="zoom-in" data-aos-duration="700">
             CONHEÇA NOSSO<br>
             <span class="hero__title-highlight">PROJETO</span>
           </h1>
 
-          <p class="hero__lead">
+          <p class="hero__lead" data-aos="fade-up" data-aos-delay="200">
             Formação de jovens programadores vindos de comunidades de Belo Horizonte/MG.
             <strong>Capacitação em hard skills e soft skills através da tecnologia.</strong>
           </p>
 
-          <a class="btn hero__cta" href="sobre.html">
+          <a class="btn hero__cta" href="sobre.html" data-aos="fade-up" data-aos-delay="400">
             <span>SAIBA MAIS</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M13 7l5 5m0 0l-5 5m5-5H6"/>
             </svg>
           </a>
 
-          <div class="hero__stats">
+          <div class="hero__stats" data-aos="fade-up" data-aos-delay="600">
             <div class="hero__stat">
               <div class="hero__stat-num">150+</div>
               <div class="hero__stat-label">Alunos</div>
@@ -83,7 +85,7 @@
     <!-- GALLERY -->
     <section class="gallery" id="galeria">
       <div class="gallery__inner">
-        <header class="gallery__header">
+        <header class="gallery__header" data-aos="fade-down">
           <h2 class="gallery__title text-gradient">Galeria</h2>
           <p class="gallery__subtitle">
             Momentos especiais do <strong>FavelaWare</strong>
@@ -91,7 +93,7 @@
         </header>
 
         <div class="gallery__grid">
-          <article class="gallery__card">
+          <article class="gallery__card" data-aos="fade-up">
             <img src="imgs/gallery/AberturaDoProjeto2022.jpg" alt="Abertura do Projeto 2022">
             <div class="gallery__overlay">
               <span class="gallery__badge">Evento</span>
@@ -103,7 +105,7 @@
             </div>
           </article>
 
-          <article class="gallery__card">
+          <article class="gallery__card" data-aos="fade-up" data-aos-delay="150">
             <img src="imgs/gallery/Formatura2022.jpg" alt="Formatura 2022">
             <div class="gallery__overlay">
               <span class="gallery__badge">Formatura</span>
@@ -129,7 +131,7 @@
     <!-- PARTNERS -->
     <section class="partners" id="reconhecimentos">
       <div class="partners__inner">
-        <header class="partners__header">
+        <header class="partners__header" data-aos="fade-down">
           <h2 class="partners__title text-gradient">IDEALIZADORES</h2>
           <div class="partners__divider"></div>
           <p class="partners__lead">
@@ -138,27 +140,27 @@
         </header>
 
         <div class="partners__grid">
-          <div class="partners__card">
+          <div class="partners__card" data-aos="zoom-in" data-aos-delay="0">
             <div class="partners__logo"><img src="imgs/partners/Mundiale.png" alt="Mundiale"></div>
             <p class="partners__name">Mundiale</p>
           </div>
-          <div class="partners__card">
+          <div class="partners__card" data-aos="zoom-in" data-aos-delay="100">
             <div class="partners__logo"><img src="imgs/partners/ânima.png" alt="Ânima Lab"></div>
             <p class="partners__name">Ânima Lab</p>
           </div>
-          <div class="partners__card">
+          <div class="partners__card" data-aos="zoom-in" data-aos-delay="200">
             <div class="partners__logo"><img src="imgs/partners/AOPA.png" alt="AOPA"></div>
             <p class="partners__name">AOPA</p>
           </div>
-          <div class="partners__card">
+          <div class="partners__card" data-aos="zoom-in" data-aos-delay="300">
             <div class="partners__logo"><img src="imgs/partners/Rede Transformar.jpg" alt="Rede Transformar"></div>
             <p class="partners__name">Rede Transformar</p>
           </div>
-          <div class="partners__card">
+          <div class="partners__card" data-aos="zoom-in" data-aos-delay="400">
             <div class="partners__logo"><img src="imgs/partners/ecossistema ânima.png" alt="Ecossistema Ânima"></div>
             <p class="partners__name">Ecossistema Ânima</p>
           </div>
-          <div class="partners__card">
+          <div class="partners__card" data-aos="zoom-in" data-aos-delay="500">
             <div class="partners__logo"><img src="imgs/partners/Una Cristiano Machado.png" alt="UNA Cristiano Machado"></div>
             <p class="partners__name">UNA Cristiano Machado</p>
           </div>
