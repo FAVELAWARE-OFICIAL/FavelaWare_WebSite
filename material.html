@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Material, FavelaWare</title>
-  <meta name="description" content="Materiais do curso e envio de atividades.">
+  <meta name="description" content="Materiais do curso FavelaWare.">
 
   <link rel="icon" type="image/png" href="imgs/logo/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,7 +19,6 @@
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
   <script src="js/components.js" defer></script>
   <script src="js/main.js" defer></script>
-  <script src="js/pages/material.js" defer></script>
 </head>
 <body>
   <site-navbar current="material"></site-navbar>
@@ -27,7 +26,7 @@
   <header class="page-header">
     <div class="container">
       <h1 class="page-header__title">MATERIAIS</h1>
-      <p class="page-header__subtitle">Acesse os materiais do curso e envie suas atividades</p>
+      <p class="page-header__subtitle">Acesse os materiais do curso</p>
     </div>
   </header>
 
@@ -61,43 +60,6 @@
             </div>
           </a>
         </div>
-      </div>
-    </section>
-
-    <section class="submit" data-aos="fade-up">
-      <div class="submit__inner">
-        <h2 class="submit__title">📝 Entrega de Atividades</h2>
-        <p class="submit__subtitle">Faça upload do seu trabalho em formato PDF (máximo 10MB)</p>
-
-        <div id="form-message" class="form__message form__message--hidden" role="status" aria-live="polite"></div>
-
-        <form id="submit-form" class="form" novalidate>
-          <div class="form__field">
-            <label class="form__label" for="nomeAluno">Seu Nome Completo *</label>
-            <input class="form__input" type="text" id="nomeAluno" name="nomeAluno" required placeholder="Ex: Maria Silva">
-          </div>
-
-          <div class="form__field">
-            <label class="form__label" for="emailAluno">Seu Email *</label>
-            <input class="form__input" type="email" id="emailAluno" name="emailAluno" required placeholder="Ex: maria.silva@email.com">
-          </div>
-
-          <div class="form__field">
-            <label class="form__label" for="nomeAtividade">Nome da Atividade *</label>
-            <input class="form__input" type="text" id="nomeAtividade" name="nomeAtividade" required placeholder="Ex: Atividade 1 - JavaScript Básico">
-          </div>
-
-          <div class="form__field">
-            <label class="form__label" for="arquivo">Arquivo PDF *</label>
-            <input class="form__file" type="file" id="arquivo" name="arquivo" accept=".pdf" required>
-            <p id="file-info" class="form__file-info"></p>
-            <p class="form__hint">Apenas arquivos PDF (máximo 10MB)</p>
-          </div>
-
-          <button class="form__submit" type="submit" id="submit-btn">
-            <span id="submit-text">📤 Enviar Atividade</span>
-          </button>
-        </form>
       </div>
     </section>
   </main>
