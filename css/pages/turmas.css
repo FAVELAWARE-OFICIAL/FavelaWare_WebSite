@@ -1,0 +1,91 @@
+/* ============================================
+   TURMAS: turma atual e links
+   ============================================ */
+
+.classes {
+  padding: 4rem 0;
+}
+
+.classes__inner {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.classes__card {
+  background: linear-gradient(135deg, var(--green-500), var(--green-600));
+  color: var(--white);
+  padding: 3rem 2rem;
+  border-radius: var(--radius-xl);
+  text-align: center;
+  box-shadow: var(--shadow-xl);
+}
+
+.classes__card-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  margin-bottom: 0.75rem;
+}
+
+.classes__card-title {
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 900;
+  margin-bottom: 0.75rem;
+}
+
+.classes__card-schedule {
+  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  font-weight: 500;
+  color: var(--white);
+}
+
+.classes__actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .classes__actions { grid-template-columns: repeat(2, 1fr); }
+}
+
+.classes__action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  padding: 2.5rem 2rem;
+  background-color: var(--white);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  color: var(--purple-900);
+  font-weight: 700;
+  transition: border-color var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.classes__action:hover {
+  border-color: var(--green-500);
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-xl);
+}
+
+.classes__action-icon {
+  font-size: 3rem;
+}
+
+.classes__action-title {
+  font-size: 1.25rem;
+}
+
+.classes__action-desc {
+  font-size: 0.95rem;
+  color: var(--gray-600);
+  font-weight: 400;
+}

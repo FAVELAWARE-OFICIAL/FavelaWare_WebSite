@@ -1,0 +1,207 @@
+/* ============================================
+   MATERIAL: recursos e formulário de entrega
+   ============================================ */
+
+.materials {
+  padding: 4rem 0;
+}
+
+.materials__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.materials__title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.materials__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .materials__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.material-card {
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 1.5rem;
+  border: 2px solid transparent;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  transition: transform var(--transition-base), border-color var(--transition-base);
+}
+
+.material-card:hover {
+  border-color: var(--green-500);
+  transform: translateY(-5px);
+}
+
+.material-card__icon { font-size: 3rem; }
+.material-card__title { font-size: 1.25rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.5rem; }
+.material-card__desc  { color: var(--gray-600); margin-bottom: 0.75rem; }
+
+.material-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.material-card__platform {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+}
+
+.material-card__platform--drive   { background-color: var(--blue-100); color: var(--blue-700); }
+.material-card__platform--gitbook { background-color: #f3e8ff; color: var(--purple-600); }
+
+.material-card__more {
+  color: var(--green-600);
+  font-weight: 500;
+}
+
+/* ---------- Formulário de entrega ---------- */
+.submit {
+  padding-bottom: 4rem;
+}
+
+.submit__inner {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--green-50), var(--blue-50));
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+}
+
+@media (min-width: 768px) {
+  .submit__inner { padding: 3rem; }
+}
+
+.submit__title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.submit__subtitle {
+  color: var(--gray-600);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.form { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.form__field { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.form__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.form__input,
+.form__file {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  background-color: var(--white);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form__file {
+  border-style: dashed;
+  border-width: 2px;
+  cursor: pointer;
+}
+
+.form__input:focus,
+.form__file:focus {
+  outline: none;
+  border-color: var(--green-500);
+  box-shadow: 0 0 0 3px rgba(139, 197, 63, 0.2);
+}
+
+.form__hint {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.form__file-info {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.form__submit {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--white);
+  background: linear-gradient(90deg, var(--green-600), var(--blue-600));
+  box-shadow: var(--shadow-lg);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), opacity var(--transition-base);
+}
+
+.form__submit:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-xl);
+}
+
+.form__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--gray-400);
+}
+
+.form__message {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+
+.form__message--success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.form__message--error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.form__message--hidden { display: none; }
+
+.form__spinner {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-top-color: var(--white);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
