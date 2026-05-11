@@ -83,6 +83,11 @@
 .section__title {
   font-size: var(--text-4xl);
   font-weight: var(--weight-black);
+  background: linear-gradient(95deg, var(--green-600) 0%, var(--purple-600) 70%, var(--pink-500) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
   letter-spacing: -0.02em;
   margin-bottom: var(--space-3);
 }

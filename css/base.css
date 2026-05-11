@@ -210,11 +210,43 @@ input, textarea, select {
 
 /* ---------- Utilitários ---------- */
 .text-gradient {
-  background: linear-gradient(90deg, var(--green-500), var(--blue-500));
+  background: linear-gradient(95deg, var(--green-600) 0%, var(--purple-600) 70%, var(--pink-500) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
+}
+
+/* Variante alternativa: verde escuro → roxo, sem pink */
+.text-gradient--cool {
+  background: linear-gradient(95deg, var(--green-700), var(--purple-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Heading com traço de identidade acima (verde) */
+.heading-accent {
+  position: relative;
+  padding-top: 1.25rem;
+}
+
+.heading-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2rem;
+  height: 3px;
+  background-color: var(--green-500);
+  border-radius: var(--radius-full);
+}
+
+.heading-accent--left::before {
+  left: 0;
+  transform: none;
 }
 
 .eyebrow {
