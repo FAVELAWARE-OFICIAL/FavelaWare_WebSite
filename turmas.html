@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turmas, FavelaWare</title>
+  <meta name="description" content="Conheça as turmas do FavelaWare.">
+
+  <link rel="icon" type="image/png" href="imgs/logo/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/turmas.css">
+
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
+  <script src="js/components.js" defer></script>
+  <script src="js/main.js" defer></script>
+</head>
+<body>
+  <site-navbar current="turmas"></site-navbar>
+
+  <header class="page-header">
+    <div class="container">
+      <h1 class="page-header__title">CONHEÇA NOSSAS TURMAS</h1>
+      <p class="page-header__subtitle">Turma vigente da Edição III e atalhos para conhecer melhor</p>
+    </div>
+  </header>
+
+  <main class="classes">
+    <div class="classes__inner">
+
+      <article class="classes__card" data-aos="zoom-in">
+        <p class="classes__card-label">Turma vigente</p>
+        <h2 class="classes__card-title">Edição III</h2>
+        <p class="classes__card-schedule">Terça, quarta e quinta, das 13h às 16h</p>
+      </article>
+
+      <div class="classes__actions" data-aos="fade-up">
+        <a class="classes__action" href="hall-da-fama.html">
+          <span class="classes__action-icon" aria-hidden="true">👥</span>
+          <span class="classes__action-title">CONHEÇA A TURMA</span>
+          <span class="classes__action-desc">Coordenação, instrutores discentes e equipe atual</span>
+        </a>
+
+        <a class="classes__action" href="hall-da-fama.html">
+          <span class="classes__action-icon" aria-hidden="true">🏆</span>
+          <span class="classes__action-title">HALL DA FAMA (TURMAS)</span>
+          <span class="classes__action-desc">Equipes que já passaram por aqui em 2022, 2023, 2024 e 2025</span>
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <site-footer></site-footer>
+</body>
+</html>
