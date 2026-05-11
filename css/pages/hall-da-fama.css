@@ -80,3 +80,4 @@
 
 .member__cargo { font-size: 0.875rem; font-weight: 700; color: var(--green-500); margin-bottom: 0.25rem; }
 .member__nome  { font-size: 1rem;     font-weight: 700; color: var(--purple-900); }
+.member__org   { font-size: 0.8rem;   color: var(--pink-500); font-weight: 600; margin-top: 0.125rem; }
