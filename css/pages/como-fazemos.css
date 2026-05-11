@@ -1,0 +1,104 @@
+/* ============================================
+   COMO FAZEMOS — trilhas e edições
+   ============================================ */
+
+.tracks {
+  padding: 3rem 0;
+}
+
+.tracks__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.track__header {
+  background: linear-gradient(90deg, var(--green-500), var(--green-600));
+  padding: 1.5rem 2rem;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.track__title {
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  font-weight: 900;
+  color: var(--purple-900);
+  text-align: center;
+}
+
+.track__body {
+  background-color: var(--white);
+  border: 2px solid var(--gray-200);
+  border-top: none;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  padding: 2rem;
+}
+
+.module + .module { margin-top: 1.5rem; }
+
+.module__title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--purple-900);
+  margin-bottom: 0.75rem;
+}
+
+.module__duration { color: var(--green-500); }
+
+.module__topics {
+  list-style: none;
+  padding-left: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.module__topics li {
+  position: relative;
+  color: var(--purple-900);
+}
+
+.module__topics li::before {
+  content: '';
+  position: absolute;
+  left: -1.25rem;
+  top: 0.6rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  background-color: var(--green-500);
+  border-radius: 50%;
+}
+
+.editions {
+  margin-top: 4rem;
+}
+
+.editions__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 2rem;
+  background-color: var(--white);
+  border: 2px solid var(--gray-200);
+  border-top: none;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+.editions__btn {
+  width: 100%;
+  padding: 1rem 2rem;
+  font-weight: 700;
+  background-color: var(--green-500);
+  color: var(--purple-900);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  transition: background-color var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.editions__btn:hover {
+  background-color: var(--green-600);
+  transform: scale(1.02);
+  box-shadow: var(--shadow-xl);
+}
