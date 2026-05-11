@@ -8,7 +8,10 @@ const MENU_ITEMS = [
   { label: 'HOME',             href: 'index.html',           page: 'home' },
   { label: 'COMO FAZEMOS',     href: 'como-fazemos.html',    page: 'como-fazemos' },
   { label: 'SOBRE',            href: 'sobre.html',           page: 'sobre' },
+  { label: 'AULAS',            href: 'aulas.html',           page: 'aulas' },
   { label: 'MATERIAL',         href: 'material.html',        page: 'material' },
+  { label: 'TURMAS',           href: 'turmas.html',          page: 'turmas' },
+  { label: 'GALERIA',          href: 'galeria.html',         page: 'galeria' },
   { label: 'RECONHECIMENTOS',  href: 'reconhecimentos.html', page: 'reconhecimentos' },
   { label: 'CONTATO',          href: 'contato.html',         page: 'contato' },
 ];
@@ -76,57 +79,19 @@ class SiteNavbar extends HTMLElement {
 class SiteFooter extends HTMLElement {
   connectedCallback() {
     this.innerHTML = `
-      <footer class="site-footer">
+      <footer class="site-footer site-footer--compact">
         <div class="site-footer__inner">
-          <div class="site-footer__grid">
-            <div>
-              <h3 class="site-footer__brand text-gradient">FavelaWare</h3>
-              <p class="site-footer__about">
-                Uma iniciativa voltada para a formação de jovens programadores vindos de comunidades de Belo Horizonte/MG,
-                focada na capacitação de hard skills e soft skills.
-              </p>
-              <div class="site-footer__socials">
-                <a class="site-footer__social" href="https://instagram.com/favelaware" target="_blank" rel="noopener" aria-label="Instagram">📷</a>
-                <a class="site-footer__social" href="mailto:favelaware@gmail.com" aria-label="Email">📧</a>
-              </div>
-            </div>
-
-            <div>
-              <h4 class="site-footer__title">Links Rápidos</h4>
-              <nav class="site-footer__links" aria-label="Links do rodapé">
-                <a class="site-footer__link" href="sobre.html">Sobre</a>
-                <a class="site-footer__link" href="como-fazemos.html">Trilhas</a>
-                <a class="site-footer__link" href="material.html">Material</a>
-                <a class="site-footer__link" href="reconhecimentos.html">Reconhecimentos</a>
-                <a class="site-footer__link" href="contato.html">Contato</a>
-              </nav>
-            </div>
-
-            <div>
-              <h4 class="site-footer__title">Contato</h4>
-              <div class="site-footer__contact-item">
-                <span aria-hidden="true">📍</span>
-                <div>
-                  <strong>Localização</strong>
-                  <p>Belo Horizonte/MG</p>
-                </div>
-              </div>
-              <div class="site-footer__contact-item">
-                <span aria-hidden="true">✉️</span>
-                <div>
-                  <strong>Email</strong>
-                  <p><a class="site-footer__link" href="mailto:favelaware@gmail.com">favelaware@gmail.com</a></p>
-                </div>
-              </div>
-            </div>
+          <div class="site-footer__socials" aria-label="Redes sociais">
+            <a class="site-footer__social" href="mailto:favelaware@gmail.com" aria-label="Email">✉️</a>
+            <a class="site-footer__social" href="https://www.instagram.com/favelaware" target="_blank" rel="noopener" aria-label="Instagram">📷</a>
           </div>
 
-          <div class="site-footer__divider"></div>
+          <p class="site-footer__about">
+            O FavelaWare é uma iniciativa voltada para a formação de jovens programadores vindos de comunidades
+            de Belo Horizonte/MG focada na capacitação de hard skills e soft skills.
+          </p>
 
-          <div class="site-footer__bottom">
-            <p>© ${new Date().getFullYear()} FavelaWare. Todos os direitos reservados.</p>
-            <p>Feito com <span class="site-footer__heart" aria-hidden="true">❤️</span> para as comunidades</p>
-          </div>
+          <p class="site-footer__credit">Site criado pela equipe Ânima Hub</p>
         </div>
       </footer>
     `;
