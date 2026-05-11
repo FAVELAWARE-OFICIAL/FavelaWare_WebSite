@@ -92,7 +92,7 @@
   transition: background-color var(--transition-base), box-shadow var(--transition-base);
 }
 
-/* Variante transparente — só na home antes de rolar */
+/* Variante transparente: só na home antes de rolar */
 .site-nav--transparent {
   background-color: transparent;
 }

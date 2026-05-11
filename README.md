@@ -1,4 +1,4 @@
-# FavelaWare — Site Oficial
+# FavelaWare: Site Oficial
 
 Site oficial do projeto FavelaWare, uma iniciativa de formação de jovens programadores vindos de comunidades de Belo Horizonte/MG.
 
@@ -8,9 +8,9 @@ O FavelaWare é focado na formação técnica e de soft skills de jovens de 15 a
 
 ## Stack
 
-HTML5, CSS3 e JavaScript puros — sem build, sem bundler.
+HTML5, CSS3 e JavaScript puros, sem build, sem bundler.
 
-- **HTML estático** — uma página por rota (`index.html`, `sobre.html`, ...).
+- **HTML estático**, uma página por rota (`index.html`, `sobre.html`, ...).
 - **CSS** organizado em `css/base.css` (tokens, reset), `css/components.css` (navbar/footer/botões/cards) e `css/pages/*.css` (estilo específico de cada página).
 - **JavaScript** com Custom Elements (`<site-navbar>`, `<site-footer>`) para evitar duplicação de navbar/footer entre páginas.
 - **AOS** (Animate On Scroll) via CDN para animações de entrada.
@@ -77,10 +77,10 @@ Abra `http://localhost:8000` (ou a porta indicada).
 
 ## Paleta de cores
 
-- **Verde** `#8bc53f` — primária.
-- **Roxo** `#2d2a5f` — header / navbar / títulos.
-- **Rosa** `#ec4899` — destaques.
-- **Azul** `#3b82f6` — secundária.
+- **Verde** `#8bc53f`: primária.
+- **Roxo** `#2d2a5f`: header, navbar e títulos.
+- **Rosa** `#ec4899`: destaques.
+- **Azul** `#3b82f6`: secundária.
 
 ## Contato
 

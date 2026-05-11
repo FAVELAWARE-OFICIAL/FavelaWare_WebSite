@@ -1,5 +1,5 @@
 /* ============================================
-   AULAS — render do cronograma a partir de aulasData
+   AULAS: render do cronograma a partir de aulasData
    ============================================ */
 
 (function () {

@@ -1,5 +1,5 @@
 /* ============================================
-   WEB COMPONENTS — Navbar e Footer compartilhados
+   WEB COMPONENTS: Navbar e Footer compartilhados
    Carregado com `defer` no <head> de cada página,
    renderiza antes do primeiro paint (sem flash).
    ============================================ */
