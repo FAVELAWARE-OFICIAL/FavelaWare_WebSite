@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galeria, FavelaWare</title>
+  <meta name="description" content="Galeria de fotos da edição atual e edições anteriores do FavelaWare.">
+
+  <link rel="icon" type="image/png" href="imgs/logo/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/galeria.css">
+
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
+  <script src="js/components.js" defer></script>
+  <script src="js/main.js" defer></script>
+</head>
+<body>
+  <site-navbar current="galeria"></site-navbar>
+
+  <header class="page-header">
+    <div class="container">
+      <h1 class="page-header__title">GALERIA</h1>
+      <p class="page-header__subtitle">Momentos da Edição III e edições anteriores</p>
+    </div>
+  </header>
+
+  <main class="gallery-page">
+    <div class="gallery-page__inner">
+
+      <section data-aos="fade-up">
+        <h2 class="gallery-page__edition-title">3ª EDIÇÃO</h2>
+
+        <div class="gallery-page__grid">
+          <a class="gallery-page__card" href="#">
+            <div>
+              <div class="gallery-page__card-icon" aria-hidden="true">🎓</div>
+              <div class="gallery-page__card-title">PRIMEIRO DIA DE AULA</div>
+              <div class="gallery-page__card-empty">Em breve</div>
+            </div>
+          </a>
+
+          <a class="gallery-page__card" href="#">
+            <div>
+              <div class="gallery-page__card-icon" aria-hidden="true">🎉</div>
+              <div class="gallery-page__card-title">DEVFEST</div>
+              <div class="gallery-page__card-empty">Em breve</div>
+            </div>
+          </a>
+
+          <a class="gallery-page__card" href="#">
+            <div>
+              <div class="gallery-page__card-icon" aria-hidden="true">⚙️</div>
+              <div class="gallery-page__card-title">DEVOPSDAYS</div>
+              <div class="gallery-page__card-empty">Em breve</div>
+            </div>
+          </a>
+
+          <a class="gallery-page__card" href="#">
+            <div>
+              <div class="gallery-page__card-icon" aria-hidden="true">💻</div>
+              <div class="gallery-page__card-title">GDG MEET</div>
+              <div class="gallery-page__card-empty">Em breve</div>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <section data-aos="fade-up">
+        <h2 class="gallery-page__edition-title">EDIÇÕES ANTERIORES</h2>
+
+        <div class="gallery-page__legacy-grid">
+          <article class="gallery-page__photo">
+            <img src="imgs/gallery/AberturaDoProjeto2022.jpg" alt="Abertura do Projeto 2022">
+            <div class="gallery-page__photo-overlay">
+              <span class="gallery-page__photo-badge">2022</span>
+              <p class="gallery-page__photo-title">Abertura do Projeto</p>
+            </div>
+          </article>
+
+          <article class="gallery-page__photo">
+            <img src="imgs/gallery/Formatura2022.jpg" alt="Formatura 2022">
+            <div class="gallery-page__photo-overlay">
+              <span class="gallery-page__photo-badge">2022</span>
+              <p class="gallery-page__photo-title">Formatura no Mandiale</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <site-footer></site-footer>
+</body>
+</html>
