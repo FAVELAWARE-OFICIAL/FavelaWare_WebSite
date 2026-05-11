@@ -3,7 +3,7 @@
    ============================================ */
 
 .teams-section {
-  padding: 4rem 0;
+  padding-block: var(--section-py);
 }
 
 .teams-section__inner {
@@ -12,30 +12,42 @@
   padding: 0 1rem;
   display: flex;
   flex-direction: column;
-  gap: 5rem;
+  gap: var(--space-20);
 }
 
 .year-team__title {
-  font-size: 2.25rem;
-  font-weight: 900;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-black);
   color: var(--purple-900);
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: var(--space-10);
+  letter-spacing: -0.02em;
+  position: relative;
+  display: inline-block;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.year-team__title::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -0.5rem;
+  width: 2.5rem;
+  height: 3px;
+  background-color: var(--green-500);
+  border-radius: var(--radius-full);
+  transform: translateX(-50%);
 }
 
 .year-team__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
+  gap: var(--space-8) var(--space-5);
 }
 
-@media (min-width: 768px) {
-  .year-team__grid { grid-template-columns: repeat(4, 1fr); }
-}
-
-@media (min-width: 1024px) {
-  .year-team__grid { grid-template-columns: repeat(6, 1fr); }
-}
+@media (min-width: 768px)  { .year-team__grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1024px) { .year-team__grid { grid-template-columns: repeat(6, 1fr); } }
 
 .member {
   display: flex;
@@ -45,25 +57,25 @@
   transition: transform var(--transition-base);
 }
 
-.member:hover { transform: translateY(-10px); }
+.member:hover { transform: translateY(-4px); }
 
 .member__avatar {
   position: relative;
-  width: 7rem;
-  height: 7rem;
+  width: 6rem;
+  height: 6rem;
   border-radius: 50%;
-  background-color: var(--green-500);
-  margin-bottom: 1rem;
+  background: linear-gradient(135deg, var(--green-400), var(--green-600));
+  margin-bottom: var(--space-4);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: box-shadow var(--transition-base), transform var(--transition-base);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow var(--transition-base);
 }
 
 .member:hover .member__avatar {
-  box-shadow: 0 0 30px rgba(139, 197, 63, 0.6);
-  transform: scale(1.1);
+  box-shadow: var(--shadow-accent);
 }
 
 .member__avatar img {
@@ -73,11 +85,30 @@
 }
 
 .member__avatar svg {
-  width: 4rem;
-  height: 4rem;
-  fill: var(--white);
+  width: 3rem;
+  height: 3rem;
+  fill: rgba(255, 255, 255, 0.85);
 }
 
-.member__cargo { font-size: 0.875rem; font-weight: 700; color: var(--green-500); margin-bottom: 0.25rem; }
-.member__nome  { font-size: 1rem;     font-weight: 700; color: var(--purple-900); }
-.member__org   { font-size: 0.8rem;   color: var(--pink-500); font-weight: 600; margin-top: 0.125rem; }
+.member__cargo {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--green-700);
+  margin-bottom: var(--space-1);
+}
+
+.member__nome {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--purple-900);
+  line-height: var(--leading-snug);
+}
+
+.member__org {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: var(--weight-medium);
+  margin-top: var(--space-1);
+}
