@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material — FavelaWare</title>
+  <meta name="description" content="Materiais do curso e envio de atividades.">
+
+  <link rel="icon" type="image/png" href="imgs/logo/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/material.css">
+
+  <script src="js/components.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/pages/material.js" defer></script>
+</head>
+<body>
+  <site-navbar current="material"></site-navbar>
+
+  <header class="page-header">
+    <div class="container">
+      <h1 class="page-header__title">MATERIAIS</h1>
+      <p class="page-header__subtitle">Acesse os materiais do curso e envie suas atividades</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="materials">
+      <div class="materials__inner">
+        <h2 class="materials__title">📚 Materiais Disponíveis</h2>
+
+        <div class="materials__grid">
+          <a class="material-card" href="#" target="_blank" rel="noopener">
+            <span class="material-card__icon" aria-hidden="true">📁</span>
+            <div>
+              <h3 class="material-card__title">FavelaWare - 3ª Edição</h3>
+              <p class="material-card__desc">Materiais completos da terceira edição do curso</p>
+              <div class="material-card__meta">
+                <span class="material-card__platform material-card__platform--drive">Google Drive</span>
+                <span class="material-card__more">Acessar →</span>
+              </div>
+            </div>
+          </a>
+
+          <a class="material-card" href="#" target="_blank" rel="noopener">
+            <span class="material-card__icon" aria-hidden="true">📚</span>
+            <div>
+              <h3 class="material-card__title">Documentação GitBook</h3>
+              <p class="material-card__desc">Documentação técnica e tutoriais interativos</p>
+              <div class="material-card__meta">
+                <span class="material-card__platform material-card__platform--gitbook">GitBook</span>
+                <span class="material-card__more">Acessar →</span>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="submit">
+      <div class="submit__inner">
+        <h2 class="submit__title">📝 Entrega de Atividades</h2>
+        <p class="submit__subtitle">Faça upload do seu trabalho em formato PDF (máximo 10MB)</p>
+
+        <div id="form-message" class="form__message form__message--hidden" role="status" aria-live="polite"></div>
+
+        <form id="submit-form" class="form" novalidate>
+          <div class="form__field">
+            <label class="form__label" for="nomeAluno">Seu Nome Completo *</label>
+            <input class="form__input" type="text" id="nomeAluno" name="nomeAluno" required placeholder="Ex: Maria Silva">
+          </div>
+
+          <div class="form__field">
+            <label class="form__label" for="emailAluno">Seu Email *</label>
+            <input class="form__input" type="email" id="emailAluno" name="emailAluno" required placeholder="Ex: maria.silva@email.com">
+          </div>
+
+          <div class="form__field">
+            <label class="form__label" for="nomeAtividade">Nome da Atividade *</label>
+            <input class="form__input" type="text" id="nomeAtividade" name="nomeAtividade" required placeholder="Ex: Atividade 1 - JavaScript Básico">
+          </div>
+
+          <div class="form__field">
+            <label class="form__label" for="arquivo">Arquivo PDF *</label>
+            <input class="form__file" type="file" id="arquivo" name="arquivo" accept=".pdf" required>
+            <p id="file-info" class="form__file-info"></p>
+            <p class="form__hint">Apenas arquivos PDF (máximo 10MB)</p>
+          </div>
+
+          <button class="form__submit" type="submit" id="submit-btn">
+            <span id="submit-text">📤 Enviar Atividade</span>
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <site-footer></site-footer>
+</body>
+</html>
