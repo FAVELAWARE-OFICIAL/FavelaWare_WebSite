@@ -90,7 +90,11 @@
 .pavoniana__title-h2 {
   font-size: var(--text-3xl);
   font-weight: var(--weight-black);
-  color: var(--purple-900);
+  background: linear-gradient(95deg, var(--green-600), var(--purple-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
   letter-spacing: -0.02em;
   margin-bottom: var(--space-3);
 }
@@ -148,7 +152,11 @@
 .socials-block__title {
   font-size: var(--text-2xl);
   font-weight: var(--weight-black);
-  color: var(--purple-900);
+  background: linear-gradient(95deg, var(--green-600), var(--purple-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
   letter-spacing: -0.01em;
   margin-bottom: var(--space-3);
 }
