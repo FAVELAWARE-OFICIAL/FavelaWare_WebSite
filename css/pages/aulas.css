@@ -1,0 +1,121 @@
+/* ============================================
+   AULAS — cronograma
+   ============================================ */
+
+.schedule {
+  padding: 3rem 0 4rem;
+}
+
+.schedule__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.schedule__trilha {
+  background-color: var(--white);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.schedule__trilha-header {
+  background: linear-gradient(90deg, var(--green-500), var(--green-600));
+  padding: 1.25rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .schedule__trilha-header { flex-direction: row; align-items: center; justify-content: space-between; }
+}
+
+.schedule__trilha-title {
+  font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+  font-weight: 900;
+  color: var(--purple-900);
+}
+
+.schedule__trilha-hours {
+  font-size: 0.875rem;
+  font-weight: 700;
+  background-color: var(--white);
+  color: var(--purple-900);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+}
+
+.schedule__secoes {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .schedule__secoes { padding: 2rem; }
+}
+
+.schedule__secao-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--purple-900);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--green-500);
+  display: inline-block;
+}
+
+.schedule__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.schedule__item {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--gray-50);
+  border-left: 4px solid var(--green-500);
+  border-radius: var(--radius-sm);
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+@media (min-width: 640px) {
+  .schedule__item {
+    grid-template-columns: 6.5rem 1fr;
+    gap: 1rem;
+    align-items: center;
+  }
+}
+
+.schedule__item:hover {
+  background-color: #ecfdf5;
+  transform: translateX(4px);
+}
+
+.schedule__date {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--purple-900);
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule__title {
+  font-size: 0.95rem;
+  color: var(--gray-800);
+  font-weight: 500;
+}
+
+.schedule__instructors {
+  font-size: 0.8rem;
+  color: var(--gray-600);
+  margin-top: 0.125rem;
+}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aulas — FavelaWare</title>
+  <meta name="description" content="Cronograma de aulas do FavelaWare — Edição III.">
+
+  <link rel="icon" type="image/png" href="imgs/logo/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/aulas.css">
+
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
+  <script src="js/components.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/data/aulas.js" defer></script>
+  <script src="js/pages/aulas.js" defer></script>
+</head>
+<body>
+  <site-navbar current="aulas"></site-navbar>
+
+  <header class="page-header">
+    <div class="container">
+      <h1 class="page-header__title">CRONOGRAMA DAS AULAS</h1>
+      <p class="page-header__subtitle">Edição III — calendário completo das aulas, oficinas e intervenções</p>
+    </div>
+  </header>
+
+  <main class="schedule">
+    <div class="schedule__inner" id="aulas-root">
+      <!-- Conteúdo renderizado por js/pages/aulas.js a partir de js/data/aulas.js -->
+    </div>
+  </main>
+
+  <site-footer></site-footer>
+</body>
+</html>
