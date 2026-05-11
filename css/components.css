@@ -5,42 +5,61 @@
 
 /* ============================================
    PAGE HEADER (cabeçalho roxo das páginas internas)
+   Compacto: clearance da navbar (4.5rem) + padding mínimo.
    ============================================ */
 
 .page-header {
   position: relative;
-  background: linear-gradient(135deg, var(--purple-900) 0%, var(--purple-700) 100%);
+  background-color: var(--purple-900);
   color: var(--white);
-  padding: clamp(6rem, 14vw, 8rem) 0 clamp(3rem, 6vw, 4.5rem);
+  padding-top: calc(4.5rem + var(--space-8));
+  padding-bottom: var(--space-8);
   text-align: center;
-  overflow: hidden;
 }
 
-/* Padrão sutil em diagonal no fundo */
-.page-header::before {
+.page-header > .container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Pequeno traço verde acima do título para identidade visual */
+.page-header > .container::before {
   content: '';
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(135deg, transparent 40%, rgba(139, 197, 63, 0.06) 40%, rgba(139, 197, 63, 0.06) 60%, transparent 60%);
-  background-size: 80px 80px;
-  pointer-events: none;
+  width: 2rem;
+  height: 3px;
+  background-color: var(--green-500);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-2);
 }
-
-.page-header > .container { position: relative; }
 
 .page-header__title {
-  font-size: var(--text-5xl);
+  font-size: var(--text-4xl);
   font-weight: var(--weight-black);
-  letter-spacing: -0.02em;
-  margin-bottom: var(--space-3);
+  letter-spacing: -0.025em;
+  line-height: 1.05;
 }
 
 .page-header__subtitle {
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   line-height: var(--leading-snug);
-  color: rgba(255, 255, 255, 0.78);
-  max-width: 44rem;
-  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 36rem;
+  margin: 0;
+}
+
+/* Linha gradiente fina no rodapé do header para suavizar transição */
+.page-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--green-500) 35%, var(--blue-500) 65%, transparent);
+  opacity: 0.6;
 }
 
 /* ============================================
