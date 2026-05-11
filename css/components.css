@@ -40,6 +40,7 @@
   font-weight: var(--weight-black);
   letter-spacing: -0.025em;
   line-height: 1.05;
+  color: var(--white);
 }
 
 .page-header__subtitle {
