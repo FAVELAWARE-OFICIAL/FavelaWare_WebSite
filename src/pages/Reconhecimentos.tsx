@@ -18,10 +18,11 @@
  * - Grid responsivo: adapta layout para mobile/desktop
  */
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import Lightbox, { type FotoLightbox } from '../components/Lightbox';
 import type { ArtigoCientifico, Premio } from '../types';
 
 /**
@@ -33,8 +34,12 @@ const Reconhecimentos: React.FC = () => {
   // ESTADOS DO COMPONENTE
   // ============================================
 
-  // Estado para controlar qual imagem está ampliada (modal)
-  const [imagemAmpliada, setImagemAmpliada] = useState<string | null>(null);
+  // Estado para controlar qual imagem está ampliada (lightbox)
+  const [imagemAmpliada, setImagemAmpliada] = useState<FotoLightbox | null>(null);
+
+  // useCallback mantém a mesma função entre renders: o Lightbox usa aoFechar
+  // como dependência do useEffect da tecla Esc
+  const fecharImagem = useCallback(() => setImagemAmpliada(null), []);
 
   // ============================================
   // DADOS DOS ARTIGOS CIENTÍFICOS
@@ -45,7 +50,7 @@ const Reconhecimentos: React.FC = () => {
       id: 1,
       titulo: 'Extension Project Based on Flipped Classroom to the Development of Hard and Soft Skills in Brazilian Outskirts: Case studies',
       descricao: 'Artigo científico sobre o projeto de extensão baseado em sala de aula invertida para o desenvolvimento de habilidades técnicas e comportamentais em comunidades brasileiras.',
-      doi: 'https://doi.org/10.33422/ijsrhe.v2i2.46',
+      doi: 'https://doi.org/10.33422/ijsfle.v2i2.464',
       ano: '2024',
       icone: '📄',
     },
@@ -63,9 +68,9 @@ const Reconhecimentos: React.FC = () => {
       ano: '2023',
       link: 'https://www.abrhbrasil.org.br/psh/',
       imagens: [
-        '/premios/premio-ser-humano-1.jpg',
-        '/premios/premio-ser-humano-2.jpg',
-        '/premios/premio-ser-humano-3.jpg',
+        '/imgs/gallery/premiacao-01.jpg',
+        '/imgs/gallery/premiacao-02.jpg',
+        '/imgs/gallery/premiacao-03.jpg',
       ],
       icone: '🏆',
     },
@@ -106,7 +111,9 @@ const Reconhecimentos: React.FC = () => {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            {/* text-3xl no celular: "RECONHECIMENTOS" é uma palavra só e, em
+                text-4xl, passava da largura da tela (rolagem lateral) */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
               RECONHECIMENTOS
             </h1>
             <p className="text-xl text-white/80 max-w-3xl mx-auto">
@@ -151,7 +158,7 @@ const Reconhecimentos: React.FC = () => {
                 <div className="flex items-start space-x-6">
                   {/* Ícone ilustrativo */}
                   <div className="hidden md:block">
-                    <div className="w-32 h-32 bg-gradient-to-br from-favela-green-100 to-favela-blue-100 rounded-xl flex items-center justify-center text-6xl">
+                    <div className="w-32 h-32 bg-gradient-to-br from-favela-green-100 to-gray-100 rounded-xl flex items-center justify-center text-6xl">
                       {artigo.icone}
                     </div>
                   </div>
@@ -182,7 +189,6 @@ const Reconhecimentos: React.FC = () => {
                       className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-favela-green-600 to-favela-blue-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all"
                     >
                       <span>Acessar Artigo</span>
-                      <span>→</span>
                     </motion.a>
                   </div>
                 </div>
@@ -247,7 +253,6 @@ const Reconhecimentos: React.FC = () => {
                       className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all"
                     >
                       <span>Saiba Mais</span>
-                      <span>→</span>
                     </motion.a>
                   )}
                 </div>
@@ -255,20 +260,22 @@ const Reconhecimentos: React.FC = () => {
                 {/* Galeria de Fotos */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {premio.imagens.map((imagem, index) => (
-                    <motion.div
+                    <motion.button
                       key={index}
+                      type="button"
+                      aria-label={`Ampliar foto ${index + 1} do ${premio.titulo}`}
                       whileHover={{ scale: 1.05, y: -5 }}
                       whileTap={{ scale: 0.95 }}
-                      className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg cursor-pointer group"
-                      onClick={() => setImagemAmpliada(imagem)}
+                      className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-favela-green-500 focus-visible:ring-offset-2"
+                      onClick={() => setImagemAmpliada({ src: imagem, legenda: `${premio.titulo} - Foto ${index + 1}` })}
                     >
-                      {/* Placeholder - Substituir por imagens reais */}
-                      <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="text-4xl mb-2">📸</div>
-                          <p className="text-sm text-gray-600">Foto {index + 1}</p>
-                        </div>
-                      </div>
+                      <img
+                        src={imagem}
+                        alt={`${premio.titulo} - Foto ${index + 1}`}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover"
+                      />
 
                       {/* Overlay ao passar o mouse */}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
@@ -276,15 +283,7 @@ const Reconhecimentos: React.FC = () => {
                           🔍 Ver ampliado
                         </span>
                       </div>
-
-                      {/* Comentado: código para imagens reais
-                      <img
-                        src={imagem}
-                        alt={`${premio.titulo} - Foto ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      */}
-                    </motion.div>
+                    </motion.button>
                   ))}
                 </div>
               </motion.div>
@@ -296,48 +295,7 @@ const Reconhecimentos: React.FC = () => {
       {/* ============================================
           MODAL DE IMAGEM AMPLIADA
           ============================================ */}
-      {imagemAmpliada && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setImagemAmpliada(null)}
-        >
-          <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.8 }}
-            className="relative max-w-5xl max-h-[90vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Botão fechar */}
-            <button
-              onClick={() => setImagemAmpliada(null)}
-              className="absolute -top-12 right-0 text-white hover:text-gray-300 text-4xl font-bold"
-            >
-              ✕
-            </button>
-
-            {/* Placeholder da imagem ampliada */}
-            <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl p-20 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-8xl mb-4">📸</div>
-                <p className="text-2xl text-gray-700">Imagem ampliada</p>
-                <p className="text-gray-600 mt-2">Substituir por imagem real</p>
-              </div>
-            </div>
-
-            {/* Comentado: código para imagem real
-            <img
-              src={imagemAmpliada}
-              alt="Imagem ampliada"
-              className="max-w-full max-h-[90vh] rounded-xl shadow-2xl"
-            />
-            */}
-          </motion.div>
-        </motion.div>
-      )}
+      <Lightbox foto={imagemAmpliada} aoFechar={fecharImagem} />
 
       <Footer />
     </div>

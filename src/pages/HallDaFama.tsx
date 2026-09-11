@@ -1,174 +1,163 @@
 /**
  * ============================================
- * PÁGINA HALL DA FAMA (EQUIPES ANTERIORES)
+ * PÁGINA HALL DA FAMA
  * ============================================
  *
- * Exibe todas as pessoas que já fizeram parte do projeto.
- * Organizado por ano de participação.
+ * Reúne todas as pessoas que já formaram a equipe do FavelaWare,
+ * agrupadas pelo ano em que participaram.
  *
- * Funcionalidades:
- * - Lista de equipes por ano (2024, 2023, 2022)
- * - Informações de cada membro (nome, cargo, foto)
- * - Animações ao aparecer na tela
+ * Os dados vêm de src/data/hallDaFama.ts.
+ *
+ * Conceitos importantes:
+ * - useState: guarda qual ano está selecionado nos botões de filtro
+ * - Filtro: mostra só as pessoas do ano escolhido (ou todas)
  */
 
-// Importa ferramentas de animação
-import { motion } from 'framer-motion';
-
-// Importa componentes reutilizáveis
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { anos, membros, membrosDoAno } from '../data/hallDaFama';
 
-const HallDaFama = () => {
-  const equipes = [
-    {
-      ano: '2024',
-      membros: [
-        { nome: 'Alessandro Ferreira', cargo: 'Coordenador', foto: null },
-        { nome: 'Ivan Santos', cargo: 'Coordenador', foto: null },
-        { nome: 'Nathalia Mazziero', cargo: 'Comunicação', foto: null },
-        { nome: 'Alinne Viegas', cargo: 'Psicóloga', foto: null },
-        { nome: 'Jataiza Barboza', cargo: 'Líder Discente', foto: null },
-        { nome: 'Pedro Assunção', cargo: 'Produtor Conteúdo', foto: null },
-        { nome: 'Lucelho Cristiano', cargo: 'Instrutor Discente', foto: null },
-        { nome: 'João Vitor', cargo: 'Instrutor Discente', foto: null },
-        { nome: 'Raquel de Matos', cargo: 'Instrutor Discente', foto: null },
-        { nome: 'Matheus Henrique', cargo: 'Instrutor Discente', foto: null },
-        { nome: 'Rodrigo Queiroz', cargo: 'Instrutor Discente', foto: null }
-      ]
-    },
-    {
-      ano: '2023',
-      membros: [
-        { nome: 'Alessandro Ferreira', cargo: 'Coordenador', foto: null },
-        { nome: 'Ivan Santos', cargo: 'Coordenador', foto: null },
-        { nome: 'Alvaro', cargo: 'Coordenador', foto: null },
-        { nome: 'Fernanda Alves', cargo: 'Produtora Conteúdo', foto: null },
-        { nome: 'Nathalia Mazziero', cargo: 'Comunicação', foto: null },
-        { nome: 'Andressa Fernandes', cargo: 'Redes Sociais', foto: null },
-        { nome: 'Alinne Viegas', cargo: 'Psicóloga', foto: null },
-        { nome: 'Taynara Soares', cargo: 'Intervenção Psicológica', foto: null },
-        { nome: 'Scarlett Lima', cargo: 'Intervenção Psicológica', foto: null },
-        { nome: 'Ludmila dos Santos', cargo: 'Intervenção Psicológica', foto: null },
-        { nome: 'Laís Martins', cargo: 'Intervenção Psicológica', foto: null },
-        { nome: 'Fabíola Fernanda', cargo: 'Orientadora Psicologia', foto: null },
-        { nome: 'Jataiza Barboza', cargo: 'Líder Discente', foto: null },
-        { nome: 'Lucelho Cristiano', cargo: 'Instrutor Discente', foto: null },
-        { nome: 'João Vitor', cargo: 'Instrutor Discente', foto: null },
-        { nome: 'Raquel de Matos', cargo: 'Instrutor Discente', foto: null },
-        { nome: 'Matheus Henrique', cargo: 'Instrutor Discente', foto: null },
-        { nome: 'Gabriel Lucas', cargo: 'Instrutor Discente', foto: null }
-      ]
-    },
-    {
-      ano: '2022',
-      membros: [
-        { nome: 'Karla', cargo: 'Sponsor', foto: null },
-        { nome: 'Laura Magalhães', cargo: 'Cellider', foto: null },
-        { nome: 'Paulo Henrique Domingos', cargo: 'Edição', foto: null },
-        { nome: 'Marcelo Laurentino', cargo: 'Curadoria de Material', foto: null },
-        { nome: 'Lara Alves', cargo: 'Líder Discente', foto: null },
-        { nome: 'Fabiana Quelott', cargo: 'Instrutor Discente', foto: null },
-        { nome: 'Jamir Rodrigues', cargo: 'Instrutor Discente', foto: null },
-        { nome: 'Thalita Alves', cargo: 'Instrutor Discente', foto: null },
-        { nome: 'Lucelho Cristiano', cargo: 'Instrutor Discente', foto: null },
-        { nome: 'Emily Lamas', cargo: 'Instrutor Discente', foto: null }
-      ]
-    }
-  ];
+const HallDaFama: React.FC = () => {
+  // 'todos' mostra a linha do tempo inteira; um ano filtra só aquela edição
+  const [anoSelecionado, setAnoSelecionado] = useState<string>('todos');
+
+  // Quais anos desenhar: todos, ou só o escolhido
+  const anosVisiveis = anoSelecionado === 'todos' ? anos : [anoSelecionado];
+
+  const fadeInUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6 },
+  };
+
+  const staggerContainer = {
+    animate: { transition: { staggerChildren: 0.05 } },
+  };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="bg-[#2d2a5f] text-white pt-28 pb-16">
+      {/* Header da página */}
+      <div className="bg-[#2d2a5f] pt-32 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.h1
-            className="text-4xl md:text-5xl font-black text-center"
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
+            className="text-center"
           >
-            QUEM JÁ PASSOU POR AQUI...
-          </motion.h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">HALL DA FAMA</h1>
+            <p className="text-xl text-white/80 max-w-3xl mx-auto">
+              {membros.length} pessoas que construíram o FavelaWare ao longo das edições
+            </p>
+          </motion.div>
         </div>
-      </section>
+      </div>
 
-      {/* Equipes por ano */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
-          {equipes.map((equipe, equipeIndex) => (
-            <motion.div
-              key={equipe.ano}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: equipeIndex * 0.2 }}
+      {/* Conteúdo */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+
+        {/* Filtro por ano */}
+        <div className="flex flex-wrap justify-center gap-3 mb-16">
+          <button
+            onClick={() => setAnoSelecionado('todos')}
+            aria-pressed={anoSelecionado === 'todos'}
+            className={`min-h-[44px] px-6 rounded-xl font-bold transition-all ${
+              anoSelecionado === 'todos'
+                ? 'bg-[#2d2a5f] text-white shadow-lg'
+                : 'bg-white text-gray-600 border-2 border-gray-200 hover:border-favela-green-500'
+            }`}
+          >
+            Todos
+          </button>
+
+          {anos.map((ano) => (
+            <button
+              key={ano}
+              onClick={() => setAnoSelecionado(ano)}
+              aria-pressed={anoSelecionado === ano}
+              className={`min-h-[44px] px-6 rounded-xl font-bold transition-all ${
+                anoSelecionado === ano
+                  ? 'bg-[#2d2a5f] text-white shadow-lg'
+                  : 'bg-white text-gray-600 border-2 border-gray-200 hover:border-favela-green-500'
+              }`}
             >
-              <h2 className="text-4xl font-black text-[#2d2a5f] text-center mb-12">
-                EM {equipe.ano}
-              </h2>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
-                {equipe.membros.map((membro, membroIndex) => (
-                  <motion.div
-                    key={membroIndex}
-                    className="flex flex-col items-center text-center group"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: membroIndex * 0.05 }}
-                    whileHover={{ y: -10, transition: { duration: 0.3 } }}
-                  >
-                    {/* Avatar */}
-                    <motion.div
-                      className="relative w-28 h-28 bg-[#8bc53f] rounded-full mb-4 overflow-hidden"
-                      whileHover={{
-                        boxShadow: '0 0 30px rgba(139, 197, 63, 0.6)',
-                        scale: 1.1
-                      }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      {membro.foto ? (
-                        <img
-                          src={membro.foto}
-                          alt={membro.nome}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <svg
-                            className="w-16 h-16 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </div>
-                      )}
-
-                      {/* Brilho ao hover */}
-                      <motion.div
-                        className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20"
-                        transition={{ duration: 0.3 }}
-                      />
-                    </motion.div>
-
-                    {/* Info */}
-                    <p className="text-sm font-bold text-[#8bc53f] mb-1">{membro.cargo}</p>
-                    <p className="text-base font-bold text-[#2d2a5f]">{membro.nome}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+              {ano}
+            </button>
           ))}
         </div>
-      </section>
+
+        {/* Um bloco por ano */}
+        <AnimatePresence mode="wait">
+          <motion.div key={anoSelecionado} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {anosVisiveis.map((ano) => (
+              <motion.section key={ano} {...fadeInUp} className="mb-16">
+                <div className="flex items-center gap-4 mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900">Em {ano}</h2>
+                  <span className="px-3 py-1 bg-favela-green-100 text-favela-green-700 text-sm font-bold rounded-full">
+                    {membrosDoAno(ano).length} pessoas
+                  </span>
+                  <div className="flex-1 h-1 bg-gradient-to-r from-favela-green-500 to-transparent rounded-full" />
+                </div>
+
+                <motion.div
+                  variants={staggerContainer}
+                  initial="initial"
+                  whileInView="animate"
+                  viewport={{ once: true }}
+                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8"
+                >
+                  {membrosDoAno(ano).map((pessoa) => (
+                    <motion.div
+                      key={`${ano}-${pessoa.nome}`}
+                      variants={fadeInUp}
+                      whileHover={{ y: -8 }}
+                      className="flex flex-col items-center text-center"
+                    >
+                      <div className="w-28 h-28 md:w-32 md:h-32 bg-[#8bc53f] rounded-full overflow-hidden mb-4 shadow-lg ring-4 ring-white">
+                        <img
+                          src={pessoa.foto}
+                          alt={`Foto de ${pessoa.nome}`}
+                          loading="lazy"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      {pessoa.cargo && (
+                        <p className="text-sm font-bold text-[#8bc53f] mb-1">{pessoa.cargo}</p>
+                      )}
+                      <p className="text-base font-bold text-[#2d2a5f] leading-tight">{pessoa.nome}</p>
+                      {pessoa.organizacao && (
+                        <p className="text-sm text-pink-500 font-semibold">{pessoa.organizacao}</p>
+                      )}
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </motion.section>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Atalho para as turmas */}
+        <motion.section {...fadeInUp} className="text-center">
+          <div className="bg-gradient-to-br from-favela-green-50 to-gray-50 rounded-2xl shadow-xl p-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">E os alunos?</h2>
+            <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+              Todas as turmas que já passaram pelo projeto estão na página de turmas.
+            </p>
+            <Link
+              to="/turmas"
+              className="inline-block bg-[#8bc53f] hover:bg-[#7ab52f] text-[#2d2a5f] font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-md hover:shadow-xl"
+            >
+              VER AS TURMAS
+            </Link>
+          </div>
+        </motion.section>
+      </div>
 
       <Footer />
     </div>
