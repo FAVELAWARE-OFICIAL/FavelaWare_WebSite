@@ -20,52 +20,47 @@ import { Link } from 'react-router-dom';
 // Importa componentes reutilizáveis
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { MotionLink } from '../components/MotionLink';
 
 const Sobre = () => {
+  // Ordem cronológica, da esquerda para a direita, como no cronograma do site
+  // oficial: lá cada texto fica alinhado com a data do mesmo ponto da linha.
   const cronogramaItems = [
-    {
-      data: '29/05',
-      titulo: 'Início das divulgações',
-      subtitulo: '26/05',
-      subtituloTexto: 'Pré-inscrições para as oficinas',
-      posicao: 0
-    },
-    {
-      data: '18/06',
-      titulo: 'Oficina Mundo Tech',
-      subtitulo: '11/06',
-      subtituloTexto: 'Oficina Developer na Prática',
-      posicao: 1
-    },
-    {
-      data: '25/06',
-      titulo: 'Oficina ChatBot e IA',
-      subtitulo: '25/06',
-      subtituloTexto: 'Inscrições FavelaWare',
-      posicao: 2
-    },
-    {
-      data: '05/08',
-      titulo: 'Início das aulas',
-      subtitulo: '',
-      subtituloTexto: '',
-      posicao: 3
-    },
-    {
-      data: '01/08/26',
-      titulo: 'Formatura',
-      subtitulo: '',
-      subtituloTexto: '',
-      posicao: 4
-    }
+    { data: '26/05', titulo: 'Início das divulgações' },
+    { data: '29/05', titulo: 'Pré-inscrições para as oficinas' },
+    { data: '11/06', titulo: 'Oficina Mundo Tech' },
+    { data: '18/06', titulo: 'Oficina Developer na Prática' },
+    { data: '25/06', titulo: 'Oficina ChatBot e IA' },
+    { data: '25/06', titulo: 'Inscrições FavelaWare' },
+    { data: '05/08', titulo: 'Início das aulas' },
+    { data: '01/08/26', titulo: 'Formatura' },
   ];
 
   const idealizadores = [
-    { nome: 'Gustavo Pena', cargo: 'Idealizador', organizacao: 'Mundiale', foto: '/imgs/team/gustavo.jpg' },
-    { nome: 'Cristiane de Ávila', cargo: 'Idealizadora', organizacao: 'Mundiale', foto: '/imgs/team/cristiane.jpg' },
-    { nome: 'Diomar', cargo: 'Idealizador', organizacao: 'AOPA', foto: '/imgs/team/diomar.jpg' },
-    { nome: 'Rafaela Moreira', cargo: 'Idealizadora e Orientadora', organizacao: 'Ânima', foto: '/imgs/team/rafaela.jpg' },
-    { nome: 'Samara Leal', cargo: 'Idealizadora', organizacao: 'Ânima', foto: '/imgs/team/samara.jpg' }
+    { nome: 'Gustavo Pena', cargo: 'Idealizador', organizacao: 'Mundiale', foto: '/imgs/team/gustavo.png' },
+    { nome: 'Cristiane de Ávila', cargo: 'Idealizadora', organizacao: 'Mundiale', foto: '/imgs/team/cristiane.png' },
+    { nome: 'Diomar', cargo: 'Idealizador', organizacao: 'AOPA', foto: '/imgs/team/diomar.png' },
+    { nome: 'Rafaela Moreira', cargo: 'Idealizadora e Orientadora', organizacao: 'Ânima', foto: '/imgs/team/rafaela.png' },
+    { nome: 'Samara Leal', cargo: 'Idealizadora', organizacao: 'Ânima', foto: '/imgs/team/samara.png' }
+  ];
+
+  // Equipe da 3ª edição — nomes, cargos e organizações conforme a página SOBRE
+  // do site oficial. As fotos estão em public/imgs/team (ver o README de lá).
+  const equipeEdicaoAtual = [
+    { nome: 'Joyce', cargo: 'Coordenadora', organizacao: 'Mundiale', foto: '/imgs/team/joyce.png' },
+    { nome: 'Nathalia Mazziero', cargo: 'Comunicação', organizacao: 'Mundiale', foto: '/imgs/team/nathalia.png' },
+    { nome: 'Ivan Santos', cargo: 'Coordenador', organizacao: 'AOPA', foto: '/imgs/team/ivan.png' },
+    { nome: 'Alinne Viegas', cargo: 'Psicóloga', organizacao: 'AOPA', foto: '/imgs/team/alinne.png' },
+    { nome: 'Letícia Sales', cargo: 'Assistente', organizacao: 'AOPA', foto: '/imgs/team/leticia.png' },
+    { nome: 'Raquel de Matos', cargo: 'Curadoria de Material', organizacao: 'Ânima', foto: '/imgs/team/raquel.png' },
+    { nome: 'Gabriel Evaristo', cargo: 'Curadoria de Material', organizacao: 'Ânima', foto: '/imgs/team/gabriel.png' },
+    { nome: 'Gabrielle Soares', cargo: 'Editora de Conteúdo', organizacao: 'Ânima', foto: '/imgs/team/gabrielle.png' },
+    { nome: 'Lorraine Fernandes', cargo: 'Designer gráfico', organizacao: 'Ânima', foto: '/imgs/team/lorraine.png' },
+    { nome: 'Lucelho Silva', cargo: 'Líder Discente', organizacao: 'Ânima', foto: '/imgs/team/lucelho.png' },
+    { nome: 'Diego Manini', cargo: 'Instrutor Discente', organizacao: 'Ânima', foto: '/imgs/team/diego.png' },
+    { nome: 'Pedro Soares', cargo: 'Instrutor Discente', organizacao: 'Ânima', foto: '/imgs/team/pedro.png' },
+    { nome: 'Miguel Alchaar', cargo: 'Instrutor Discente', organizacao: 'Ânima', foto: '/imgs/team/miguel.png' },
+    { nome: 'Leandro Cavalcante', cargo: 'Instrutor Discente', organizacao: 'Ânima', foto: '/imgs/team/leandro.png' },
   ];
 
   const propositos = [
@@ -86,7 +81,8 @@ const Sobre = () => {
     }
   ];
 
-  const parceiros = [
+  // link é opcional: parceiro sem site oficial conhecido fica sem o botão "SAIBA MAIS"
+  const parceiros: { nome: string; descricao: string; logo: string; link?: string }[] = [
     {
       nome: 'Mundiale',
       descricao: 'Com a união de pessoas, tecnologia e uma metodologia própria, a Mundiale revoluciona a relação entre marcas e consumidores por meio de canais digitais, proporcionando interações mais humanas, assertivas e fluidas.',
@@ -97,7 +93,7 @@ const Sobre = () => {
       nome: 'AOPA',
       descricao: 'A AOPA é uma instituição social católica dos Religiosos Pavonianos, que, pela experiência de seu fundador, São Ludovico Pavoni, dedica-se ao atendimento integral de crianças e adolescentes.',
       logo: '/imgs/partners/AOPA.png',
-      link: 'https://aopa.org.br'
+      link: 'https://www.pavonianos.org.br/unidade/aopabh'
     },
     {
       nome: 'Ecossistema Ânima Educação',
@@ -114,8 +110,7 @@ const Sobre = () => {
     {
       nome: 'REDE TRANSFORMAR',
       descricao: 'A REDE TRANSFORMAR é uma organização sem fins lucrativos que desenvolve programas, projetos e ações de assessoramento, defesa e garantia de direitos sociais.',
-      logo: '/imgs/partners/Rede Transformar.jpg',
-      link: 'https://redetransformar.org.br'
+      logo: '/imgs/partners/Rede Transformar.jpg'
     }
   ];
 
@@ -124,10 +119,10 @@ const Sobre = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="bg-[#2d2a5f] text-white pt-28 pb-16">
+      <section className="bg-[#2d2a5f] text-white pt-32 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.h1
-            className="text-4xl md:text-5xl font-black text-center mb-8"
+            className="text-4xl md:text-5xl font-bold text-center mb-8"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -181,131 +176,90 @@ const Sobre = () => {
           </motion.h2>
 
           <div className="mb-12 relative bg-white p-8 rounded-2xl shadow-md">
-            {/* Ícone no canto */}
-            <div className="absolute left-8 top-8 flex items-start gap-1">
-              <div className="w-2 h-2 bg-[#8bc53f] rounded-sm"></div>
-              <div className="w-4 h-4 bg-[#2d2a5f] rounded-sm"></div>
+            {/* Quadradinhos do canto, como no original: o verde encosta na quina do roxo */}
+            <div className="absolute left-8 top-8 flex items-start" aria-hidden="true">
+              <div className="w-2.5 h-2.5 bg-[#8bc53f]" />
+              <div className="w-7 h-7 mt-2.5 bg-[#2d2a5f]" />
             </div>
 
-            <h3 className="text-2xl font-bold text-[#2d2a5f] mb-20 italic text-center">Cronograma Macro</h3>
+            {/* mt-12 no celular: em tela estreita o título centralizado encostava nos quadradinhos */}
+            <h3 className="mt-12 md:mt-0 text-2xl font-bold text-[#2d2a5f] mb-10 italic text-center">Cronograma Macro</h3>
 
-            {/* Timeline Container */}
-            <div className="relative py-40">
-              {/* Linha horizontal AZUL/ROXA */}
-              <div className="absolute top-1/2 left-0 right-0 h-2 bg-[#2d2a5f] transform -translate-y-1/2 rounded-full" />
+            {/* Linha do tempo (tablet e computador), no desenho do site oficial:
+                bola verde na linha, texto de um lado e data do outro, alternando.
+                Tudo em fluxo normal, sem posição absoluta por ponto: antes o
+                transform das animações anulava o -translate do Tailwind e
+                desalinhava bolas e hastes.
+                No celular os textos não cabem lado a lado: lá aparece a lista abaixo. */}
+            <motion.div
+              className="relative hidden md:block max-w-5xl mx-auto"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              {/* Linha roxa: do centro da primeira bola ao centro da última (metade do w-20) */}
+              <div className="absolute top-1/2 left-10 right-10 h-1.5 -translate-y-1/2 bg-[#2d2a5f] rounded-full" aria-hidden="true" />
 
-              {/* Items do cronograma */}
-              <div className="relative grid grid-cols-5 gap-2">
-                {cronogramaItems.map((item, index) => (
-                  <div key={index} className="relative flex flex-col items-center">
-                    {/* Linha vertical superior VERDE */}
-                    <div className="absolute top-1/2 left-1/2 w-1 h-28 bg-[#8bc53f] transform -translate-x-1/2 -translate-y-full"></div>
+              <ol className="relative flex">
+                {cronogramaItems.map((item, index) => {
+                  // Alterna os lados: nos pontos pares o texto fica em cima e a data embaixo
+                  const textoEmCima = index % 2 === 0;
+                  const haste = <span className="w-[3px] h-7 bg-[#8bc53f]" aria-hidden="true" />;
+                  const bolinha = <span className="w-5 h-5 rounded-full border-2 border-[#8bc53f] bg-white" aria-hidden="true" />;
 
-                    {/* Bola BRANCA com borda VERDE no topo - SÓ DATA */}
-                    <motion.div
-                      className="absolute top-1/2 left-1/2 w-6 h-6 border-3 border-[#8bc53f] bg-white rounded-full transform -translate-x-1/2 shadow-md z-20"
-                      style={{ top: 'calc(50% - 128px)' }}
-                      initial={{ scale: 0 }}
-                      whileInView={{ scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{
-                        scale: 1.5,
-                        boxShadow: '0 0 30px rgba(139, 197, 63, 0.8)'
-                      }}
-                    />
-
-                    {/* Data acima da bola branca */}
-                    <motion.p
-                      className="absolute left-1/2 transform -translate-x-1/2 text-xs font-bold text-[#2d2a5f]"
-                      style={{ top: 'calc(50% - 152px)' }}
-                      initial={{ opacity: 0, y: 10 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.1 }}
+                  return (
+                    <li
+                      key={item.titulo}
+                      // A formatura fica isolada na ponta, como no original: é no ano seguinte
+                      className={`w-20 shrink-0 flex flex-col items-center text-center ${index === cronogramaItems.length - 1 ? 'ml-auto' : ''}`}
                     >
-                      {item.data}
-                    </motion.p>
+                      {/* Metade de cima: o conteúdo encosta na bola verde */}
+                      <div className="h-20 flex flex-col items-center justify-end">
+                        {textoEmCima ? (
+                          <p className="w-24 mb-2 text-xs leading-snug text-[#2d2a5f]">{item.titulo}</p>
+                        ) : (
+                          <>
+                            <p className="mb-1 text-xs font-bold text-[#2d2a5f]">{item.data}</p>
+                            {bolinha}
+                            {haste}
+                          </>
+                        )}
+                      </div>
 
-                    {/* Texto do evento acima da data */}
-                    <motion.p
-                      className="absolute left-1/2 transform -translate-x-1/2 text-xs text-center text-gray-600 max-w-[110px] leading-snug"
-                      style={{ top: 'calc(50% - 195px)' }}
-                      initial={{ opacity: 0, y: 10 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.1 + 0.1 }}
-                    >
-                      {item.titulo}
-                    </motion.p>
+                      {/* Bola verde sobre a linha */}
+                      <span className="w-7 h-7 rounded-full bg-[#8bc53f]" aria-hidden="true" />
 
-                    {/* Bola VERDE na linha azul - COM TEXTO */}
-                    <motion.div
-                      className="absolute top-1/2 left-1/2 w-10 h-10 bg-[#8bc53f] rounded-full z-10 cursor-pointer transform -translate-x-1/2 -translate-y-1/2 shadow-xl"
-                      initial={{ scale: 0, opacity: 0 }}
-                      whileInView={{ scale: 1, opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.15, type: 'spring', stiffness: 200 }}
-                      whileHover={{
-                        scale: 1.7,
-                        boxShadow: '0 0 45px rgba(139, 197, 63, 1)',
-                        transition: { duration: 0.3 }
-                      }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      {/* Brilho interno gradiente */}
-                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/40 via-transparent to-transparent" />
-                    </motion.div>
+                      {/* Metade de baixo */}
+                      <div className="h-20 flex flex-col items-center justify-start">
+                        {textoEmCima ? (
+                          <>
+                            {haste}
+                            {bolinha}
+                            <p className="mt-1 text-xs font-bold text-[#2d2a5f]">{item.data}</p>
+                          </>
+                        ) : (
+                          <p className="w-24 mt-2 text-xs leading-snug text-[#2d2a5f]">{item.titulo}</p>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            </motion.div>
 
-                    {/* Conteúdo inferior (quando existir) */}
-                    {item.subtitulo && (
-                      <>
-                        {/* Linha vertical inferior VERDE */}
-                        <div className="absolute top-1/2 left-1/2 w-1 h-28 bg-[#8bc53f] transform -translate-x-1/2"></div>
-
-                        {/* Bola BRANCA com borda VERDE embaixo - SÓ DATA */}
-                        <motion.div
-                          className="absolute top-1/2 left-1/2 w-6 h-6 border-3 border-[#8bc53f] bg-white rounded-full transform -translate-x-1/2 shadow-md z-20"
-                          style={{ top: 'calc(50% + 128px)' }}
-                          initial={{ scale: 0 }}
-                          whileInView={{ scale: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: index * 0.1 + 0.2 }}
-                          whileHover={{
-                            scale: 1.5,
-                            boxShadow: '0 0 30px rgba(139, 197, 63, 0.8)'
-                          }}
-                        />
-
-                        {/* Texto do evento embaixo */}
-                        <motion.p
-                          className="absolute left-1/2 transform -translate-x-1/2 text-xs text-center text-gray-600 max-w-[110px] leading-snug"
-                          style={{ top: 'calc(50% + 148px)' }}
-                          initial={{ opacity: 0, y: -10 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: index * 0.1 + 0.2 }}
-                        >
-                          {item.subtituloTexto}
-                        </motion.p>
-
-                        {/* Data abaixo do texto embaixo */}
-                        <motion.p
-                          className="absolute left-1/2 transform -translate-x-1/2 text-xs font-bold text-[#2d2a5f] whitespace-nowrap"
-                          style={{ top: 'calc(50% + 190px)' }}
-                          initial={{ opacity: 0, y: -10 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: index * 0.1 + 0.3 }}
-                        >
-                          {item.subtitulo}
-                        </motion.p>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Versão vertical do cronograma (celular): mesmos itens e cores,
+                com a linha roxa na esquerda e as bolas sobre ela */}
+            <ol className="md:hidden relative ml-3 border-l-4 border-[#2d2a5f] space-y-8">
+              {cronogramaItems.map((item) => (
+                <li key={item.titulo} className="relative pl-8">
+                  {/* Bola VERDE na linha */}
+                  <span className="absolute -left-[14px] top-0 w-6 h-6 bg-[#8bc53f] rounded-full shadow-md" aria-hidden="true" />
+                  <p className="text-sm font-bold text-[#2d2a5f]">{item.data}</p>
+                  <p className="text-gray-600">{item.titulo}</p>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </section>
@@ -333,8 +287,15 @@ const Sobre = () => {
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -10 }}
               >
+                {/* Foto da pessoa. O verde do container aparece nas bordas do
+                    recorte circular, então combina com o fundo verde da própria foto. */}
                 <div className="w-32 h-32 bg-[#8bc53f] rounded-full mb-4 overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-[#8bc53f] to-[#7ab52f]" />
+                  <img
+                    src={pessoa.foto}
+                    alt={`Foto de ${pessoa.nome}`}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <p className="text-sm font-bold text-[#8bc53f] mb-1">{pessoa.cargo}</p>
                 <p className="text-base font-bold text-[#2d2a5f]">{pessoa.nome}</p>
@@ -345,7 +306,57 @@ const Sobre = () => {
         </div>
       </section>
 
-      {/* Propósitos */}
+      {/* Equipe da edição atual */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.h2
+            className="text-3xl md:text-4xl font-black text-[#2d2a5f] text-center mb-12"
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            EQUIPE — EDIÇÃO III
+          </motion.h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
+            {equipeEdicaoAtual.map((pessoa, index) => (
+              <motion.div
+                key={pessoa.nome}
+                className="flex flex-col items-center text-center"
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: (index % 5) * 0.1 }}
+                whileHover={{ y: -10 }}
+              >
+                <div className="w-32 h-32 bg-[#8bc53f] rounded-full mb-4 overflow-hidden shadow-lg ring-4 ring-white">
+                  <img
+                    src={pessoa.foto}
+                    alt={`Foto de ${pessoa.nome}`}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <p className="text-sm font-bold text-[#8bc53f] mb-1">{pessoa.cargo}</p>
+                <p className="text-base font-bold text-[#2d2a5f]">{pessoa.nome}</p>
+                <p className="text-sm text-pink-500 font-semibold">{pessoa.organizacao}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Atalho para as equipes anteriores */}
+          <div className="text-center mt-12">
+            <Link
+              to="/hall-da-fama"
+              className="inline-block bg-[#8bc53f] hover:bg-[#7ab52f] text-[#2d2a5f] font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-md hover:shadow-xl"
+            >
+              VER AS EQUIPES ANTERIORES
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Propositos */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.h2
@@ -375,8 +386,10 @@ const Sobre = () => {
         </div>
       </section>
 
-      {/* Sobre cada Parceiro */}
-      <section className="py-16 bg-white">
+      {/* Sobre cada Parceiro.
+          overflow-x-hidden: os cards entram deslizando de fora (x ±50) e,
+          no celular, isso criava rolagem lateral na página. */}
+      <section className="py-16 bg-white overflow-x-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.h2
             className="text-3xl md:text-4xl font-black text-[#2d2a5f] text-center mb-12"
@@ -398,24 +411,26 @@ const Sobre = () => {
                 transition={{ duration: 0.6 }}
               >
                 <div className="w-48 h-48 flex items-center justify-center">
-                  <img src={parceiro.logo} alt={parceiro.nome} className="max-w-full max-h-full object-contain" />
+                  <img src={parceiro.logo} alt={parceiro.nome} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain" />
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-700 mb-6">{parceiro.descricao}</p>
-                  <motion.a
-                    href={parceiro.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-6 py-3 bg-white border-2 border-[#2d2a5f] text-[#2d2a5f] font-bold rounded-lg transition-all duration-300"
-                    whileHover={{
-                      backgroundColor: '#2d2a5f',
-                      color: '#ffffff',
-                      scale: 1.05
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    SAIBA MAIS
-                  </motion.a>
+                  {parceiro.link && (
+                    <motion.a
+                      href={parceiro.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block px-6 py-3 bg-white border-2 border-[#2d2a5f] text-[#2d2a5f] font-bold rounded-lg transition-all duration-300"
+                      whileHover={{
+                        backgroundColor: '#2d2a5f',
+                        color: '#ffffff',
+                        scale: 1.05
+                      }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      SAIBA MAIS
+                    </motion.a>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -426,18 +441,18 @@ const Sobre = () => {
       {/* Hall da Fama Button */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Link to="/hall-da-fama">
-            <motion.button
-              className="px-12 py-6 bg-[#2d2a5f] text-white font-black text-xl rounded-full shadow-2xl"
-              whileHover={{
-                scale: 1.1,
-                boxShadow: '0 20px 60px rgba(45, 42, 95, 0.4)'
-              }}
-              whileTap={{ scale: 0.95 }}
-            >
-              HALL DA FAMA (EQUIPE)
-            </motion.button>
-          </Link>
+          {/* inline-block: o link ocupa a mesma caixa que o antigo <button> ocupava */}
+          <MotionLink
+            to="/hall-da-fama"
+            className="inline-block px-12 py-6 bg-[#2d2a5f] text-white font-black text-xl rounded-full shadow-2xl"
+            whileHover={{
+              scale: 1.1,
+              boxShadow: '0 20px 60px rgba(45, 42, 95, 0.4)'
+            }}
+            whileTap={{ scale: 0.95 }}
+          >
+            HALL DA FAMA (EQUIPE)
+          </MotionLink>
         </div>
       </section>
 

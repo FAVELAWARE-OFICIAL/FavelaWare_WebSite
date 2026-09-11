@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Configuração local do Claude Code: permissões da máquina e, às vezes, chaves
+.claude/settings.local.json
+
+# Variáveis de ambiente (segredos nunca vão para o repositório)
+.env*
+!.env.example

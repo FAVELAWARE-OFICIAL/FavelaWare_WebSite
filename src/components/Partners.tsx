@@ -125,6 +125,8 @@ const Partners: React.FC = () => {
                     <img
                       src={partner.image}
                       alt={partner.name}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-contain"
                       onError={(e) => {
                         // Se a imagem não carregar, mostra o emoji
