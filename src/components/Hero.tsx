@@ -8,46 +8,36 @@
  *
  * Funcionalidades:
  * - Animações de entrada dos elementos
- * - Partículas de código flutuando no fundo
  * - Logo com animação de flutuação
  * - Botão com efeito hover interativo
- * - Estatísticas do projeto (alunos, turmas, anos)
- *
- * Estados:
- * - isButtonHovered: controla a animação do botão ao passar o mouse
+ * - Estatísticas do projeto (alunos, turmas, edições)
  */
 
 // Importa ferramentas de animação
 import { motion } from 'framer-motion';
 
-// Importa ferramenta para criar estados
-import { useState } from 'react';
+// Link do React Router que aceita animações do Framer Motion
+import { MotionLink } from './MotionLink';
 
 const Hero = () => {
-  const [isButtonHovered, setIsButtonHovered] = useState(false);
-
-  // Partículas de código animadas - reduzido para ~30 elementos
-  const codeSnippets = [
-    'var', 'let', 'const', 'function()', 'return',
-    'String', 'Number', 'Boolean', 'Array', 'Object',
-    '<div>', '<span>', '<html>', '<body>', '</>',
-    '.class', '#id', 'display:', 'flex', 'grid',
-    'import', 'export', 'async', 'await',
-    'if()', 'else', 'for()', 'while()',
-    'React', 'npm', 'git', 'API', 'JSON'
-  ];
-
   return (
     <section
       id="home"
-      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#8bc53f] via-[#7ab52f] to-[#6aa520]"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#8bc53f]"
       style={{
+        // Banner oficial do FavelaWare (foto da comunidade + código binário).
+        // Sem blend com gradiente: o blend "overlay" lavava a imagem e sumia com a textura.
         backgroundImage: "url('/imgs/backgrounds/fundo.png')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundBlendMode: 'overlay',
       }}
     >
+      {/* Véu escuro por cima do banner.
+          O texto do hero é branco e o banner tem trechos bem claros; sem este
+          véu o título fica ilegível. Escurece o suficiente para o contraste
+          sem apagar a foto e o código binário. */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#2d2a5f]/45 via-[#2d2a5f]/25 to-[#2d2a5f]/50" />
+
       {/* Padrão de código no fundo */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0" style={{
@@ -57,32 +47,6 @@ const Hero = () => {
           `,
           backgroundSize: '50px 50px'
         }} />
-      </div>
-
-      {/* Partículas de código flutuantes */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {codeSnippets.map((snippet, i) => (
-          <motion.div
-            key={i}
-            className="absolute text-white/30 font-mono text-sm md:text-base font-bold"
-            initial={{
-              x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920),
-              y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1080),
-            }}
-            animate={{
-              x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920),
-              y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1080),
-              rotate: 360,
-            }}
-            transition={{
-              duration: 15 + Math.random() * 10,
-              repeat: Infinity,
-              ease: 'linear',
-            }}
-          >
-            {snippet}
-          </motion.div>
-        ))}
       </div>
 
       {/* Gradiente animado de borda */}
@@ -137,15 +101,7 @@ const Hero = () => {
               >
                 CONHEÇA NOSSO
                 <br />
-                <span className="relative inline-block">
-                  <span className="text-[#2d2a5f]">PROJETO</span>
-                  <motion.span
-                    className="absolute -bottom-2 left-0 w-full h-2 bg-white/30"
-                    initial={{ width: 0 }}
-                    animate={{ width: '100%' }}
-                    transition={{ duration: 0.8, delay: 0.8 }}
-                  />
-                </span>
+                <span className="text-[#2d2a5f]">PROJETO</span>
               </motion.h1>
             </motion.div>
 
@@ -166,18 +122,21 @@ const Hero = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.7 }}
             >
-              <motion.a
-                href="#sobre"
+              {/* Hover por variants, sem useState: re-renderizar o Hero no hover
+                  dá um ref novo ao Link e o Framer Motion perde o hover.
+                  O link repassa "repouso"/"hover" para a faixa colorida. */}
+              <MotionLink
+                to="/sobre"
                 className="group relative inline-flex items-center gap-3 px-8 py-4 bg-[#2d2a5f] text-white font-bold text-lg rounded-full overflow-hidden shadow-2xl"
-                whileHover={{ scale: 1.05 }}
+                initial="repouso"
+                animate="repouso"
+                whileHover="hover"
                 whileTap={{ scale: 0.95 }}
-                onMouseEnter={() => setIsButtonHovered(true)}
-                onMouseLeave={() => setIsButtonHovered(false)}
+                variants={{ repouso: { scale: 1 }, hover: { scale: 1.05 } }}
               >
                 <motion.span
                   className="absolute inset-0 bg-gradient-to-r from-[#ec4899] via-[#d946ef] to-[#ec4899]"
-                  initial={{ x: '-100%' }}
-                  animate={{ x: isButtonHovered ? '0%' : '-100%' }}
+                  variants={{ repouso: { x: '-100%' }, hover: { x: '0%' } }}
                   transition={{ duration: 0.5, ease: 'easeInOut' }}
                 />
                 <span className="relative z-10">SAIBA MAIS</span>
@@ -189,7 +148,7 @@ const Hero = () => {
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
-              </motion.a>
+              </MotionLink>
             </motion.div>
 
             {/* Stats com animação */}
@@ -202,7 +161,7 @@ const Hero = () => {
               {[
                 { number: '150+', label: 'Alunos' },
                 { number: '5+', label: 'Turmas' },
-                { number: '4+', label: 'Anos' },
+                { number: '3', label: 'Edições' },
               ].map((stat, index) => (
                 <motion.div
                   key={index}

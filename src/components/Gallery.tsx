@@ -14,6 +14,8 @@
 
 // Importa ferramentas de animação
 import { motion } from 'framer-motion';
+// Link do React Router que aceita animações do Framer Motion
+import { MotionLink } from './MotionLink';
 // Importa tipos customizados
 import type { Photo } from '../types';
 
@@ -27,14 +29,14 @@ const Gallery: React.FC = () => {
     {
       id: 1,
       title: 'Abertura do Projeto 2022',
-      description: 'Abertura do projeto com a professora Samara, Rafaela, Tatiana e Iracema, os parceiros do Mandiale, das Obras Paroquianas e alunos',
+      description: 'Abertura do projeto com a professora Samara, Rafaela, Tatiana e Iracema, os parceiros da Mundiale, das Obras Pavonianas e alunos',
       category: 'Evento',
       image: '/imgs/gallery/AberturaDoProjeto2022.jpg',
     },
     {
       id: 2,
       title: 'Formatura 2022',
-      description: 'Formatura do projeto FavelaWare no Mandiale - 2022',
+      description: 'Formatura do projeto FavelaWare na Mundiale - 2022',
       category: 'Formatura',
       image: '/imgs/gallery/Formatura2022.jpg',
     },
@@ -82,11 +84,15 @@ const Gallery: React.FC = () => {
                 <img
                   src={photo.image}
                   alt={photo.title}
+                  loading="lazy"
+                  decoding="async"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
 
-                {/* Overlay com informações */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                {/* Overlay com informações.
+                    No celular não existe hover, então a legenda fica sempre visível;
+                    a partir do md ela só aparece ao passar o mouse. */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 flex flex-col justify-end opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                   {/* Category Badge */}
                   <span className="inline-block w-fit px-3 py-1 mb-3 text-xs font-bold bg-favela-green-500 text-white rounded-full">
                     {photo.category}
@@ -113,8 +119,9 @@ const Gallery: React.FC = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.5 }}
         >
-          <motion.button
-            className="group relative px-8 py-4 bg-gradient-to-r from-favela-green-500 to-favela-blue-500 text-white font-bold text-lg rounded-full overflow-hidden shadow-lg"
+          <MotionLink
+            to="/galeria"
+            className="group relative inline-block px-8 py-4 bg-gradient-to-r from-favela-green-500 to-favela-blue-500 text-white font-bold text-lg rounded-full overflow-hidden shadow-lg"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -129,7 +136,7 @@ const Gallery: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </span>
-          </motion.button>
+          </MotionLink>
         </motion.div>
       </div>
     </section>
