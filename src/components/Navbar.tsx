@@ -50,7 +50,7 @@ const Navbar = () => {
       return isScrolled
         ? 'bg-[#2d2a5f] shadow-lg'
         : 'bg-transparent';
-    } else if (location.pathname === '/como-fazemos' || location.pathname === '/sobre' || location.pathname === '/hall-da-fama' || location.pathname === '/material' || location.pathname === '/reconhecimentos' || location.pathname === '/contato') {
+    } else if (location.pathname !== '/') {
       // Em todas as páginas internas: sempre roxo para fazer parte do header
       return 'bg-[#2d2a5f]';
     }
@@ -62,10 +62,10 @@ const Navbar = () => {
     { name: 'HOME', href: '/', type: 'route' },
     { name: 'COMO FAZEMOS', href: '/como-fazemos', type: 'route' },
     { name: 'SOBRE', href: '/sobre', type: 'route' },
-    { name: 'AULAS', href: '#aulas', type: 'anchor' },
+    { name: 'AULAS', href: '/aulas', type: 'route' },
     { name: 'MATERIAL', href: '/material', type: 'route' },
-    { name: 'TURMAS', href: '#turmas', type: 'anchor' },
-    { name: 'GALERIA', href: '#galeria', type: 'anchor' },
+    { name: 'TURMAS', href: '/turmas', type: 'route' },
+    { name: 'GALERIA', href: '/galeria', type: 'route' },
     { name: 'RECONHECIMENTOS', href: '/reconhecimentos', type: 'route' },
     { name: 'CONTATO', href: '/contato', type: 'route' },
   ];
@@ -92,10 +92,10 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Menu */}
-          <div className="hidden lg:flex items-center space-x-1">
+          <div className="hidden xl:flex items-center space-x-1">
             {menuItems.map((item, index) => (
               item.type === 'route' ? (
-                <Link key={item.name} to={item.href}>
+                <Link key={item.name} to={item.href} className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
                   <motion.div
                     className="relative px-3 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors group"
                     initial={{ opacity: 0, y: -20 }}
@@ -128,12 +128,48 @@ const Navbar = () => {
                 </motion.a>
               )
             ))}
+
+            {/* Botão de acesso à área restrita.
+                Fica destacado (e não como mais um item da lista) porque é uma
+                ação, não uma página de conteúdo do site.
+                Na home sem rolagem a barra é transparente sobre o hero verde:
+                ali o botão fica roxo para não sumir no fundo; com a barra roxa,
+                verde. */}
+            <Link to="/login" aria-label="Entrar na área restrita" className="ml-4 group relative rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+              <motion.div
+                className={`w-11 h-11 flex items-center justify-center rounded-full shadow-lg ring-2 ring-white/30 group-hover:ring-white transition-all ${
+                  location.pathname === '/' && !isScrolled
+                    ? 'bg-[#2d2a5f] text-white'
+                    : 'bg-[#8bc53f] text-[#2d2a5f] group-hover:bg-[#7ab52f]'
+                }`}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: menuItems.length * 0.05, type: 'spring', stiffness: 260, damping: 18 }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.92 }}
+              >
+                {/* Ícone de pessoa: é o símbolo usual de "sua conta" */}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </motion.div>
+
+              {/* Rótulo que aparece ao passar o mouse, para o ícone não virar adivinhação */}
+              <span className="pointer-events-none absolute top-full right-0 mt-2 px-3 py-1.5 rounded-lg bg-[#2d2a5f] text-white text-xs font-bold whitespace-nowrap shadow-xl opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200">
+                LOGIN
+              </span>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
           <motion.button
-            className="lg:hidden relative w-10 h-10 text-white focus:outline-none"
+            className="xl:hidden relative w-10 h-10 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-lg"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            // O botão só tem ícone: o rótulo e o estado aberto/fechado são
+            // o que o leitor de tela anuncia
+            aria-label={isMobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="menu-mobile"
             whileTap={{ scale: 0.9 }}
           >
             <div className="absolute inset-0 flex flex-col justify-center items-center space-y-1.5">
@@ -158,15 +194,16 @@ const Navbar = () => {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
+            id="menu-mobile"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-[#2d2a5f]/98 backdrop-blur-lg border-t border-white/10"
+            className="xl:hidden bg-[#2d2a5f]/95 backdrop-blur-lg border-t border-white/10"
           >
-            <div className="px-4 py-6 space-y-3">
+            <div className="px-4 py-6">
               {menuItems.map((item, index) => (
                 item.type === 'route' ? (
-                  <Link key={item.name} to={item.href} onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link key={item.name} to={item.href} onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
                     <motion.div
                       className="block px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all"
                       initial={{ opacity: 0, x: -20 }}
@@ -192,6 +229,18 @@ const Navbar = () => {
                   </motion.a>
                 )
               ))}
+
+              {/* Mesmo acesso à área restrita, agora no menu do celular */}
+              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                <motion.div
+                  className="block mt-2 px-4 py-3 bg-[#8bc53f] hover:bg-[#7ab52f] text-[#2d2a5f] font-bold text-center rounded-lg transition-all"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: menuItems.length * 0.05 }}
+                >
+                  LOGIN
+                </motion.div>
+              </Link>
             </div>
           </motion.div>
         )}
