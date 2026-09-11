@@ -495,8 +495,13 @@ const ComoFazemos = () => {
   // Cartão de uma trilha: faixa verde com o título e, abaixo, os módulos.
   // O mesmo cartão é usado nas trilhas atuais e nas das edições anteriores.
   // NivelTitulo: h2 nas trilhas atuais; h3 dentro de "Edições Anteriores",
-  // que já é um h2 (maiúsculo para o JSX usar o valor como tag).
-  const renderTrilha = (trilha: Trilha, NivelTitulo: 'h2' | 'h3' = 'h2') => (
+  // que já é um h2. NivelModulo fica sempre um nível abaixo (h3 ou h4).
+  // (Maiúsculos para o JSX usar o valor como tag.)
+  const renderTrilha = (
+    trilha: Trilha,
+    NivelTitulo: 'h2' | 'h3' = 'h2',
+    NivelModulo: 'h3' | 'h4' = NivelTitulo === 'h2' ? 'h3' : 'h4',
+  ) => (
     <>
       {/* Header da Trilha. px-4 no celular: com px-8 o título mais longo
           ("DESENVOLVIMENTO WEB (INICIAL)") não cabia a 375px */}
@@ -510,9 +515,9 @@ const ComoFazemos = () => {
       <div className="bg-white border-2 border-gray-200 rounded-b-2xl p-8">
         {trilha.modulos.map((modulo, mIndex) => (
           <div key={mIndex} className="mb-6 last:mb-0">
-            <h3 className="text-lg font-bold text-[#2d2a5f] mb-3">
+            <NivelModulo className="text-lg font-bold text-[#2d2a5f] mb-3">
               {modulo.nome} - <span className="text-[#8bc53f]">{modulo.duracao}</span>
-            </h3>
+            </NivelModulo>
 
             {modulo.topicos.length > 0 && (
               <ul className="ml-8 space-y-2">

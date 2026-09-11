@@ -15,7 +15,7 @@ Cada etapa tem um subagente dedicado (`planner`, `coder`, `tester`, `reviewer`, 
 
 ## Antes de qualquer etapa: carregue `boas-praticas`
 
-**Obrigatório, não opcional.** A skill `boas-praticas` traz as diretrizes de código da Elkys — preservação de regras de negócio, redução de complexidade sem alterar comportamento, logs de progresso, instanciação de serviços, os 5 status canônicos, idioma e separação de camadas. Ela vale em **todas** as cinco etapas, não só na do Coder:
+**Obrigatório, não opcional.** A skill `boas-praticas` traz as diretrizes de código e vale em **todas** as cinco etapas, não só na do Coder:
 
 - **Planner** desenha a menor alteração que preserva 100% do comportamento.
 - **Coder** implementa dentro das diretrizes.
@@ -23,7 +23,7 @@ Cada etapa tem um subagente dedicado (`planner`, `coder`, `tester`, `reviewer`, 
 - **Reviewer** rejeita o que violar as diretrizes.
 - **Security Auditor** trata log de dado sensível e secret no fonte como achado.
 
-Se o projeto tiver documento próprio (`docs/boas-praticas.md` ou equivalente), ele manda no detalhe do stack.
+Se o projeto tiver documento próprio (`docs/boas-praticas.md` ou equivalente) ou skills próprias (`<projeto>-*` em `.claude/skills/`), eles mandam no detalhe do stack.
 
 ## Ordem de prioridade (resolve todo conflito)
 
@@ -72,12 +72,9 @@ Achado bloqueante volta para o Coder e **as etapas seguintes rodam de novo**. Re
 
 - **Nenhuma mudança silenciosa.** Toda diferença de comportamento precisa ser intencional e escrita — no commit e na documentação, não só num comentário que ninguém vai abrir.
 - **Provar antes de chamar de bug.** Comportamento estranho costuma ser regra de negócio esquecida. Reproduza antes de "corrigir".
-- **Condição aparentemente redundante não se remove no impulso.** Verifique antes se ela é regra de negócio, compatibilidade, exceção operacional ou cenário legado ainda válido. A condição "sobrando" costuma ser a regra que ninguém lembra.
 - **Menor alteração possível.** Refatoração de carona sai do escopo e vira item separado.
 - **Reusar antes de criar.** Buscar no projeto antes de escrever helper novo.
-- **Duplicação é o alvo, não o código movido.** Extrair serviço só compensa quando mata cópia. Ao achar cópias, **compare-as entre si**: a divergência entre elas costuma ser bug latente e é o achado mais valioso.
-- **Código morto só sai com prova.** Export sem consumidor não basta — ferramenta de análise erra em arquivo fora do grafo de módulos. Confirme com busca cruzada.
-- **Log de progresso onde o fluxo tem etapas**, e nunca com senha, token, secret, credencial ou dado pessoal desnecessário.
+- **As regras de código de `boas-praticas`** — condição aparentemente redundante, duplicação comparada entre cópias, código morto só com prova, log de progresso sem dado sensível — valem em todas as etapas.
 - **Relatar o resultado real.** Se o teste falhou, diga com a saída. Se algo ficou de fora, diga o quê e por quê.
 
 ## Skills de apoio
@@ -89,6 +86,7 @@ Achado bloqueante volta para o Coder e **as etapas seguintes rodam de novo**. Re
 - `owasp-security` — quando a mudança envolve autenticação, autorização, sessão, API ou agente/IA.
 - `security-review` — revisão de segurança **do diff**, antes do PR.
 - `audit-codebase` — auditoria do projeto **inteiro**, periódica; não é etapa de PR.
+- `navegacao-web`, `performance-web`, `web-3d` — quando a mudança toca rota e navegação, build e performance, ou 3D.
 
 ## Ferramenta externa
 

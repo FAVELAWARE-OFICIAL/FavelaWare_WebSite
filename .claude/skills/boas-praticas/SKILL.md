@@ -1,11 +1,11 @@
 ---
 name: boas-praticas
-description: Diretrizes de código da Elkys — preservação de regras de negócio acima de tudo, redução de complexidade sem alterar comportamento, logs de progresso, instanciação de serviços, tamanho do controlador, os 5 status canônicos, código em português, onde uma função mora, variáveis de ambiente e separação de camadas. Use ao escrever, refatorar ou corrigir qualquer lógica de aplicação, ao decidir onde colocar uma responsabilidade, ao criar serviço/utilitário/camada nova, e sempre que pedirem "segue o padrão", "boas práticas", "refatorar", "simplificar" ou "padronizar o código".
+description: Boas práticas de código — regras de negócio preservadas acima de tudo, complexidade menor sem mudar comportamento, serviços, controlador, os 5 status, logs de progresso, idioma do código, configuração e camadas. Use ao escrever, refatorar ou corrigir lógica de aplicação, ao decidir onde uma responsabilidade mora, ao criar serviço/utilitário/camada nova, ou quando pedirem "segue o padrão", "boas práticas" ou "padronizar o código".
 ---
 
-# Boas práticas Elkys
+# Boas práticas
 
-Valem para qualquer projeto e qualquer linguagem da organização.
+Valem para qualquer projeto e qualquer linguagem.
 
 ## A regra que vem antes de todas
 
@@ -219,26 +219,30 @@ Generalize só com necessidade concreta.
 
 ## Consultas
 
-- **`select("*")` é proibido.** Cada consulta declara suas colunas.
+- **Cada consulta declara suas colunas.** `SELECT *`, `select("*")` e
+  equivalentes do ORM são proibidos.
 - Ao trocar `*` por colunas, **estreite o tipo local junto** — é o compilador
   com tipo estreito que pega campo esquecido.
-- Ao auditar, busque `select("*` **sem fechar aspas** (a variante com join
-  escapa) e `.select()` **sem argumento**, que é `select("*")` funcional.
+- Ao auditar, busque também as variantes que escapam da busca exata. Exemplo
+  no supabase-js: `select("*` **sem fechar aspas** (a variante com join) e
+  `.select()` **sem argumento**, que é `select("*")` funcional.
 - **A regra vale para a assinatura**, não só para a query: método que exige a
   linha inteira obriga o chamador a carregar coluna que não usa — e é assim
   que nasce uma cópia do fluxo em quem só tem um recorte.
 
-## O que NÃO fazer
+## Armadilhas recorrentes
 
-- Migrar comportamento junto com infraestrutura no mesmo PR.
-- Traduzir nome de coluna/tabela.
-- Fazer o serviço falar com o usuário — toast/modal é do controlador.
-- Deixar `catch` engolindo erro sem virar exceção de sistema.
-- Usar estado de URL em componente renderizado como aba.
-- Confiar em `try/catch` em volta de cliente que **devolve** o erro em vez de
-  lançar: o `catch` nunca dispara e a falha fica invisível.
+- Comportamento e infraestrutura migram em PRs separados.
+- Toast/modal é do controlador; o serviço só devolve status.
+- Todo `catch` vira exceção de sistema (log + status); nenhum engole o erro.
+- Estado de URL fica na página que hospeda as abas, não no componente
+  renderizado como aba.
+- Cliente que **devolve** o erro em vez de lançar (ex.: supabase-js) exige ler
+  o erro retornado: `try/catch` em volta dele nunca dispara e a falha fica
+  invisível.
 
 ---
 
-Se o projeto tiver documento próprio (`docs/boas-praticas.md` ou equivalente),
-ele manda no detalhe do stack; esta skill vale quando o projeto não diz nada.
+Se o projeto tiver documento próprio (`docs/boas-praticas.md` ou equivalente)
+ou skill própria, ele manda no detalhe do stack; esta skill vale quando o
+projeto não diz nada.

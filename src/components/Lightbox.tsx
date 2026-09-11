@@ -47,12 +47,21 @@ const Lightbox: React.FC<LightboxProps> = ({ foto, aoFechar }) => {
     };
   }, [foto]);
 
-  // Enquanto o lightbox está aberto: Esc fecha e o fundo não rola
+  // Enquanto o lightbox está aberto: Esc fecha, o Tab não sai do diálogo
+  // e o fundo não rola
   useEffect(() => {
     if (!foto) return;
 
     const aoTeclar = (e: KeyboardEvent) => {
       if (e.key === 'Escape') aoFechar();
+
+      // O Fechar é o único item focável: o Tab (e o Shift+Tab) volta sempre
+      // para ele, como o aria-modal promete. Vale também quando o foco caiu
+      // no body depois de um clique na foto.
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        botaoFecharRef.current?.focus();
+      }
     };
     document.addEventListener('keydown', aoTeclar);
     document.body.style.overflow = 'hidden';

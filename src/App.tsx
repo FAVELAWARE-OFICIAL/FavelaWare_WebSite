@@ -29,7 +29,7 @@ import Home from './pages/Home';               // Página inicial
 import ComoFazemos from './pages/ComoFazemos'; // Página que explica as trilhas de ensino
 import Sobre from './pages/Sobre';             // Página sobre o projeto
 import HallDaFama from './pages/HallDaFama';   // Página com equipes anteriores
-import Material from './pages/Material';       // Página de materiais e entrega de atividades
+import Material from './pages/Material';       // Página de materiais do curso
 import Reconhecimentos from './pages/Reconhecimentos'; // Página de reconhecimentos e prêmios
 import Contato from './pages/Contato';         // Página de contato
 import Login from './pages/Login';             // Página de login (acesso à área restrita)

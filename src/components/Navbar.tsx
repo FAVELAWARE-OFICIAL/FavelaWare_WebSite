@@ -84,6 +84,9 @@ const Navbar = () => {
               className="flex items-center space-x-2"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              // Quem recebe o foco é o Link. Sem tabIndex, o framer-motion põe
+              // tabindex=0 em quem tem whileTap e o link vira duas paradas de Tab.
+              tabIndex={-1}
             >
               <div className="text-2xl font-bold text-white">
                 FavelaWare
@@ -95,7 +98,7 @@ const Navbar = () => {
           <div className="hidden xl:flex items-center space-x-1">
             {menuItems.map((item, index) => (
               item.type === 'route' ? (
-                <Link key={item.name} to={item.href} className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                <Link key={item.name} to={item.href} className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2d2a5f]">
                   <motion.div
                     className="relative px-3 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors group"
                     initial={{ opacity: 0, y: -20 }}
@@ -103,6 +106,7 @@ const Navbar = () => {
                     transition={{ delay: index * 0.05 }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    tabIndex={-1} // o foco fica no Link (ver o comentário do logo)
                   >
                     {item.name}
                     <motion.span
@@ -135,7 +139,7 @@ const Navbar = () => {
                 Na home sem rolagem a barra é transparente sobre o hero verde:
                 ali o botão fica roxo para não sumir no fundo; com a barra roxa,
                 verde. */}
-            <Link to="/login" aria-label="Entrar na área restrita" className="ml-4 group relative rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+            <Link to="/login" aria-label="Entrar na área restrita" className="ml-4 group relative rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2d2a5f]">
               <motion.div
                 className={`w-11 h-11 flex items-center justify-center rounded-full shadow-lg ring-2 ring-white/30 group-hover:ring-white transition-all ${
                   location.pathname === '/' && !isScrolled
@@ -147,6 +151,7 @@ const Navbar = () => {
                 transition={{ delay: menuItems.length * 0.05, type: 'spring', stiffness: 260, damping: 18 }}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.92 }}
+                tabIndex={-1} // o foco fica no Link (ver o comentário do logo)
               >
                 {/* Ícone de pessoa: é o símbolo usual de "sua conta" */}
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden="true">
@@ -163,7 +168,7 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <motion.button
-            className="xl:hidden relative w-10 h-10 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-lg"
+            className="xl:hidden relative w-10 h-10 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2d2a5f] rounded-lg"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             // O botão só tem ícone: o rótulo e o estado aberto/fechado são
             // o que o leitor de tela anuncia
@@ -203,7 +208,7 @@ const Navbar = () => {
             <div className="px-4 py-6">
               {menuItems.map((item, index) => (
                 item.type === 'route' ? (
-                  <Link key={item.name} to={item.href} onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                  <Link key={item.name} to={item.href} onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2d2a5f]">
                     <motion.div
                       className="block px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all"
                       initial={{ opacity: 0, x: -20 }}

@@ -1,6 +1,6 @@
 ---
 name: auditor-de-padroes
-description: Mede a distância entre o código existente e as boas práticas da Elkys, num escopo dado (arquivo, módulo ou projeto), e devolve um plano de migração priorizado. Use ao começar uma refatoração, ao assumir código legado, ao decidir por onde atacar dívida técnica, ou quando pedirem "o que está fora do padrão", "por onde começo a refatorar" ou "audita a arquitetura".
+description: Mede a distância entre o código existente e a skill boas-praticas, num escopo dado (arquivo, módulo ou projeto), e devolve um plano de migração priorizado. Use ao começar uma refatoração, ao assumir código legado, ao decidir por onde atacar dívida técnica, ou quando pedirem "o que está fora do padrão", "por onde começo a refatorar" ou "audita a arquitetura".
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---
@@ -86,8 +86,8 @@ real. Reporte isso separado: é achado, não é dívida.
 
 ### 3. Consultas
 
-- `select("*")` — busque `select("*` **sem o fechamento de aspas**, senão a
-  variante com join escapa.
+- Consulta sem lista de colunas (variantes que escapam da busca exata: seção
+  Consultas de `boas-praticas`).
 - Query que traz coluna que ninguém consome.
 - Tipo montado de string solta em vez de vir do schema.
 
@@ -98,7 +98,7 @@ constantes, enums, mensagens. Ignore o que é padrão de linguagem/framework e
 nomes de tabela/coluna do banco — não são violação.
 
 Reporte por módulo, com contagem, não item a item: "23 identificadores de
-domínio em inglês em `src/pages/portal/admin/`" é acionável; uma lista de 200
+domínio em inglês em `src/<modulo>/`" é acionável; uma lista de 200
 linhas não é.
 
 ### 5. Tratamento de erro
@@ -147,7 +147,7 @@ Procure **um único conjunto de dados carregado uma vez e consumido com filtros
 diferentes no mesmo arquivo** — sobretudo quando os dois resultados alimentam
 o mesmo indicador.
 
-O caso que originou este eixo: o array de despesas alimentava a série mensal
+Exemplo real: o array de despesas alimentava a série mensal
 (que descartava mês futuro, porque o bucket não existia na janela) e o saldo
 de caixa (que somava tudo). Numerador e denominador do runway usavam conjuntos
 diferentes. Ninguém percebeu por meses, porque cada trecho lido isolado parece
@@ -206,8 +206,8 @@ está grande demais: quebre.
   descuido. Não proponha unificar sem provar que são a mesma coisa.
 - Se não conseguiu medir um eixo, diga que não mediu. Não estime.
 - **Comentário e docstring descrevem intenção, não comportamento.** Ao auditar,
-  confira a afirmação contra o código antes de repeti-la. Já aconteceu neste
-  projeto de um cabeçalho garantir que uma auditoria anterior tinha unificado
+  confira a afirmação contra o código antes de repeti-la. Já aconteceu de um
+  cabeçalho garantir que uma auditoria anterior tinha unificado
   duas métricas, enquanto os argumentos passados a elas continuavam
   divergentes. Comentário desatualizado que justifica um desenho é pior que
   comentário nenhum — reporte como achado.
