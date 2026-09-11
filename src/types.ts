@@ -176,18 +176,6 @@ export interface Material {
 }
 
 /**
- * TIPO: Entrega de Atividade
- * Define as informações de uma entrega de atividade pelo aluno
- */
-export interface Entrega {
-  nomeAluno: string;       // Nome do aluno
-  emailAluno: string;      // Email do aluno
-  nomeAtividade: string;   // Nome/título da atividade
-  arquivo: File;           // Arquivo PDF da atividade
-  dataEntrega: Date;       // Data e hora da entrega
-}
-
-/**
  * TIPO: Artigo Científico
  * Define artigos publicados sobre o projeto
  */
