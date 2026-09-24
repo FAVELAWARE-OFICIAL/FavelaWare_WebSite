@@ -122,6 +122,23 @@ begin
     r := r || E'\nok - nem o gestor dá pode_alternar_papel';
   end;
 
+  -- ===== Primeiro acesso do aluno vale uma vez só =====
+  reset role;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_aluno, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  perform public.concluir_primeiro_acesso('Aluno Teste Primeiro', '2000-01-01', 'aluno.teste@gmail.com');
+  select nome into v_txt from public.participantes where id = v_part;
+  r := r || E'
+' || case when v_txt = 'Aluno Teste Primeiro' then 'ok' else 'FALHOU' end || ' - primeiro acesso grava o nome completo';
+  begin
+    perform public.concluir_primeiro_acesso('Outro Nome Qualquer', '2000-01-01', 'aluno.teste@gmail.com');
+    r := r || E'
+FALHOU - aluno trocou o nome depois do primeiro acesso';
+  exception when insufficient_privilege then
+    r := r || E'
+ok - depois do primeiro acesso o aluno não troca o nome por ali';
+  end;
+
   -- ===== Visitante =====
   reset role;
   set local role anon;

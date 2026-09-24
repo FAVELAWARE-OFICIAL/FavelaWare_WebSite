@@ -12,8 +12,8 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { supabase, carregarPerfil, type Papel } from '../lib/supabase';
-import { jaPreencheuDados } from '../lib/dadosInstrutor';
+import { servicoSessao, type Papel } from '../lib/sessao';
+import { servicoDadosInstrutor } from '../lib/dadosInstrutor';
 import Carregamento from './admin/Carregamento';
 
 const RotaProtegida: React.FC<{ papeis: Papel[]; children: React.ReactNode }> = ({ papeis, children }) => {
@@ -27,20 +27,19 @@ const RotaProtegida: React.FC<{ papeis: Papel[]; children: React.ReactNode }> = 
     const permitidos = chavePapeis.split(',');
 
     const verificar = async () => {
-      const { data } = await supabase.auth.getSession();
-      const usuario = data.session?.user;
-      const perfil = usuario ? await carregarPerfil(usuario.id) : null;
+      const logada = await servicoSessao.contaLogada();
+      const perfil = logada?.perfil;
       if (!ativo) return;
       if (!perfil?.papel || !permitidos.includes(perfil.papel)) return setEstado('negado');
       if (perfil.papel === 'aluno') {
         // Aluno só entra com a conta ligada a uma turma, e depois do primeiro acesso
-        if (!perfil.participanteId && !perfil.podeAlternarPapel) return setEstado('negado');
+        if (!servicoSessao.alunoTemArea(perfil)) return setEstado('negado');
         if (perfil.precisaTrocarSenha) return setEstado('primeiro-acesso');
       }
       // Instrutor só entra depois de preencher os dados do RPA (a conta de
       // demonstração, que só "vê como" instrutor, fica de fora)
-      if (perfil.papel === 'professor' && !perfil.podeAlternarPapel && usuario) {
-        const preencheu = await jaPreencheuDados(usuario.id);
+      if (perfil.papel === 'professor' && !perfil.podeAlternarPapel && logada) {
+        const preencheu = await servicoDadosInstrutor.jaPreencheu(logada.conta.id);
         if (!ativo) return;
         if (!preencheu) return setEstado('dados-do-instrutor');
       }
@@ -49,13 +48,11 @@ const RotaProtegida: React.FC<{ papeis: Papel[]; children: React.ReactNode }> = 
     verificar();
 
     // Se a sessão acabar (sair em outra aba, token expirado), volta para o login
-    const { data: ouvinte } = supabase.auth.onAuthStateChange((evento) => {
-      if (evento === 'SIGNED_OUT' && ativo) setEstado('negado');
-    });
+    const pararDeOuvir = servicoSessao.aoEncerrar(() => ativo && setEstado('negado'));
 
     return () => {
       ativo = false;
-      ouvinte.subscription.unsubscribe();
+      pararDeOuvir();
     };
   }, [chavePapeis]);
 

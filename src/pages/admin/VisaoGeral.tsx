@@ -22,14 +22,8 @@ import {
 } from '../../components/admin/Graficos';
 import { BarraDeFiltros, Botao, Cartao } from '../../components/admin/Ui';
 import { espaco, foco, selo, superficie, texto } from '../../components/admin/designSystem';
-import {
-  FAIXAS,
-  FALTAS_SEGUIDAS_ALERTA,
-  META_FREQUENCIA,
-  faixaDe,
-  formatarData,
-  formatarPercentual,
-} from '../../lib/dashboard';
+import { FALTAS_SEGUIDAS_ALERTA, META_FREQUENCIA, corDaFrequencia, formatarPercentual } from '../../lib/painel';
+import { formatarData } from '../../utils/datas';
 import { useAdmin } from './contexto';
 
 const pontos = (diferenca: number) =>
@@ -62,7 +56,7 @@ const BarraComMeta: React.FC<{ valor: number | null }> = ({ valor }) => (
   <div className="relative h-2 rounded-full bg-gray-100" aria-hidden="true">
     <div
       className="h-full rounded-full"
-      style={{ width: `${(valor ?? 0) * 100}%`, backgroundColor: FAIXAS.find((f) => f.valor === faixaDe(valor))?.cor }}
+      style={{ width: `${(valor ?? 0) * 100}%`, backgroundColor: corDaFrequencia(valor) }}
     />
     <span
       className="absolute -top-1 h-4 w-0.5 rounded bg-red-600"
@@ -80,8 +74,8 @@ const VisaoGeral: React.FC = () => {
   const media = painel.frequenciaMedia;
   const diferencaMeta = media === null ? null : media - META_FREQUENCIA;
   const emRisco = painel.emRisco.length;
-  const aulas = painel.aulasDeAlunos.filter((a) => a.data).length;
-  const presentesPorAula = aulas ? Math.round(painel.totais.presentes / aulas) : 0;
+  const aulas = painel.quantidadeDeAulas;
+  const { presentesPorAula } = painel;
 
   // Leva para a lista de alunos já filtrada pelos que estão abaixo da meta
   const verAlunosEmRisco = () => {

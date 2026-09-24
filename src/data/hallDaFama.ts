@@ -434,25 +434,55 @@ export const edicoes: EdicaoDoHall[] = [
   { id: 'edicao-1', nome: '1ª Edição', periodo: '2022', anos: ['2022'] },
 ];
 
-// Ordem das organizações dentro de cada edição (quem não tem organização vai por último)
-const ORDEM_DAS_ORGANIZACOES = ['Mundiale', 'AOPA', 'Ânima'];
-const posicaoDaOrganizacao = (organizacao: string) => {
-  const i = ORDEM_DAS_ORGANIZACOES.indexOf(organizacao);
+/** Pessoa num cartão da equipe (arquivo ou banco): foto e LinkedIn são opcionais */
+export type PessoaDoHall = Pick<MembroEquipe, 'nome' | 'cargo'> & {
+  organizacao?: string;
+  foto?: string;
+  linkedin?: string;
+};
+
+/** Uma edição no Hall da Fama, com as pessoas já em ordem */
+export interface GrupoDoHall {
+  id: string;
+  nome: string;
+  periodo: string;
+  membros: PessoaDoHall[];
+}
+
+// Ordem das organizações dentro de cada edição (quem não tem organização vai por último).
+// O formulário de vínculo sugere estas mesmas.
+export const ORDEM_DAS_ORGANIZACOES = ['Mundiale', 'AOPA', 'Ânima'];
+const posicaoDaOrganizacao = (organizacao?: string) => {
+  const i = ORDEM_DAS_ORGANIZACOES.indexOf(organizacao ?? '');
   return i === -1 ? ORDEM_DAS_ORGANIZACOES.length : i;
 };
+
+/** Agrupa por organização: Mundiale, AOPA, Ânima e as outras (dentro de cada uma, a ordem recebida) */
+export const ordenarPorOrganizacao = <T extends { organizacao?: string }>(pessoas: T[]): T[] =>
+  [...pessoas].sort((a, b) => posicaoDaOrganizacao(a.organizacao) - posicaoDaOrganizacao(b.organizacao)); // sort é estável
 
 /**
  * Pessoas de uma edição, sem repetir quem aparece em dois anos da mesma
  * edição (fica a entrada do ano mais recente, a foto mais nova), agrupadas
  * por organização: Mundiale, AOPA e Ânima. Dentro de cada uma, a ordem do arquivo.
  */
-export const membrosDaEdicao = (edicao: EdicaoDoHall): MembroEquipe[] => {
+const membrosDaEdicao = (edicao: EdicaoDoHall): MembroEquipe[] => {
   const vistos = new Set<string>();
-  return edicao.anos
-    .flatMap((ano) => membros.filter((m) => m.ano === ano))
-    .filter((m) => (vistos.has(m.nome) ? false : (vistos.add(m.nome), true)))
-    .sort((a, b) => posicaoDaOrganizacao(a.organizacao) - posicaoDaOrganizacao(b.organizacao)); // sort é estável
+  return ordenarPorOrganizacao(
+    edicao.anos
+      .flatMap((ano) => membros.filter((m) => m.ano === ano))
+      .filter((m) => (vistos.has(m.nome) ? false : (vistos.add(m.nome), true))),
+  );
 };
 
+/** As edições deste arquivo (1ª a 3ª); as encerradas depois vêm do banco (ver lib/sitePublico.ts) */
+export const gruposDoArquivo: GrupoDoHall[] = edicoes.map((edicao) => ({
+  id: edicao.id,
+  nome: edicao.nome,
+  periodo: edicao.periodo,
+  membros: membrosDaEdicao(edicao),
+}));
+
 /** Total de pessoas diferentes que já passaram pela equipe */
-export const totalDePessoas = new Set(membros.map((m) => m.nome)).size;
+export const contarPessoas = (grupos: GrupoDoHall[]): number =>
+  new Set(grupos.flatMap((g) => g.membros.map((m) => m.nome))).size;

@@ -9,7 +9,7 @@
  * - Lado esquerdo (só em telas grandes): painel verde da marca com logo e boas-vindas
  * - Lado direito: formulário de email e senha
  *
- * O login usa o Supabase Auth (email + senha), pelo cliente em src/lib/supabase.ts.
+ * O login usa o Supabase Auth (email + senha), pelo serviço de sessão em src/lib/sessao.ts.
  *
  * Conceitos importantes:
  * - useState: guarda informações que mudam na tela (o que foi digitado, se está carregando)
@@ -18,7 +18,7 @@
  */
 
 // Importa o hook de estado do React
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // Importa ferramentas de animação do Framer Motion
 import { motion } from 'framer-motion';
@@ -29,27 +29,13 @@ import { Link, useNavigate } from 'react-router-dom';
 // E-mail oficial (fonte única em src/data/contato.ts)
 import { email } from '../data/contato';
 
-// Cliente do Supabase (autenticação)
-import { supabase, definirLembrarDeMim, carregarPerfil, destinoDoPerfil, emailDoIdentificador } from '../lib/supabase';
+import { classeBotaoDeAcesso, classeCampoDeAcesso } from '../components/estilosDeAcesso';
 
-/**
- * Converte o código de erro do Supabase numa mensagem em português.
- * Credencial errada e e-mail inexistente dão a MESMA mensagem de propósito:
- * assim ninguém descobre quais e-mails têm conta.
- */
-function traduzirErroDeLogin(codigo?: string): string {
-  switch (codigo) {
-    case 'invalid_credentials':
-      return 'E-mail (ou login) ou senha incorretos.';
-    case 'email_not_confirmed':
-      return 'Confirme seu email antes de entrar (veja sua caixa de entrada).';
-    case 'over_request_rate_limit':
-    case 'over_email_send_rate_limit':
-      return 'Muitas tentativas seguidas. Espere um pouco e tente de novo.';
-    default:
-      return 'Não foi possível entrar agora. Tente novamente em instantes.';
-  }
-}
+// Sessão (entrar e descobrir a área de cada papel)
+import { servicoSessao } from '../lib/sessao';
+import { TAMANHO_MINIMO_SENHA } from '../lib/senha';
+import { StatusProcessamento } from '../types';
+import { FUNDO_DA_MARCA, LOGO } from '../data/imagens';
 
 /**
  * COMPONENTE LOGIN
@@ -64,7 +50,7 @@ const Login: React.FC = () => {
   // ============================================
 
   // Guarda o que o usuário digitou nos campos
-  const [formData, setFormData] = useState({
+  const [campos, setCampos] = useState({
     email: '',
     senha: '',
     lembrarDeMim: false,
@@ -75,6 +61,7 @@ const Login: React.FC = () => {
 
   // Fica true enquanto o "login" está sendo processado (trava o botão)
   const [carregando, setCarregando] = useState(false);
+  const [enviandoLink, setEnviandoLink] = useState(false);
 
   // Mensagem de retorno mostrada acima do formulário
   const [mensagem, setMensagem] = useState<{
@@ -91,56 +78,79 @@ const Login: React.FC = () => {
    * Usa event.target.name para saber QUAL campo mudou, assim uma função
    * só atende todos os campos do formulário.
    */
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const aoAlterarCampo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
 
-    setFormData((anterior) => ({
+    setCampos((anterior) => ({
       ...anterior, // mantém os outros campos como estavam
       [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
+  /** Link de acesso por e-mail (sem senha): a banca avaliadora entra assim */
+  const enviarLink = async () => {
+    setMensagem(null);
+    setEnviandoLink(true);
+    const resultado = await servicoSessao.enviarLinkDeAcesso(campos.email);
+    setEnviandoLink(false);
+    setMensagem(
+      resultado.status === StatusProcessamento.Sucesso
+        ? { tipo: 'sucesso', texto: 'Se houver uma conta com esse e-mail, o link de acesso chega em instantes.' }
+        : { tipo: 'erro', texto: resultado.mensagem ?? 'Não foi possível enviar o link.' },
+    );
+  };
+
+  // Voltou pelo link do e-mail (ou já estava logado): vai direto para a própria área
+  useEffect(() => {
+    const irParaArea = () =>
+      servicoSessao
+        .contaLogada()
+        .then((l) => {
+          const destino = l ? servicoSessao.destinoDoPerfil(l.perfil) : null;
+          if (destino) navigate(destino, { replace: true });
+        })
+        .catch((e) => console.error('[login] sessão do link', e?.message));
+    irParaArea();
+    return servicoSessao.aoIniciar(irParaArea);
+  }, [navigate]);
+
   /**
    * Envia o formulário.
    * event.preventDefault() impede o navegador de recarregar a página.
    */
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const aoEnviar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMensagem(null);
 
     // Validação simples antes de "enviar"
-    if (!formData.email.trim() || !formData.senha.trim()) {
+    if (!campos.email.trim() || !campos.senha.trim()) {
       setMensagem({ tipo: 'erro', texto: 'Preencha o e-mail (ou login) e a senha para continuar.' });
       return;
     }
 
-    if (formData.senha.length < 6) {
-      setMensagem({ tipo: 'erro', texto: 'A senha precisa ter pelo menos 6 caracteres.' });
+    // Só o tamanho: a política completa vale ao criar a senha (o servidor confere a senha em si)
+    if (campos.senha.length < TAMANHO_MINIMO_SENHA) {
+      setMensagem({
+        tipo: 'erro',
+        texto: `A senha precisa ter pelo menos ${TAMANHO_MINIMO_SENHA} caracteres.`,
+      });
       return;
     }
 
     setCarregando(true);
 
-    // Precisa vir antes do login: é na hora do login que a sessão é gravada
-    definirLembrarDeMim(formData.lembrarDeMim);
+    // Aluno digita o login (nome.sobrenome); a equipe, o e-mail
+    const { resultado, destino } = await servicoSessao.entrar(campos.email, campos.senha, campos.lembrarDeMim);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      // Aluno digita o login (nome.sobrenome); vira o e-mail interno da conta
-      email: emailDoIdentificador(formData.email),
-      password: formData.senha,
-    });
-
-    if (error) {
+    if (resultado.status !== StatusProcessamento.Sucesso) {
       setCarregando(false);
-      setMensagem({ tipo: 'erro', texto: traduzirErroDeLogin(error.code) });
+      setMensagem({ tipo: 'erro', texto: resultado.mensagem! });
       return;
     }
 
     // Cada papel tem sua área (gestor, professor, aluno — ou o primeiro acesso do aluno)
-    const area = destinoDoPerfil(await carregarPerfil(data.user.id));
-
-    if (area) {
-      navigate(area, { replace: true });
+    if (destino) {
+      navigate(destino, { replace: true });
       return;
     }
 
@@ -177,7 +187,7 @@ const Login: React.FC = () => {
         style={{
           // Banner oficial do FavelaWare: foto da comunidade com código binário.
           // É o mesmo fundo do Hero da home, usado aqui em opacidade cheia.
-          backgroundImage: "url('/imgs/backgrounds/fundo.webp')",
+          backgroundImage: `url('${FUNDO_DA_MARCA}')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
@@ -189,7 +199,7 @@ const Login: React.FC = () => {
         {/* Conteúdo do painel (z-10 deixa por cima da textura) */}
         <div className="relative z-10 flex flex-col justify-center items-start p-12 xl:p-16 w-full">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-            <img src="/imgs/logo/logo.png" alt="Logo FavelaWare" className="w-64 object-contain mb-8 drop-shadow-2xl" />
+            <img src={LOGO} alt="Logo FavelaWare" className="w-64 object-contain mb-8 drop-shadow-2xl" />
 
             {/* Texto branco com sombra: o painel agora é uma foto, então a sombra
                 garante contraste independente do trecho da imagem que ficar atrás */}
@@ -219,7 +229,7 @@ const Login: React.FC = () => {
         <motion.div {...fadeInUp} className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 md:p-10">
           {/* Logo pequeno: aparece só no celular, já que o painel verde está escondido */}
           <div className="lg:hidden text-center mb-6">
-            <img src="/imgs/logo/logo.png" alt="Logo FavelaWare" className="w-40 object-contain mx-auto" />
+            <img src={LOGO} alt="Logo FavelaWare" className="w-40 object-contain mx-auto" />
           </div>
 
           {/* Título do card */}
@@ -246,7 +256,7 @@ const Login: React.FC = () => {
           )}
 
           {/* Formulário */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={aoEnviar} className="space-y-6">
             {/* Campo: e-mail (gestor e professor) ou login da turma (aluno: nome.sobrenome) */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -256,13 +266,13 @@ const Login: React.FC = () => {
                 type="text"
                 id="email"
                 name="email"
-                value={formData.email}
-                onChange={handleInputChange}
+                value={campos.email}
+                onChange={aoAlterarCampo}
                 autoComplete="username"
                 autoCapitalize="none"
                 spellCheck={false}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-favela-green-500 focus:border-transparent transition-all"
+                className={classeCampoDeAcesso}
                 placeholder="Ex: maria.silva ou maria@email.com"
               />
             </div>
@@ -278,11 +288,11 @@ const Login: React.FC = () => {
                   type={mostrarSenha ? 'text' : 'password'}
                   id="senha"
                   name="senha"
-                  value={formData.senha}
-                  onChange={handleInputChange}
+                  value={campos.senha}
+                  onChange={aoAlterarCampo}
                   autoComplete="current-password"
                   required
-                  className="w-full px-4 py-3 pr-14 border border-gray-300 rounded-lg focus:ring-2 focus:ring-favela-green-500 focus:border-transparent transition-all"
+                  className={`${classeCampoDeAcesso} pr-14`}
                   placeholder="Sua senha"
                 />
                 <button
@@ -303,8 +313,8 @@ const Login: React.FC = () => {
                   type="checkbox"
                   id="lembrarDeMim"
                   name="lembrarDeMim"
-                  checked={formData.lembrarDeMim}
-                  onChange={handleInputChange}
+                  checked={campos.lembrarDeMim}
+                  onChange={aoAlterarCampo}
                   className="w-4 h-4 rounded border-gray-300 text-favela-green-500 focus:ring-2 focus:ring-favela-green-500"
                 />
                 Lembrar de mim
@@ -325,11 +335,7 @@ const Login: React.FC = () => {
               disabled={carregando}
               whileHover={{ scale: carregando ? 1 : 1.02 }}
               whileTap={{ scale: carregando ? 1 : 0.98 }}
-              className={`w-full py-4 px-6 rounded-lg font-bold text-white text-lg shadow-lg transition-all ${
-                carregando
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-favela-green-600 to-favela-blue-600 hover:shadow-xl'
-              }`}
+              className={classeBotaoDeAcesso(carregando)}
             >
               {carregando ? (
                 <span className="flex items-center justify-center">
@@ -361,6 +367,18 @@ const Login: React.FC = () => {
               )}
             </motion.button>
           </form>
+
+          {/* Banca avaliadora (e quem preferir): entra por um link no e-mail, sem senha */}
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              disabled={enviandoLink}
+              onClick={enviarLink}
+              className="rounded text-sm font-medium text-gray-600 underline-offset-2 hover:text-gray-900 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-favela-green-500 disabled:opacity-60"
+            >
+              {enviandoLink ? 'Enviando o link…' : 'Receber um link de acesso no e-mail (sem senha)'}
+            </button>
+          </div>
 
           {/* Caminho de volta no celular (no desktop ele fica no painel verde) */}
           <div className="lg:hidden text-center mt-8">

@@ -7,9 +7,10 @@
  * fundo cinza, cartões brancos com borda fina, sombra leve, texto compacto
  * e sem animação de entrada (quem usa o painel quer os números rápido).
  */
-import { FAIXAS, FILTROS_INICIAIS, type Filtros } from '../../lib/dashboard';
+import { FAIXAS, FILTROS_INICIAIS, type Filtros } from '../../lib/painel';
 import { useAdmin } from '../../pages/admin/contexto';
 import { campo, foco, superficie, texto } from './designSystem';
+import Janela from './Janela';
 
 export const Cartao: React.FC<{
   titulo?: string;
@@ -60,6 +61,9 @@ export const Vazio: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 /** Atalhos com o nome antigo (usados nas páginas) */
 export const classeCampo = campo;
 
+/** Caixa de texto longo: tamanho fixo (a pessoa não arrasta o canto para mudar) */
+export const classeTextoLongo = `${campo} resize-none`;
+
 export const classeRotulo = texto.rotulo;
 
 const VARIANTES = {
@@ -73,15 +77,60 @@ const TAMANHOS = {
   pequeno: 'px-3 py-1.5 text-xs',
 };
 
+/** Classes do botão padrão (também para um Link que tem cara de botão) */
+export const classeDoBotao = (
+  variante: keyof typeof VARIANTES = 'secundario',
+  tamanho: keyof typeof TAMANHOS = 'normal',
+) =>
+  `inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors ${TAMANHOS[tamanho]} ${foco} focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTES[variante]}`;
+
 /** Botão padrão das áreas restritas */
 export const Botao: React.FC<
   React.ButtonHTMLAttributes<HTMLButtonElement> & { variante?: keyof typeof VARIANTES; tamanho?: keyof typeof TAMANHOS }
 > = ({ variante = 'secundario', tamanho = 'normal', className = '', type = 'button', ...resto }) => (
-  <button
-    type={type}
-    className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors ${TAMANHOS[tamanho]} ${foco} focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTES[variante]} ${className}`}
-    {...resto}
-  />
+  <button type={type} className={`${classeDoBotao(variante, tamanho)} ${className}`} {...resto} />
+);
+
+/**
+ * Janela de confirmação de uma ação que não tem volta (salvar e travar, tirar
+ * alguém...). O foco começa em "Voltar", para Enter não confirmar sem querer.
+ */
+export const JanelaDeConfirmacao: React.FC<{
+  titulo: string;
+  aberta: boolean;
+  aoFechar: () => void;
+  aoConfirmar: () => void;
+  ocupado?: boolean;
+  rotuloConfirmar: string;
+  rotuloOcupado?: string;
+  rotuloVoltar?: string;
+  variante?: 'primario' | 'perigo';
+  children: React.ReactNode;
+}> = ({
+  titulo,
+  aberta,
+  aoFechar,
+  aoConfirmar,
+  ocupado,
+  rotuloConfirmar,
+  rotuloOcupado = 'Aguarde…',
+  rotuloVoltar = 'Revisar',
+  variante = 'primario',
+  children,
+}) => (
+  <Janela titulo={titulo} aberta={aberta} onFechar={aoFechar} focoInicial="fechar">
+    <div className="space-y-4">
+      <div className={texto.corpo}>{children}</div>
+      <div className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
+        <Botao onClick={aoFechar} disabled={ocupado}>
+          {rotuloVoltar}
+        </Botao>
+        <Botao variante={variante} onClick={aoConfirmar} disabled={ocupado}>
+          {ocupado ? rotuloOcupado : rotuloConfirmar}
+        </Botao>
+      </div>
+    </div>
+  </Janela>
 );
 
 export type Mensagem = { tipo: 'sucesso' | 'erro'; texto: string } | null;

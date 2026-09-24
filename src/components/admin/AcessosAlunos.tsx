@@ -15,10 +15,11 @@ import { useState } from 'react';
 
 import { Aviso, Botao, classeCampo, classeRotulo, type Mensagem } from './Ui';
 import { espaco, selo, texto } from './designSystem';
-import type { Participante, Turma } from '../../lib/dashboard';
-import { gerenciarAcessos, ROTULO_ACESSO, type ResultadoDosAcessos, type SituacaoDoAcesso } from '../../lib/acessos';
-
-const TAMANHO_MINIMO = 8;
+import type { Participante, Turma } from '../../lib/painel';
+import { ROTULO_ACESSO, servicoAcessos, type ResultadoDosAcessos, type SituacaoDoAcesso } from '../../lib/acessos';
+import RequisitosDaSenha from '../RequisitosDaSenha';
+import { servicoSenha, TAMANHO_MINIMO_SENHA as TAMANHO_MINIMO } from '../../lib/senha';
+import { StatusProcessamento } from '../../types';
 
 const ESTILO_SELO: Record<SituacaoDoAcesso, string> = {
   'sem-acesso': selo.neutro,
@@ -40,6 +41,7 @@ const CampoSenha: React.FC<{ id: string; valor: string; aoMudar: (v: string) => 
     <input
       id={id}
       type="text"
+      aria-describedby={`${id}-requisitos`}
       autoComplete="off"
       spellCheck={false}
       minLength={TAMANHO_MINIMO}
@@ -49,9 +51,9 @@ const CampoSenha: React.FC<{ id: string; valor: string; aoMudar: (v: string) => 
       className={classeCampo}
       placeholder="Ex: Favela#2026turmaA"
     />
+    <RequisitosDaSenha senha={valor} id={`${id}-requisitos`} />
     <p className={`mt-1 ${texto.apoio}`}>
-      Mínimo de {TAMANHO_MINIMO} caracteres. Evite senhas óbvias: quem souber o login e a senha padrão entra antes do
-      aluno.
+      Evite senhas óbvias: quem souber o login e a senha padrão entra antes do aluno.
     </p>
   </div>
 );
@@ -103,20 +105,17 @@ export const AcessosDaTurma: React.FC<{
   const criar = async () => {
     setMensagem(null);
     setResultado(null);
-    if (senha.length < TAMANHO_MINIMO)
-      return setMensagem({
-        tipo: 'erro',
-        texto: `A senha padrão precisa ter pelo menos ${TAMANHO_MINIMO} caracteres.`,
-      });
+    const problema = servicoSenha.validarNova(senha, senha, 'A senha padrão');
+    if (problema) return setMensagem({ tipo: 'erro', texto: problema });
     setEnviando(true);
-    const { resultado: r, erro } = await gerenciarAcessos(
+    const { resultado: r, acessos } = await servicoAcessos.gerenciar(
       'criar',
       semAcesso.map((a) => a.id),
       senha,
     );
     setEnviando(false);
-    if (erro) return setMensagem({ tipo: 'erro', texto: erro });
-    setResultado(r!);
+    if (r.status !== StatusProcessamento.Sucesso) return setMensagem({ tipo: 'erro', texto: r.mensagem! });
+    setResultado(acessos!);
     await onConcluir();
   };
 
@@ -189,16 +188,13 @@ export const AcessoDoAluno: React.FC<{
 
   const confirmar = async () => {
     setMensagem(null);
-    if (senha.length < TAMANHO_MINIMO)
-      return setMensagem({
-        tipo: 'erro',
-        texto: `A senha padrão precisa ter pelo menos ${TAMANHO_MINIMO} caracteres.`,
-      });
+    const problema = servicoSenha.validarNova(senha, senha, 'A senha padrão');
+    if (problema) return setMensagem({ tipo: 'erro', texto: problema });
     setEnviando(true);
-    const { resultado: r, erro } = await gerenciarAcessos(acao, [aluno.id], senha);
+    const { resultado: r, acessos } = await servicoAcessos.gerenciar(acao, [aluno.id], senha);
     setEnviando(false);
-    if (erro) return setMensagem({ tipo: 'erro', texto: erro });
-    setResultado(r!);
+    if (r.status !== StatusProcessamento.Sucesso) return setMensagem({ tipo: 'erro', texto: r.mensagem! });
+    setResultado(acessos!);
     setAberto(false);
     await onConcluir();
   };

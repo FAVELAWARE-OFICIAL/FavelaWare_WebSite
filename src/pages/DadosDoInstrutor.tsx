@@ -1,24 +1,27 @@
 /**
  * ============================================
- * DADOS DO INSTRUTOR (RPA)
+ * DADOS DO INSTRUTOR (BOLSA / RPA)
  * ============================================
  *
- * Logo depois do login, o instrutor preenche os dados do documento "DADOS PARA
- * RPA" (nome completo, CPF, identidade, INSS/PIS, endereço, nascimento,
- * telefone, e-mail, estado civil, cor/raça e grau de instrução). Sem isso a
- * guarda de rota não deixa entrar em /professor.
+ * Logo depois do primeiro acesso, o instrutor preenche os dados do documento
+ * "DADOS PARA RPA" (recibo de pagamento de autônomo) usados na bolsa. Sem isso
+ * a guarda de rota não deixa entrar em /professor.
+ *
+ * A tela ocupa a janela inteira, sem rolagem: o formulário vem em 4 etapas
+ * (Identificação, Contato, Endereço e Outras informações). Cada etapa é
+ * conferida antes de avançar; no fim, tudo é conferido de novo e salvo.
  *
  * A mesma página serve para atualizar depois (o perfil tem um atalho): ela
  * abre já preenchida. Os números vão só com dígitos para o banco, que confere
  * CPF e PIS de novo (os dígitos verificadores).
  */
 import { useEffect, useRef, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 import Carregamento from '../components/admin/Carregamento';
-import { hoje as hojeLocal } from '../lib/chamada';
+import TelaDeEtapas from '../components/TelaDeEtapas';
+import { classeCampoDeEtapa, classeRotuloDeEtapa } from '../components/estilosDeAcesso';
 import {
-  carregarMeusDadosDeInstrutor,
   CORES_RACAS,
   ESTADOS_CIVIS,
   GRAUS_DE_INSTRUCAO,
@@ -27,16 +30,13 @@ import {
   mascaraPis,
   mascaraTelefone,
   nascimentoMaximo,
-  salvarMeusDadosDeInstrutor,
+  servicoDadosInstrutor,
   UFS,
   validarDados,
   type DadosInstrutor,
 } from '../lib/dadosInstrutor';
-import { supabase, carregarPerfil } from '../lib/supabase';
-
-const classeCampo =
-  'w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-favela-green-500 focus:border-transparent transition-all';
-const classeRotulo = 'block text-sm font-medium text-gray-700 mb-2';
+import { servicoSessao } from '../lib/sessao';
+import { hoje as hojeLocal } from '../utils/datas';
 
 const VAZIO: DadosInstrutor = {
   nome_completo: '',
@@ -67,6 +67,36 @@ const MASCARAS: Partial<Record<keyof DadosInstrutor, (v: string) => string>> = {
   telefone: mascaraTelefone,
 };
 
+/** As 4 etapas do formulário e os campos de cada uma (na ordem da tela) */
+const ETAPAS: { titulo: string; descricao: string; icone: string; campos: (keyof DadosInstrutor)[] }[] = [
+  {
+    titulo: 'Identificação',
+    descricao: 'Como você aparece no recibo da bolsa.',
+    icone: '🪪',
+    campos: ['nome_completo', 'cpf', 'identidade', 'pis', 'data_nascimento'],
+  },
+  {
+    titulo: 'Contato',
+    descricao: 'Como a gestão do projeto fala com você.',
+    icone: '📞',
+    campos: ['telefone', 'email', 'linkedin'],
+  },
+  {
+    titulo: 'Endereço',
+    descricao: 'Onde você mora (também vai no recibo).',
+    icone: '📍',
+    campos: ['cep', 'numero', 'logradouro', 'complemento', 'bairro', 'cidade', 'uf'],
+  },
+  {
+    titulo: 'Outras informações',
+    descricao: 'Pedidas pelo documento do RPA.',
+    icone: '📝',
+    campos: ['estado_civil', 'cor_raca', 'grau_instrucao'],
+  },
+];
+
+const etapaDoCampo = (campo: keyof DadosInstrutor) => ETAPAS.findIndex((e) => e.campos.includes(campo));
+
 type Estado =
   { tipo: 'verificando' } | { tipo: 'sem-acesso' } | { tipo: 'pronto'; usuarioId: string; jaTinha: boolean };
 
@@ -74,7 +104,12 @@ const DadosDoInstrutor: React.FC = () => {
   const navigate = useNavigate();
   const formulario = useRef<HTMLFormElement>(null);
   const [estado, setEstado] = useState<Estado>({ tipo: 'verificando' });
-  const [formData, setFormData] = useState<DadosInstrutor>(VAZIO);
+  const [campos, setCampos] = useState<DadosInstrutor>(VAZIO);
+  const [etapa, setEtapa] = useState(0);
+  // Etapa mais adiante já liberada (dá para voltar e pular até ela pelo índice)
+  const [liberadaAte, setLiberadaAte] = useState(0);
+  // Campo que recebe o foco depois de trocar de etapa (o do erro, ou o primeiro)
+  const [focar, setFocar] = useState<keyof DadosInstrutor | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [erroCarregar, setErroCarregar] = useState(false);
@@ -83,16 +118,16 @@ const DadosDoInstrutor: React.FC = () => {
   useEffect(() => {
     let ativo = true;
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      const usuario = data.session?.user;
-      const perfil = usuario ? await carregarPerfil(usuario.id) : null;
+      const logada = await servicoSessao.contaLogada();
+      const usuario = logada?.conta;
+      const perfil = logada?.perfil ?? null;
       if (!ativo) return;
       if (!usuario || perfil?.papel !== 'professor') return setEstado({ tipo: 'sem-acesso' });
       try {
-        const salvos = await carregarMeusDadosDeInstrutor(usuario.id);
+        const salvos = await servicoDadosInstrutor.carregarMeus(usuario.id);
         if (!ativo) return;
         if (salvos) {
-          setFormData({
+          setCampos({
             ...salvos,
             complemento: salvos.complemento ?? '',
             linkedin: salvos.linkedin ?? '',
@@ -101,9 +136,10 @@ const DadosDoInstrutor: React.FC = () => {
             cep: mascaraCep(salvos.cep),
             telefone: mascaraTelefone(salvos.telefone),
           });
+          setLiberadaAte(ETAPAS.length - 1); // já preenchido: todas as etapas abertas
         } else {
           // Primeira vez: aproveita o nome e o e-mail que já estão no perfil
-          setFormData((f) => ({ ...f, nome_completo: perfil.nome ?? '', email: usuario.email ?? '' }));
+          setCampos((f) => ({ ...f, nome_completo: perfil.nome ?? '', email: usuario.email ?? '' }));
         }
         setEstado({ tipo: 'pronto', usuarioId: usuario.id, jaTinha: Boolean(salvos) });
       } catch (erro) {
@@ -119,37 +155,54 @@ const DadosDoInstrutor: React.FC = () => {
     };
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Depois de trocar de etapa, leva o foco ao campo certo
+  useEffect(() => {
+    if (!focar) return;
+    formulario.current?.querySelector<HTMLElement>(`[name="${focar}"]`)?.focus();
+    setFocar(null);
+  }, [focar, etapa]);
+
+  const aoAlterarCampo = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const mascara = MASCARAS[name as keyof DadosInstrutor];
-    setFormData((anterior) => ({ ...anterior, [name]: mascara ? mascara(value) : value }));
+    setCampos((anterior) => ({ ...anterior, [name]: mascara ? mascara(value) : value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const irPara = (proxima: number, campo?: keyof DadosInstrutor) => {
+    setEtapa(proxima);
+    setLiberadaAte((atual) => Math.max(atual, proxima));
+    setFocar(campo ?? ETAPAS[proxima].campos[0]);
+  };
+
+  /** Mostra o problema e leva até o campo (trocando de etapa, se preciso) */
+  const apontar = (problema: { campo: keyof DadosInstrutor; texto: string }) => {
+    setMensagem(problema.texto);
+    irPara(etapaDoCampo(problema.campo), problema.campo);
+  };
+
+  const aoEnviar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (estado.tipo !== 'pronto') return;
     setMensagem(null);
 
-    const problema = validarDados(formData, hojeLocal());
-    if (problema) {
-      setMensagem(problema.texto);
-      // Leva a pessoa até o campo com problema
-      formulario.current?.querySelector<HTMLElement>(`[name="${problema.campo}"]`)?.focus();
-      return;
+    // Etapas do meio: confere só os campos desta etapa e avança
+    if (etapa < ETAPAS.length - 1) {
+      const problema = validarDados(campos, hojeLocal(), ETAPAS[etapa].campos);
+      if (problema) return apontar(problema);
+      return irPara(etapa + 1);
     }
+
+    // Última etapa: confere tudo (uma etapa pode ter sido pulada pelo índice)
+    const problema = validarDados(campos, hojeLocal());
+    if (problema) return apontar(problema);
 
     setSalvando(true);
     try {
-      await salvarMeusDadosDeInstrutor(estado.usuarioId, formData);
+      await servicoDadosInstrutor.salvarMeus(estado.usuarioId, campos);
       navigate(estado.jaTinha ? '/professor/perfil' : '/professor', { replace: true });
     } catch (erro) {
-      console.error('[dados-instrutor] falha ao salvar', (erro as { code?: string })?.code);
       setSalvando(false);
-      setMensagem(
-        (erro as { code?: string })?.code === '23514'
-          ? 'Algum dado não passou na conferência. Revise CPF, INSS/PIS e data de nascimento.'
-          : 'Não foi possível salvar agora. Tente de novo em instantes.',
-      );
+      setMensagem(servicoDadosInstrutor.mensagemDoErroAoSalvar(erro));
     }
   };
 
@@ -163,21 +216,23 @@ const DadosDoInstrutor: React.FC = () => {
   if (estado.tipo === 'sem-acesso') return <Navigate to="/login" replace />;
 
   const hoje = hojeLocal();
+
   const campo = (
     nome: keyof DadosInstrutor,
     rotulo: string,
+    classe: string,
     extras: React.InputHTMLAttributes<HTMLInputElement> = {},
   ) => (
-    <div>
-      <label htmlFor={nome} className={classeRotulo}>
+    <div className={classe}>
+      <label htmlFor={nome} className={classeRotuloDeEtapa}>
         {rotulo}
       </label>
       <input
         id={nome}
         name={nome}
-        value={formData[nome] ?? ''}
-        onChange={handleInputChange}
-        className={classeCampo}
+        value={campos[nome] ?? ''}
+        onChange={aoAlterarCampo}
+        className={classeCampoDeEtapa}
         {...extras}
       />
     </div>
@@ -185,20 +240,21 @@ const DadosDoInstrutor: React.FC = () => {
   const lista = (
     nome: keyof DadosInstrutor,
     rotulo: string,
+    classe: string,
     opcoes: Record<string, string>,
     extras: { autoComplete?: string } = {},
   ) => (
-    <div>
-      <label htmlFor={nome} className={classeRotulo}>
+    <div className={classe}>
+      <label htmlFor={nome} className={classeRotuloDeEtapa}>
         {rotulo}
       </label>
       <select
         id={nome}
         name={nome}
-        value={formData[nome] ?? ''}
-        onChange={handleInputChange}
+        value={campos[nome] ?? ''}
+        onChange={aoAlterarCampo}
         required
-        className={classeCampo}
+        className={classeCampoDeEtapa}
         {...extras}
       >
         <option value="" disabled>
@@ -213,151 +269,137 @@ const DadosDoInstrutor: React.FC = () => {
     </div>
   );
 
+  // Campos de cada etapa: grade de 2 colunas no celular e 6 em tela grande
+  const camposDaEtapa = [
+    <>
+      {campo('nome_completo', 'Nome completo *', 'col-span-2 lg:col-span-6', {
+        autoComplete: 'name',
+        maxLength: 150,
+        required: true,
+      })}
+      {campo('cpf', 'CPF *', 'col-span-1 lg:col-span-3', {
+        inputMode: 'numeric',
+        placeholder: '000.000.000-00',
+        required: true,
+        autoComplete: 'off',
+      })}
+      {campo('identidade', 'Identidade (RG) *', 'col-span-1 lg:col-span-3', {
+        placeholder: 'Ex: MG-00.000.000',
+        maxLength: 30,
+        required: true,
+        autoComplete: 'off',
+      })}
+      {campo('pis', 'INSS/PIS *', 'col-span-1 lg:col-span-3', {
+        inputMode: 'numeric',
+        placeholder: '000.00000.00-0',
+        required: true,
+        autoComplete: 'off',
+      })}
+      {campo('data_nascimento', 'Nascimento *', 'col-span-1 lg:col-span-3', {
+        type: 'date',
+        min: '1900-01-01',
+        max: nascimentoMaximo(hoje),
+        required: true,
+        autoComplete: 'bday',
+      })}
+    </>,
+    <>
+      {campo('telefone', 'Telefone (com DDD) *', 'col-span-2 lg:col-span-3', {
+        type: 'tel',
+        inputMode: 'tel',
+        placeholder: '(31) 90000-0000',
+        required: true,
+        autoComplete: 'tel',
+      })}
+      {campo('email', 'E-mail *', 'col-span-2 lg:col-span-3', {
+        type: 'email',
+        maxLength: 254,
+        required: true,
+        autoComplete: 'email',
+      })}
+      {campo('linkedin', 'LinkedIn (opcional)', 'col-span-2 lg:col-span-6', {
+        type: 'url',
+        inputMode: 'url',
+        maxLength: 200,
+        placeholder: 'linkedin.com/in/seu-nome',
+        autoComplete: 'url',
+      })}
+    </>,
+    <>
+      {campo('cep', 'CEP *', 'col-span-1 lg:col-span-2', {
+        inputMode: 'numeric',
+        placeholder: '00000-000',
+        required: true,
+        autoComplete: 'postal-code',
+      })}
+      {campo('numero', 'Número *', 'col-span-1 lg:col-span-1', {
+        maxLength: 20,
+        required: true,
+        placeholder: '120 ou s/n',
+      })}
+      {campo('logradouro', 'Rua / avenida *', 'col-span-2 lg:col-span-3', {
+        maxLength: 150,
+        required: true,
+        autoComplete: 'address-line1',
+      })}
+      {campo('complemento', 'Complemento', 'col-span-2 lg:col-span-2', {
+        maxLength: 80,
+        placeholder: 'Ex: apto 201',
+        autoComplete: 'address-line2',
+      })}
+      {campo('bairro', 'Bairro *', 'col-span-1 lg:col-span-2', { maxLength: 80, required: true })}
+      {campo('cidade', 'Cidade *', 'col-span-1 lg:col-span-2', {
+        maxLength: 80,
+        required: true,
+        autoComplete: 'address-level2',
+      })}
+      {lista('uf', 'Estado (UF) *', 'col-span-1 lg:col-span-2', Object.fromEntries(UFS.map((uf) => [uf, uf])), {
+        autoComplete: 'address-level1',
+      })}
+    </>,
+    <>
+      {lista('estado_civil', 'Estado civil *', 'col-span-2 lg:col-span-2', ESTADOS_CIVIS)}
+      {lista('cor_raca', 'Cor/raça *', 'col-span-2 lg:col-span-2', CORES_RACAS)}
+      {lista('grau_instrucao', 'Grau de instrução *', 'col-span-2 lg:col-span-2', GRAUS_DE_INSTRUCAO)}
+      <p className="col-span-2 text-sm text-gray-500 lg:col-span-6">
+        Cor/raça segue a classificação do IBGE e pode ficar como “Prefiro não declarar”.
+      </p>
+    </>,
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white px-4 py-12">
-      <div className="mx-auto w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl sm:p-8 md:p-10">
-        <img src="/imgs/logo/logo.png" alt="Logo FavelaWare" className="mx-auto mb-6 w-40 object-contain" />
-
-        <h1 className="mb-2 text-3xl font-bold text-gray-900">
-          {estado.jaTinha ? 'Meus dados para o RPA' : 'Complete seus dados'}
-        </h1>
-        <p className="mb-6 text-gray-600">
-          {estado.jaTinha
-            ? 'Confira e atualize o que mudou.'
-            : 'Antes de entrar na área do instrutor, preencha os dados usados no RPA (recibo de pagamento de autônomo).'}{' '}
-          Eles servem só para emitir o seu RPA e cumprir as obrigações previdenciárias, e só você e a gestão do projeto
-          veem estas informações.
-        </p>
-
-        {erroCarregar && (
-          <div role="alert" className="mb-6 rounded-lg border border-red-300 bg-red-100 p-4 text-red-800">
-            Não foi possível carregar os dados já salvos. Recarregue a página antes de continuar.
-          </div>
-        )}
-        {mensagem && (
-          <div role="alert" className="mb-6 rounded-lg border border-red-300 bg-red-100 p-4 text-red-800">
-            {mensagem}
-          </div>
-        )}
-
-        <form ref={formulario} onSubmit={handleSubmit} noValidate className="space-y-8">
-          <fieldset className="space-y-6">
-            <legend className="mb-4 text-lg font-bold text-gray-900">Identificação</legend>
-            {campo('nome_completo', 'Nome completo *', { autoComplete: 'name', maxLength: 150, required: true })}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {campo('cpf', 'CPF *', {
-                inputMode: 'numeric',
-                placeholder: '000.000.000-00',
-                required: true,
-                autoComplete: 'off',
-              })}
-              {campo('identidade', 'Identidade (RG) *', {
-                placeholder: 'Ex: MG-00.000.000',
-                maxLength: 30,
-                required: true,
-                autoComplete: 'off',
-              })}
-              {campo('pis', 'INSS/PIS *', {
-                inputMode: 'numeric',
-                placeholder: '000.00000.00-0',
-                required: true,
-                autoComplete: 'off',
-              })}
-              {campo('data_nascimento', 'Data de nascimento *', {
-                type: 'date',
-                min: '1900-01-01',
-                max: nascimentoMaximo(hoje),
-                required: true,
-                autoComplete: 'bday',
-              })}
-            </div>
-          </fieldset>
-
-          <fieldset className="space-y-6">
-            <legend className="mb-4 text-lg font-bold text-gray-900">Contato</legend>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {campo('telefone', 'Telefone (com DDD) *', {
-                type: 'tel',
-                inputMode: 'tel',
-                placeholder: '(31) 90000-0000',
-                required: true,
-                autoComplete: 'tel',
-              })}
-              {campo('email', 'E-mail *', { type: 'email', maxLength: 254, required: true, autoComplete: 'email' })}
-              <div className="md:col-span-2">
-                {campo('linkedin', 'LinkedIn (opcional)', {
-                  type: 'url',
-                  inputMode: 'url',
-                  maxLength: 200,
-                  placeholder: 'linkedin.com/in/seu-nome',
-                  autoComplete: 'url',
-                })}
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset className="space-y-6">
-            <legend className="mb-4 text-lg font-bold text-gray-900">Endereço</legend>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              {campo('cep', 'CEP *', {
-                inputMode: 'numeric',
-                placeholder: '00000-000',
-                required: true,
-                autoComplete: 'postal-code',
-              })}
-              <div className="md:col-span-2">
-                {campo('logradouro', 'Rua / avenida *', {
-                  maxLength: 150,
-                  required: true,
-                  autoComplete: 'address-line1',
-                })}
-              </div>
-              {campo('numero', 'Número *', { maxLength: 20, required: true, placeholder: 'Ex: 120 ou s/n' })}
-              <div className="md:col-span-2">
-                {campo('complemento', 'Complemento', {
-                  maxLength: 80,
-                  placeholder: 'Ex: apto 201',
-                  autoComplete: 'address-line2',
-                })}
-              </div>
-              {campo('bairro', 'Bairro *', { maxLength: 80, required: true })}
-              {campo('cidade', 'Cidade *', { maxLength: 80, required: true, autoComplete: 'address-level2' })}
-              {lista('uf', 'Estado (UF) *', Object.fromEntries(UFS.map((uf) => [uf, uf])), {
-                autoComplete: 'address-level1',
-              })}
-            </div>
-          </fieldset>
-
-          <fieldset className="space-y-6">
-            <legend className="mb-4 text-lg font-bold text-gray-900">Outras informações</legend>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              {lista('estado_civil', 'Estado civil *', ESTADOS_CIVIS)}
-              {lista('cor_raca', 'Cor/raça *', CORES_RACAS)}
-              {lista('grau_instrucao', 'Grau de instrução *', GRAUS_DE_INSTRUCAO)}
-            </div>
-          </fieldset>
-
-          <button
-            type="submit"
-            disabled={salvando || erroCarregar}
-            className={`w-full rounded-lg px-6 py-4 text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-favela-green-500 focus-visible:ring-offset-2 ${
-              salvando || erroCarregar
-                ? 'cursor-not-allowed bg-gray-400'
-                : 'bg-gradient-to-r from-favela-green-600 to-favela-blue-600 hover:shadow-xl'
-            }`}
-          >
-            {salvando ? 'Salvando...' : estado.jaTinha ? 'SALVAR ALTERAÇÕES' : 'SALVAR E ENTRAR'}
-          </button>
-          {estado.jaTinha && (
-            <p className="text-center">
-              <Link to="/professor/perfil" className="text-sm font-medium text-gray-600 underline hover:text-gray-900">
-                Voltar sem salvar
-              </Link>
-            </p>
-          )}
-        </form>
-      </div>
-    </div>
+    <TelaDeEtapas
+      titulo={estado.jaTinha ? 'MEUS DADOS DA BOLSA' : 'DADOS DA BOLSA'}
+      tituloCurto={estado.jaTinha ? 'Meus dados da bolsa' : 'Dados da bolsa'}
+      descricao={
+        estado.jaTinha
+          ? 'Confira e atualize o que mudou.'
+          : 'Antes de entrar na área do instrutor, preencha os dados usados no RPA (recibo de pagamento de autônomo).'
+      }
+      privacidade="Estes dados servem só para emitir o seu RPA e cumprir as obrigações previdenciárias. Só você e a gestão do projeto veem estas informações."
+      privacidadeCurta="Usados só para emitir o seu RPA. Só você e a gestão do projeto veem estes dados."
+      etapas={ETAPAS}
+      etapa={etapa}
+      liberadaAte={liberadaAte}
+      concluida={(i) => !validarDados(campos, hoje, ETAPAS[i].campos)}
+      aoIrPara={(i) => {
+        setMensagem(null);
+        irPara(i);
+      }}
+      voltar={estado.jaTinha ? { para: '/professor/perfil', rotulo: 'Voltar sem salvar' } : undefined}
+      erro={
+        erroCarregar
+          ? 'Não foi possível carregar os dados já salvos. Recarregue a página antes de continuar.'
+          : mensagem
+      }
+      ocupado={salvando}
+      bloqueado={erroCarregar}
+      rotuloFinal={estado.jaTinha ? 'SALVAR ALTERAÇÕES' : 'SALVAR E ENTRAR'}
+      formulario={formulario}
+      aoEnviar={aoEnviar}
+    >
+      {camposDaEtapa[etapa]}
+    </TelaDeEtapas>
   );
 };
 

@@ -1,8 +1,33 @@
-# Lib
+# Lib: serviços
 
-Esta pasta contém bibliotecas, configurações e utilitários de terceiros.
+Camada de serviços (regras 1, 6 e 8 de `docs/boas-praticas.md`). Cada arquivo cuida de um assunto e
+exporta uma classe e a instância que as páginas usam, por exemplo `servicoPonto.registrar(...)`.
+Tipos, constantes e funções puras do assunto ficam no mesmo arquivo, fora da classe.
 
-## Exemplos:
-- Configurações de bibliotecas
-- Wrappers de APIs
-- Instâncias de clientes HTTP
+| Arquivo              | Serviço                  | Assunto                                                                              |
+| -------------------- | ------------------------ | ------------------------------------------------------------------------------------ |
+| `supabase.ts`        | —                        | cliente Supabase único (infraestrutura)                                              |
+| `banco.ts`           | —                        | erros do banco e das Edge Functions (status padrão), link de download, próxima ordem |
+| `cache.ts`           | `servicoCache`           | cache das áreas restritas                                                            |
+| `sessao.ts`          | `servicoSessao`          | entrar, sair, perfil e área de cada papel                                            |
+| `senha.ts`           | `servicoSenha`           | troca de senha, primeiro acesso e convite                                            |
+| `perfil.ts`          | `servicoPerfil`          | tela "Meu perfil"                                                                    |
+| `edicoes.ts`         | `servicoEdicoes`         | edições do curso                                                                     |
+| `turmas.ts`          | `servicoTurmas`          | turmas e cadastro                                                                    |
+| `alunos.ts`          | `servicoAlunos`          | cadastro de alunos                                                                   |
+| `chamada.ts`         | `servicoChamada`         | chamada do professor e correção do gestor                                            |
+| `ponto.ts`           | `servicoPonto`           | ponto dos instrutores                                                                |
+| `equipe.ts`          | `servicoEquipe`          | instrutores e vínculo com turmas                                                     |
+| `acessos.ts`         | `servicoAcessos`         | login dos alunos (Edge Function)                                                     |
+| `solicitacoes.ts`    | `servicoSolicitacoes`    | pedidos dos alunos                                                                   |
+| `material.ts`        | `servicoMaterial`        | trilhas e links do portal                                                            |
+| `atividades.ts`      | `servicoAtividades`      | atividades e correção                                                                |
+| `entregas.ts`        | `servicoEntregas`        | regras e envio das entregas                                                          |
+| `painel.ts`          | `servicoPainel`          | dados e contas do painel do gestor                                                   |
+| `dadosInstrutor.ts`  | `servicoDadosInstrutor`  | dados do RPA                                                                         |
+| `sitePublico.ts`     | `servicoSitePublico`     | turmas, fotos e equipe do banco no site público                                      |
+| `fotoPadronizada.ts` | `servicoFotoPadronizada` | foto no padrão do site (fundo tirado, círculo verde)                                 |
+| `atestados.ts`       | `servicoAtestados`       | justificativa de falta e atestado no Drive                                           |
+
+Método de serviço passado como callback perde o `this`: use sempre uma arrow,
+`useDadosEmCache(CHAVE, () => servicoX.carregar())`.

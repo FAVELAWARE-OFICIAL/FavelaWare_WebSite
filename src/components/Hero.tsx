@@ -18,6 +18,8 @@ import { motion } from 'framer-motion';
 
 // Link do React Router que aceita animações do Framer Motion
 import { MotionLink } from './MotionLink';
+import { estatisticasDoProjeto } from '../data/sobre';
+import { FUNDO_DA_MARCA, LOGO } from '../data/imagens';
 
 const Hero = () => {
   return (
@@ -27,7 +29,7 @@ const Hero = () => {
       style={{
         // Banner oficial do FavelaWare (foto da comunidade + código binário).
         // Sem blend com gradiente: o blend "overlay" lavava a imagem e sumia com a textura.
-        backgroundImage: "url('/imgs/backgrounds/fundo.webp')",
+        backgroundImage: `url('${FUNDO_DA_MARCA}')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -78,7 +80,7 @@ const Hero = () => {
             >
               {/* Logo do FavelaWare */}
               <motion.img
-                src="/imgs/logo/logo.png"
+                src={LOGO}
                 alt="FavelaWare Logo"
                 className="w-80 h-80 object-contain"
                 initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
@@ -155,11 +157,7 @@ const Hero = () => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.9 }}
             >
-              {[
-                { number: '150+', label: 'Alunos' },
-                { number: '5+', label: 'Turmas' },
-                { number: '3', label: 'Edições' },
-              ].map((stat, index) => (
+              {estatisticasDoProjeto.map((estatistica, index) => (
                 <motion.div
                   key={index}
                   className="text-center p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20"
@@ -168,8 +166,8 @@ const Hero = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1 + index * 0.1 }}
                 >
-                  <div className="text-3xl md:text-4xl font-black text-white">{stat.number}</div>
-                  <div className="text-sm md:text-base text-white/80 font-semibold">{stat.label}</div>
+                  <div className="text-3xl md:text-4xl font-black text-white">{estatistica.numero}</div>
+                  <div className="text-sm md:text-base text-white/80 font-semibold">{estatistica.rotulo}</div>
                 </motion.div>
               ))}
             </motion.div>

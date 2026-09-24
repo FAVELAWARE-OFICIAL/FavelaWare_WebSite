@@ -100,14 +100,18 @@ A `RotaProtegida` só organiza a navegação. Quem protege os dados são as regr
 
 ```
 src/
-├── components/        # Navbar, Footer, Hero, Gallery, RotaProtegida e admin/
-├── pages/             # páginas públicas + admin/, professor/, aluno/, equipe/
-├── lib/               # acesso ao Supabase por assunto (chamada, ponto, turmas...)
-├── data/              # conteúdo estático: trilhas, turmas, hall da fama, contato
+├── pages/             # controladores: páginas públicas + admin/, professor/, aluno/, equipe/
+├── components/        # interface reutilizável (admin/, atividades/, trilhas/)
+├── lib/               # serviços por assunto: classe + instância (servicoSessao, servicoPonto...)
+├── hooks/             # hooks que ligam a interface aos serviços
+├── utils/             # funções usadas por 2+ módulos (datas, texto, preferências)
+├── data/              # conteúdo do site: trilhas, turmas, galeria, parceiros, sobre
+├── config.ts          # configuração (.env.local e nomes fixos do Supabase)
+├── types.ts           # status padronizado e tipos compartilhados
 └── App.tsx            # rotas
 supabase/
 ├── migrations/        # schema, RLS e funções
-├── functions/         # acessos-alunos, convidar-professor, entregas-drive
+├── functions/         # acessos-alunos, convidar-professor, entregas-drive (+ _shared)
 └── testes/            # testes das regras RLS
 google-apps-script/    # ponte portal → Google Drive
 scripts/               # importação de planilhas e otimização de imagens
@@ -139,15 +143,21 @@ Regras de UI na skill `.claude/skills/favelaware-padrao-visual/`.
 | `npm run lint` / `lint:fix` | ESLint |
 | `npm run typecheck` | TypeScript sem emitir arquivos |
 | `npm run format` / `format:check` | Prettier em `src/` |
+| `npm test` | testes (Vitest) |
 
 ## Portal
 
 | Área | Rota | Papel | O que tem |
 | --- | --- | --- | --- |
-| Gestor | `/dashboard` | `gestor` | visão geral, alunos, chamada, turmas, equipe, solicitações, ponto dos instrutores, trilhas |
-| Instrutor | `/professor` | `professor` | chamada, ponto, trilhas |
-| Aluno | `/aluno` | `aluno` | trilhas e atividades |
+| Gestor | `/dashboard` | `gestor` | visão geral, alunos, chamada, turmas, equipe, membros, solicitações, avaliações, ponto dos instrutores, trilhas |
+| Parceiro | `/dashboard` | `parceiro` | só leitura: visão geral, alunos e chamada |
+| Instrutor | `/professor` | `professor` | chamada, ponto, trilhas e, no prazo liberado, a avaliação final da turma |
+| Banca avaliadora | `/banca` | `banca` | só a avaliação do dia da banca (entra pelo link do e-mail, sem senha) |
+| Aluno | `/aluno` | `aluno` | trilhas, atividades e solicitações |
 | Todos | `/perfil` de cada área | qualquer | dados pessoais |
+
+Parceiro novo: convite pelo painel do Supabase (Authentication > Invite user) e, no SQL Editor,
+`update public.perfis set papel = 'parceiro', nome = '...', email = '...' where id = (select id from auth.users where email = '...');`.
 
 ```mermaid
 flowchart TD
@@ -164,7 +174,7 @@ flowchart TD
 | Edge Function | Quem chama | Faz |
 | --- | --- | --- |
 | `acessos-alunos` | gestor | cria ou redefine o acesso dos alunos |
-| `convidar-professor` | gestor | convida o instrutor por e-mail e liga às turmas |
+| `convidar-professor` | gestor | convida o instrutor (e liga às turmas) ou o membro da banca por e-mail |
 | `entregas-drive` | aluno e instrutor | envia e lê entregas no Drive da ONG |
 
 ## Banco de dados
@@ -173,13 +183,15 @@ Todas as tabelas com RLS, testadas em `supabase/testes/`.
 
 | Tabelas | Guardam |
 | --- | --- |
-| `perfis` | identidade e papel |
+| `perfis` | identidade, papel, redes, vínculo e cargo |
+| `hall_da_fama` | retrato da equipe de cada edição encerrada (lido só por `hall_da_fama_do_site`) |
+| `avaliacoes_instrutor`, `membros_banca`, `notas_banca` | avaliação final da edição e banca avaliadora |
 | `edicoes`, `turmas`, `participantes`, `duplas` | edições, turmas e alunos |
-| `aulas`, `presencas`, `mudancas_horario` | cronograma e chamada |
+| `aulas`, `presencas`, `mudancas_horario` | cronograma e chamada (`mudancas_horario` é histórico de 2022, sem tela) |
 | `professores_turmas`, `pontos_professores`, `dados_instrutores` | instrutores, ponto e dados do RPA |
 | `trilhas`, `conteudos`, `conteudos_turma`, `materiais` | trilhas e material |
 | `atividades`, `tentativas`, `arquivos_entrega` | atividades e entregas |
-| `solicitacoes` | pedidos para o gestor |
+| `solicitacoes`, `mensagens_solicitacao` | pedidos dos alunos e a conversa com a coordenação |
 
 ## Git-flow
 
@@ -199,7 +211,7 @@ flowchart LR
 | Peça | O que faz |
 | --- | --- |
 | `validate-merge-source` | `main` só aceita `release/*` ou `hotfix/*`; título do PR em Conventional Commits |
-| `ci` | gitleaks no histórico, ESLint, TypeScript, Prettier e build |
+| `ci` | gitleaks no histórico, ESLint, TypeScript, Prettier, testes, tipos das Edge Functions e build |
 | `Dependency audit` | reprova vulnerabilidade alta ou crítica |
 | `versionamento` | bump da versão no PR de release e tag + release no merge |
 | `back-merge-main-develop` | devolve a `main` para a `develop` depois de todo merge |

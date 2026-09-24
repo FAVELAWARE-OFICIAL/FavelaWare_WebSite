@@ -14,68 +14,62 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Avatar from '../../components/admin/Avatar';
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
-import { Carregando, gravarPreferencia, lerPreferencia, RodapeFixo } from '../../components/admin/Moldura';
-import { Botao, Cartao, Vazio } from '../../components/admin/Ui';
+import { Carregando, RodapeFixo } from '../../components/admin/Moldura';
+import { Aviso, Botao, Cartao, Vazio } from '../../components/admin/Ui';
 import Janela from '../../components/admin/Janela';
+import JanelaDeJustificativa from '../../components/admin/JanelaDeJustificativa';
+import type { Justificativa } from '../../lib/atestados';
 import {
   aulaDoDia,
-  carregarAlunos,
-  carregarAulas,
-  carregarMarcacoes,
-  carregarMinhasTurmas,
-  hoje,
-  salvarChamada,
+  OPCOES_CHAMADA,
+  servicoChamada,
   type AlunoDaChamada,
   type AulaRegistrada,
+  type JustificativasDaChamada,
   type Marcacao,
-  type TurmaDoProfessor,
 } from '../../lib/chamada';
-import { formatarData } from '../../lib/dashboard';
+import { servicoTurmas, type TurmaComEdicao } from '../../lib/turmas';
+import { formatarData, hoje } from '../../utils/datas';
+import { gravarPreferencia, lerPreferencia, PREFERENCIA_TURMA_DO_PROFESSOR } from '../../utils/preferencias';
 import { campo, foco, texto } from '../../components/admin/designSystem';
-
-// As três opções da chamada: letra no botão, nome completo para leitor de tela
-const OPCOES: { valor: Marcacao; letra: string; rotulo: string; ativo: string }[] = [
-  {
-    valor: 'presente',
-    letra: 'P',
-    rotulo: 'Presente',
-    ativo: 'bg-favela-green-500 border-favela-green-500 text-[#2d2a5f]',
-  },
-  { valor: 'ausente', letra: 'A', rotulo: 'Ausente', ativo: 'bg-red-600 border-red-600 text-white' },
-  {
-    valor: 'justificada',
-    letra: 'J',
-    rotulo: 'Falta justificada',
-    ativo: 'bg-amber-400 border-amber-400 text-gray-900',
-  },
-];
 
 type Marcacoes = Record<number, Marcacao | undefined>;
 
 const mesmasMarcacoes = (a: Marcacoes, b: Marcacoes, alunos: AlunoDaChamada[]) =>
   alunos.every((aluno) => a[aluno.id] === b[aluno.id]);
 
+const mesmaJustificativa = (a?: Justificativa, b?: Justificativa) =>
+  (a?.texto ?? '') === (b?.texto ?? '') && (a?.atestadoId ?? null) === (b?.atestadoId ?? null);
+
 const FazerChamada: React.FC = () => {
   // ============================================
   // ESTADOS
   // ============================================
-  const [turmas, setTurmas] = useState<TurmaDoProfessor[] | null>(null);
+  const [turmas, setTurmas] = useState<TurmaComEdicao[] | null>(null);
   const [turmaId, setTurmaId] = useState<number | null>(null);
   const [data, setData] = useState(hoje());
   const [alunos, setAlunos] = useState<AlunoDaChamada[]>([]);
   const [aulas, setAulas] = useState<AulaRegistrada[]>([]);
   const [marcacoes, setMarcacoes] = useState<Marcacoes>({}); // o que está na tela
   const [salvas, setSalvas] = useState<Marcacoes>({}); // o que está no banco
+  // Justificativa (e atestado) de cada J: na tela e no banco
+  const [justificativas, setJustificativas] = useState<JustificativasDaChamada>({});
+  const [justificativasSalvas, setJustificativasSalvas] = useState<JustificativasDaChamada>({});
+  // Aluno cuja falta justificada está sendo descrita (janela aberta)
+  const [justificando, setJustificando] = useState<AlunoDaChamada | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
-
-  // Turmas do professor (o banco só devolve as dele); abre a última usada
+  // Turmas do professor (o banco só devolve as dele), sem as de edição encerrada
+  // (acabou: o professor não precisa mais delas; o histórico fica com o gestor).
+  // Abre a última usada.
   useEffect(() => {
-    carregarMinhasTurmas()
-      .then((lista) => {
+    servicoTurmas
+      .carregarComEdicao()
+      .then((todas) => {
+        const lista = todas.filter((t) => !t.edicaoEncerrada);
         setTurmas(lista);
-        const lembrada = Number(lerPreferencia('professor:turma'));
+        const lembrada = Number(lerPreferencia(PREFERENCIA_TURMA_DO_PROFESSOR));
         setTurmaId((lista.find((t) => t.id === lembrada) ?? lista[0])?.id ?? null);
         if (!lista.length) setCarregando(false);
       })
@@ -91,8 +85,8 @@ const FazerChamada: React.FC = () => {
     if (turmaId === null) return;
     let ativo = true;
     setCarregando(true);
-    gravarPreferencia('professor:turma', String(turmaId));
-    Promise.all([carregarAlunos(turmaId), carregarAulas(turmaId)])
+    gravarPreferencia(PREFERENCIA_TURMA_DO_PROFESSOR, String(turmaId));
+    Promise.all([servicoChamada.carregarAlunos(turmaId), servicoChamada.carregarAulas(turmaId)])
       .then(([listaAlunos, listaAulas]) => {
         if (!ativo) return;
         setAlunos(listaAlunos);
@@ -113,13 +107,18 @@ const FazerChamada: React.FC = () => {
     if (!aulaAtualId) {
       setMarcacoes({});
       setSalvas({});
+      setJustificativas({});
+      setJustificativasSalvas({});
       return;
     }
-    carregarMarcacoes(aulaAtualId)
-      .then((m) => {
+    servicoChamada
+      .carregarMarcacoes(aulaAtualId)
+      .then(({ marcacoes: salvasNoBanco, justificativas: justificativasNoBanco }) => {
         if (!ativo) return;
-        setMarcacoes(m);
-        setSalvas(m);
+        setMarcacoes(salvasNoBanco);
+        setSalvas(salvasNoBanco);
+        setJustificativas(justificativasNoBanco);
+        setJustificativasSalvas(justificativasNoBanco);
       })
       .catch(() => ativo && setMensagem({ tipo: 'erro', texto: 'Não foi possível abrir a chamada deste dia.' }));
     return () => {
@@ -146,7 +145,11 @@ const FazerChamada: React.FC = () => {
     setTimeout(() => document.getElementById('data')?.focus(), 50);
   };
 
-  const alterado = !mesmasMarcacoes(marcacoes, salvas, alunos);
+  const alterado =
+    !mesmasMarcacoes(marcacoes, salvas, alunos) ||
+    alunos.some(
+      (a) => marcacoes[a.id] === 'justificada' && !mesmaJustificativa(justificativas[a.id], justificativasSalvas[a.id]),
+    );
   // Carregamento na hora (nunca tela em branco) e pintura sempre completa
   const mostrarCarregando = useCarregamentoCompleto(turmas === null || carregando, 0);
 
@@ -172,6 +175,8 @@ const FazerChamada: React.FC = () => {
     setMensagem(null);
     setMarcacoes({});
     setSalvas({});
+    setJustificativas({});
+    setJustificativasSalvas({});
     setTurmaId(id);
   };
 
@@ -181,10 +186,20 @@ const FazerChamada: React.FC = () => {
     setData(novaData);
   };
 
-  const marcar = (alunoId: number, valor: Marcacao) => {
+  const marcar = (aluno: AlunoDaChamada, valor: Marcacao) => {
     setMensagem(null);
-    setMarcacoes((atual) => ({ ...atual, [alunoId]: atual[alunoId] === valor ? undefined : valor }));
+    // J pede a justificativa antes de marcar (a janela marca ao confirmar)
+    if (valor === 'justificada' && marcacoes[aluno.id] !== 'justificada') return setJustificando(aluno);
+    setMarcacoes((atual) => ({ ...atual, [aluno.id]: atual[aluno.id] === valor ? undefined : valor }));
   };
+
+  const confirmarJustificativa = (justificativa: Justificativa) => {
+    if (!justificando) return;
+    setMarcacoes((atual) => ({ ...atual, [justificando.id]: 'justificada' }));
+    setJustificativas((atual) => ({ ...atual, [justificando.id]: justificativa }));
+    setJustificando(null);
+  };
+  const fecharJustificativa = useCallback(() => setJustificando(null), []);
 
   const marcarTodos = (valor: Marcacao | undefined) => {
     setMensagem(null);
@@ -196,10 +211,11 @@ const FazerChamada: React.FC = () => {
     setSalvando(true);
     setMensagem(null);
     try {
-      await salvarChamada(turmaId, data, alunos, marcacoes);
+      await servicoChamada.salvar(turmaId, data, alunos, marcacoes, justificativas);
       jaAvisados.current.add(`${turmaId}:${data}`); // acabou de salvar: não avisa "já tem chamada"
-      setAulas(await carregarAulas(turmaId)); // o dia pode ter virado aula nova
+      setAulas(await servicoChamada.carregarAulas(turmaId)); // o dia pode ter virado aula nova
       setSalvas(marcacoes);
+      setJustificativasSalvas(justificativas);
       setMensagem({ tipo: 'sucesso', texto: `Chamada de ${formatarData(data)} salva.` });
     } catch {
       setMensagem({ tipo: 'erro', texto: 'Não foi possível salvar a chamada. Verifique a conexão e tente de novo.' });
@@ -217,8 +233,6 @@ const FazerChamada: React.FC = () => {
     return <Vazio>Você ainda não está vinculado a nenhuma turma. Peça ao gestor para liberar suas turmas.</Vazio>;
   }
 
-  const classeCampo = campo;
-
   return (
     <div>
       {/* ============ TURMA E DIA ============ */}
@@ -232,7 +246,7 @@ const FazerChamada: React.FC = () => {
               id="turma"
               value={turmaId ?? ''}
               onChange={(e) => trocarTurma(Number(e.target.value))}
-              className={classeCampo}
+              className={campo}
             >
               {turmas.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -251,7 +265,7 @@ const FazerChamada: React.FC = () => {
               value={data}
               max={hoje()}
               onChange={(e) => trocarData(e.target.value)}
-              className={classeCampo}
+              className={campo}
             />
           </div>
         </div>
@@ -281,18 +295,7 @@ const FazerChamada: React.FC = () => {
         )}
       </Cartao>
 
-      {mensagem && (
-        <div
-          role={mensagem.tipo === 'erro' ? 'alert' : 'status'}
-          className={`mb-6 rounded-lg border p-4 text-sm ${
-            mensagem.tipo === 'sucesso'
-              ? 'border-green-300 bg-green-50 text-green-800'
-              : 'border-red-300 bg-red-50 text-red-800'
-          }`}
-        >
-          {mensagem.texto}
-        </div>
-      )}
+      <Aviso mensagem={mensagem} />
 
       {mostrarCarregando || carregando ? (
         <Carregando texto="Carregando alunos" />
@@ -320,23 +323,35 @@ const FazerChamada: React.FC = () => {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-gray-900">{aluno.nome}</p>
                   {aluno.login && <p className={`truncate ${texto.apoio}`}>{aluno.login}</p>}
+                  {marcacoes[aluno.id] === 'justificada' && (
+                    <button
+                      type="button"
+                      onClick={() => setJustificando(aluno)}
+                      className={`mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs text-amber-900 ring-1 ring-amber-200 hover:bg-amber-100 ${foco}`}
+                    >
+                      <span aria-hidden="true">{justificativas[aluno.id]?.atestadoId ? '📄' : '📝'}</span>
+                      <span className="truncate">
+                        {justificativas[aluno.id]?.texto || 'Sem justificativa: clique para escrever'}
+                      </span>
+                    </button>
+                  )}
                 </div>
 
                 {/* P / A / J: botões de alternância (clicar de novo desmarca) */}
                 <div role="group" aria-label={`Presença de ${aluno.nome}`} className="flex gap-2">
-                  {OPCOES.map((op) => {
+                  {OPCOES_CHAMADA.map((op) => {
                     const escolhido = marcacoes[aluno.id] === op.valor;
                     return (
                       <button
                         key={op.valor}
                         type="button"
-                        onClick={() => marcar(aluno.id, op.valor)}
+                        onClick={() => marcar(aluno, op.valor)}
                         aria-pressed={escolhido}
                         aria-label={op.rotulo}
                         title={op.rotulo}
                         className={`h-11 w-11 rounded-lg border-2 text-base font-bold transition-colors ${foco} focus-visible:ring-offset-2 ${
                           escolhido
-                            ? op.ativo
+                            ? op.classe
                             : 'border-gray-200 bg-white text-gray-400 hover:border-gray-400 hover:text-gray-700'
                         }`}
                       >
@@ -375,6 +390,16 @@ const FazerChamada: React.FC = () => {
           </div>
         </RodapeFixo>
       )}
+
+      {/* ============ FALTA JUSTIFICADA: justificativa e atestado ============ */}
+      <JanelaDeJustificativa
+        aberta={justificando !== null}
+        subtitulo={justificando ? `${justificando.nome} · ${formatarData(data)}` : ''}
+        dono={{ participanteId: justificando?.id ?? 0 }}
+        inicial={justificando ? (justificativas[justificando.id] ?? null) : null}
+        aoConfirmar={confirmarJustificativa}
+        aoFechar={fecharJustificativa}
+      />
 
       {/* ============ AVISO: DIA COM CHAMADA JÁ REGISTRADA ============ */}
       <Janela titulo="Chamada já registrada" aberta={avisoCorrecao} onFechar={fecharAviso}>

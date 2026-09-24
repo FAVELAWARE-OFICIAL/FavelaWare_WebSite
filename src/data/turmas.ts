@@ -25,13 +25,15 @@
  */
 
 export interface Aluno {
-  /** Id do aluno no banco: a foto posta no dashboard substitui a daqui (lib/fotosDoSite.ts) */
+  /** Id do aluno no banco: a foto posta no dashboard substitui a daqui (lib/sitePublico.ts) */
   participanteId?: number;
   nome: string;
   foto?: string; // sem foto, a página mostra o avatar padrão
+  /** Vem do "Meu perfil" do aluno (lib/sitePublico.ts), não deste arquivo */
+  linkedin?: string;
 }
 
-export interface Turma {
+export interface TurmaDoSite {
   slug: string; // usado na URL: /turmas/<slug>
   nome: string;
   edicao: string;
@@ -41,7 +43,7 @@ export interface Turma {
   alunos: Aluno[];
 }
 
-export const turmas: Turma[] = [
+export const turmas: TurmaDoSite[] = [
   {
     slug: 'turma-2025',
     nome: 'Turma Única',
@@ -604,6 +606,3 @@ export const turmas: Turma[] = [
     ],
   },
 ];
-
-/** Busca uma turma pelo slug da URL. */
-export const acharTurma = (slug?: string): Turma | undefined => turmas.find((t) => t.slug === slug);

@@ -1,6 +1,6 @@
 /**
  * ============================================
- * DADOS DO PAINEL DO GESTOR
+ * PAINEL DO GESTOR
  * ============================================
  *
  * Busca no Supabase as listas de presença de uma edição e faz as contas do painel.
@@ -10,19 +10,10 @@
  * As contas são feitas aqui (e não no banco) porque o filtro de período muda
  * quais aulas entram — e a frequência precisa ser recalculada a cada filtro.
  */
+import { formatarData } from '../utils/datas';
 import { supabase } from './supabase';
 
 export type Situacao = 'presente' | 'ausente' | 'justificada' | 'folga';
-
-export interface Edicao {
-  id: number;
-  nome: string;
-  total_alunos_informado: number | null;
-  aprovados_informado: number | null;
-  desistentes_informado: number | null;
-  /** Edição de demonstração (teste do "Ver como"); não é uma edição real */
-  demonstracao: boolean;
-}
 
 export interface Turma {
   id: number;
@@ -52,11 +43,8 @@ export interface Presenca {
   aula_id: number;
   situacao: Situacao;
   registro_original: string;
-}
-
-export interface MudancaHorario {
-  participante_id: number;
-  horario: string | null;
+  justificativa: string | null;
+  atestado_id: string | null;
 }
 
 export interface DadosDaEdicao {
@@ -64,84 +52,102 @@ export interface DadosDaEdicao {
   participantes: Participante[];
   aulas: Aula[];
   presencas: Presenca[];
-  mudancasHorario: MudancaHorario[];
-}
-
-// A API devolve no máximo 1000 linhas por vez. A primeira página já traz o
-// total; as demais são pedidas todas ao mesmo tempo (e não uma depois da outra).
-const TAMANHO_PAGINA = 1000;
-
-async function buscarTudo<T>(
-  consulta: (de: number, ate: number) => PromiseLike<{ data: T[] | null; error: unknown; count: number | null }>,
-): Promise<T[]> {
-  const primeira = await consulta(0, TAMANHO_PAGINA - 1);
-  if (primeira.error) throw primeira.error;
-  const total = primeira.count ?? 0;
-  const restantes = await Promise.all(
-    Array.from({ length: Math.max(0, Math.ceil(total / TAMANHO_PAGINA) - 1) }, (_, i) => {
-      const de = (i + 1) * TAMANHO_PAGINA;
-      return consulta(de, de + TAMANHO_PAGINA - 1);
-    }),
-  );
-  const todas = [...(primeira.data ?? [])];
-  for (const pagina of restantes) {
-    if (pagina.error) throw pagina.error;
-    todas.push(...(pagina.data ?? []));
-  }
-  return todas;
-}
-
-export async function carregarEdicoes(): Promise<Edicao[]> {
-  const { data, error } = await supabase
-    .from('edicoes')
-    .select('id, nome, total_alunos_informado, aprovados_informado, desistentes_informado, demonstracao')
-    .order('ordem');
-  if (error) throw error;
-  return data;
 }
 
 /**
- * Tudo de uma edição, em uma rodada só: as consultas saem ao mesmo tempo.
- * Presenças e mudanças de horário são filtradas pela edição no próprio banco
- * (junção com aulas/participantes), sem mandar listas de ids na URL.
+ * Linhas por página nas consultas grandes. Precisa ser igual ao "Max rows" do
+ * projeto Supabase (Settings > API): se lá for menor, cada página volta
+ * incompleta e linhas se perdem sem erro.
  */
-export async function carregarDadosDaEdicao(edicaoId: number): Promise<DadosDaEdicao> {
-  const [turmas, participantes, aulas, presencas, mudancas] = await Promise.all([
-    supabase.from('turmas').select('id, nome').eq('edicao_id', edicaoId).order('nome'),
-    supabase
-      .from('participantes')
-      .select('id, turma_id, funcao, nome, login, observacao, foto')
-      .eq('edicao_id', edicaoId)
-      .order('nome'),
-    supabase.from('aulas').select('id, turma_id, data, ordem, descricao').eq('edicao_id', edicaoId).order('ordem'),
-    // "aulas!inner()" só filtra pela edição: não devolve nenhuma coluna de aulas
-    buscarTudo<Presenca>(
-      (de, ate) =>
-        supabase
-          .from('presencas')
-          .select('participante_id, aula_id, situacao, registro_original, aulas!inner()', {
-            count: de === 0 ? 'exact' : undefined,
-          })
-          .eq('aulas.edicao_id', edicaoId)
-          .order('aula_id')
-          .order('participante_id')
-          .range(de, ate) as unknown as PromiseLike<{ data: Presenca[] | null; error: unknown; count: number | null }>,
-    ),
-    supabase
-      .from('mudancas_horario')
-      .select('participante_id, horario, participantes!inner()')
-      .eq('participantes.edicao_id', edicaoId),
-  ]);
-  for (const r of [turmas, participantes, aulas, mudancas]) if (r.error) throw r.error;
+const TAMANHO_PAGINA = 1000;
 
-  return {
-    turmas: turmas.data!,
-    participantes: participantes.data! as Participante[],
-    aulas: aulas.data!,
-    presencas,
-    mudancasHorario: mudancas.data! as MudancaHorario[],
-  };
+export class ServicoPainel {
+  /**
+   * Tudo de uma edição, em uma rodada só: as consultas saem ao mesmo tempo.
+   * As presenças são filtradas pela edição no próprio banco (junção com
+   * aulas), sem mandar listas de ids na URL.
+   *
+   * Parceiro (somenteLeitura): alunos e presenças vêm das funções do banco feitas
+   * para ele, sem dado pessoal (login, observação, justificativa e atestado vazios).
+   */
+  async carregarDadosDaEdicao(edicaoId: number, somenteLeitura = false): Promise<DadosDaEdicao> {
+    const [turmas, participantes, aulas, presencas] = await Promise.all([
+      supabase.from('turmas').select('id, nome').eq('edicao_id', edicaoId).order('nome'),
+      somenteLeitura
+        ? supabase.rpc('participantes_do_parceiro', { p_edicao_id: edicaoId })
+        : supabase
+            .from('participantes')
+            .select('id, turma_id, funcao, nome, login, observacao, foto')
+            .eq('edicao_id', edicaoId)
+            .order('nome'),
+      supabase.from('aulas').select('id, turma_id, data, ordem, descricao').eq('edicao_id', edicaoId).order('ordem'),
+      this.buscarTudo<Presenca>((de, ate) =>
+        somenteLeitura
+          ? (supabase
+              .rpc('presencas_do_parceiro', { p_edicao_id: edicaoId }, { count: de === 0 ? 'exact' : undefined })
+              .range(de, ate) as unknown as PromiseLike<{
+              data: Presenca[] | null;
+              error: unknown;
+              count: number | null;
+            }>)
+          : // "aulas!inner()" só filtra pela edição: não devolve nenhuma coluna de aulas
+            (supabase
+              .from('presencas')
+              .select(
+                'participante_id, aula_id, situacao, registro_original, justificativa, atestado_id, aulas!inner()',
+                {
+                  count: de === 0 ? 'exact' : undefined,
+                },
+              )
+              .eq('aulas.edicao_id', edicaoId)
+              .order('aula_id')
+              .order('participante_id')
+              .range(de, ate) as unknown as PromiseLike<{
+              data: Presenca[] | null;
+              error: unknown;
+              count: number | null;
+            }>),
+      ),
+    ]);
+    for (const r of [turmas, participantes, aulas]) if (r.error) throw r.error;
+
+    return {
+      turmas: turmas.data!,
+      participantes: participantes.data! as Participante[],
+      aulas: aulas.data!,
+      // Do parceiro vêm sem justificativa e atestado: completa com vazio
+      presencas: somenteLeitura ? presencas.map((p) => ({ ...p, justificativa: null, atestado_id: null })) : presencas,
+    };
+  }
+
+  /**
+   * A API devolve no máximo TAMANHO_PAGINA linhas por vez. A primeira página já
+   * traz o total; as demais são pedidas todas ao mesmo tempo.
+   */
+  private async buscarTudo<T>(
+    consulta: (de: number, ate: number) => PromiseLike<{ data: T[] | null; error: unknown; count: number | null }>,
+  ): Promise<T[]> {
+    const primeira = await consulta(0, TAMANHO_PAGINA - 1);
+    if (primeira.error) throw primeira.error;
+    const total = primeira.count ?? 0;
+    const restantes = await Promise.all(
+      Array.from({ length: Math.max(0, Math.ceil(total / TAMANHO_PAGINA) - 1) }, (_, i) => {
+        const de = (i + 1) * TAMANHO_PAGINA;
+        return consulta(de, de + TAMANHO_PAGINA - 1);
+      }),
+    );
+    const todas = [...(primeira.data ?? [])];
+    for (const pagina of restantes) {
+      if (pagina.error) throw pagina.error;
+      todas.push(...(pagina.data ?? []));
+    }
+    // Página que voltou menor que o pedido: o limite de linhas do Supabase é menor que TAMANHO_PAGINA
+    if (todas.length < total) console.error('[painel] presenças incompletas', { recebidas: todas.length, total });
+    return todas;
+  }
 }
+
+export const servicoPainel = new ServicoPainel();
 
 // ============================================
 // CONTAS
@@ -156,7 +162,7 @@ export interface Resumo {
   frequencia: number | null;
 }
 
-export function resumir(situacoes: Situacao[]): Resumo {
+function resumir(situacoes: Situacao[]): Resumo {
   const r = { presentes: 0, ausentes: 0, justificadas: 0, folgas: 0 };
   for (const s of situacoes) {
     if (s === 'presente') r.presentes++;
@@ -173,32 +179,36 @@ export type Faixa = 'todas' | 'baixa' | 'media' | 'alta' | 'risco';
 /** Meta de frequência do curso: abaixo dela o aluno está "em risco" */
 export const META_FREQUENCIA = 0.75;
 
+/** Abaixo disto a frequência é "baixa" (vermelho); entre isto e a meta, "média" (âmbar) */
+const LIMITE_FREQUENCIA_BAIXA = 0.5;
+
 /** Faltas seguidas (nas aulas mais recentes) que indicam possível desistência */
 export const FALTAS_SEGUIDAS_ALERTA = 3;
 
 /** Faixas de frequência usadas no filtro e no gráfico de distribuição */
 export const FAIXAS: { valor: Exclude<Faixa, 'todas' | 'risco'>; rotulo: string; cor: string }[] = [
-  { valor: 'baixa', rotulo: 'Abaixo de 50%', cor: '#dc2626' },
-  { valor: 'media', rotulo: 'De 50% a 74%', cor: '#f59e0b' },
-  { valor: 'alta', rotulo: '75% ou mais', cor: '#8bc53f' },
+  { valor: 'baixa', rotulo: `Abaixo de ${LIMITE_FREQUENCIA_BAIXA * 100}%`, cor: '#dc2626' },
+  {
+    valor: 'media',
+    rotulo: `De ${LIMITE_FREQUENCIA_BAIXA * 100}% a ${META_FREQUENCIA * 100 - 1}%`,
+    cor: '#f59e0b',
+  },
+  { valor: 'alta', rotulo: `${META_FREQUENCIA * 100}% ou mais`, cor: '#8bc53f' },
 ];
 
 export function faixaDe(frequencia: number | null): Exclude<Faixa, 'todas' | 'risco'> | null {
   if (frequencia === null) return null;
-  if (frequencia < 0.5) return 'baixa';
-  if (frequencia < 0.75) return 'media';
+  if (frequencia < LIMITE_FREQUENCIA_BAIXA) return 'baixa';
+  if (frequencia < META_FREQUENCIA) return 'media';
   return 'alta';
 }
 
+/** Cor da faixa de uma frequência (cinza quando não há dado) */
+export const corDaFrequencia = (frequencia: number | null) =>
+  FAIXAS.find((f) => f.valor === faixaDe(frequencia))?.cor ?? '#9ca3af';
+
 export function formatarPercentual(valor: number | null): string {
   return valor === null ? '—' : `${Math.round(valor * 100)}%`;
-}
-
-/** "2024-03-07" -> "07/03/2024" (sem passar por Date, que mudaria o dia pelo fuso) */
-export function formatarData(data: string | null): string {
-  if (!data) return 'sem data';
-  const [ano, mes, dia] = data.split('-');
-  return `${dia}/${mes}/${ano}`;
 }
 
 // ============================================
@@ -325,11 +335,18 @@ export function montarPainel(dados: DadosDaEdicao, filtros: Filtros) {
     [...porPessoa.entries()].filter(([id]) => idsAlunos.has(id)).flatMap(([, lista]) => lista.map((p) => p.situacao)),
   );
 
+  // Presentes por aula: as aulas com data da(s) turma(s) visível(is) e, nelas,
+  // só os alunos filtrados. Numerador e denominador no MESMO recorte.
+  const aulasComData = aulasDeAlunos.filter((a) => a.data);
+  const presentesNasAulasComData = aulasComData.reduce(
+    (total, aula) =>
+      total +
+      (porAula.get(aula.id) ?? []).filter((p) => p.situacao === 'presente' && idsAlunos.has(p.participante_id)).length,
+    0,
+  );
+
   // Período das aulas (primeira e última data)
-  const datas = aulasDeAlunos
-    .map((a) => a.data)
-    .filter((d): d is string => !!d)
-    .sort();
+  const datas = aulasComData.map((a) => a.data!).sort();
 
   // Aulas em que a presença foi melhor e pior (média entre as turmas do dia)
   const mediaDoPonto = (ponto: Record<string, string | number | null>) =>
@@ -356,6 +373,10 @@ export function montarPainel(dados: DadosDaEdicao, filtros: Filtros) {
     turmasVisiveis,
     alunos,
     totais,
+    /** Aulas com data no recorte atual */
+    quantidadeDeAulas: aulasComData.length,
+    /** Média de alunos presentes por aula (arredondada), no recorte atual */
+    presentesPorAula: aulasComData.length ? Math.round(presentesNasAulasComData / aulasComData.length) : 0,
     periodo: datas.length ? { inicio: datas[0], fim: datas[datas.length - 1] } : null,
     melhorAula,
     piorAula,
@@ -367,7 +388,7 @@ export function montarPainel(dados: DadosDaEdicao, filtros: Filtros) {
     professores: participantes.filter((p) => p.funcao === 'professor').map((p) => ({ ...p, ...resumoDe(p.id) })),
     pontos,
     frequenciaMedia: media(frequencias),
-    abaixoDe75: frequencias.filter((f) => f < 0.75).length,
+    abaixoDaMeta: frequencias.filter((f) => f < META_FREQUENCIA).length,
     distribuicao: FAIXAS.map((f) => {
       const quantos = alunos.filter((a) => faixaDe(a.frequencia) === f.valor).length;
       return { rotulo: f.rotulo, cor: f.cor, valor: quantos, parte: alunos.length ? quantos / alunos.length : 0 };
@@ -377,7 +398,8 @@ export function montarPainel(dados: DadosDaEdicao, filtros: Filtros) {
       return {
         rotulo: t.nome,
         alunos: daTurma.length,
-        valor: media(daTurma.filter((a) => a.frequencia !== null).map((a) => a.frequencia!)) ?? 0,
+        /** null = nenhuma aula contável no recorte (sem dados, não 0%) */
+        valor: media(daTurma.filter((a) => a.frequencia !== null).map((a) => a.frequencia!)),
       };
     }),
   };

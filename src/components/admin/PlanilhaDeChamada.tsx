@@ -9,8 +9,8 @@
  * A tabela rola na horizontal dentro do próprio card (são mais de 100 aulas
  * em algumas edições) e a coluna do nome fica fixa à esquerda.
  */
-import type { Aula, Presenca, Situacao } from '../../lib/dashboard';
-import { formatarData } from '../../lib/dashboard';
+import type { Aula, Presenca, Situacao } from '../../lib/painel';
+import { formatarData } from '../../utils/datas';
 
 // Cor e letra de cada situação. A letra garante leitura sem depender só da cor.
 export const ESTILO_SITUACAO: Record<Situacao, { letra: string; rotulo: string; classe: string }> = {

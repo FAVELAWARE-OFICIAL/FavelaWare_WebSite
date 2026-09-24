@@ -12,6 +12,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
+import DetalheDaJustificativa from '../../components/admin/DetalheDaJustificativa';
 import Janela from '../../components/admin/Janela';
 import { Carregando } from '../../components/admin/Moldura';
 import PlanilhaDeChamada, { LegendaSituacoes } from '../../components/admin/PlanilhaDeChamada';
@@ -27,26 +28,10 @@ import {
   type Mensagem,
 } from '../../components/admin/Ui';
 import { espaco, foco, selo, texto } from '../../components/admin/designSystem';
-import { useDadosEmCache } from '../../lib/cache';
-import { hoje } from '../../lib/chamada';
-import { formatarData } from '../../lib/dashboard';
-import {
-  carregarPontosDaEquipe,
-  mensagemDoErroDePonto,
-  OPCOES_PONTO,
-  opcaoDoPonto,
-  registrarPonto,
-  type SituacaoPonto,
-} from '../../lib/ponto';
+import { useDadosEmCache } from '../../hooks/useDadosEmCache';
+import { OPCOES_PONTO, opcaoDoPonto, servicoPonto, type SituacaoPonto } from '../../lib/ponto';
+import { diasAtras, formatarData, hoje } from '../../utils/datas';
 import { useAdmin } from './contexto';
-
-/** "AAAA-MM-DD" de N dias atrás (pela data local, sem passar por UTC) */
-const diasAtras = (n: number) => {
-  const d = new Date(`${hoje()}T12:00:00`);
-  d.setDate(d.getDate() - n);
-  const doisDigitos = (x: number) => String(x).padStart(2, '0');
-  return `${d.getFullYear()}-${doisDigitos(d.getMonth() + 1)}-${doisDigitos(d.getDate())}`;
-};
 
 type Correcao = { professorId: string; nome: string; data: string; atual?: SituacaoPonto };
 
@@ -57,7 +42,9 @@ const PresencaProfessores: React.FC = () => {
   const de = filtros.dataDe || diasAtras(30);
   const ate = filtros.dataAte || hoje();
   const ultimoDiaLancavel = ate < hoje() ? ate : hoje(); // "Lançar ponto": dentro do período e nunca no futuro
-  const { dados, erro, recarregar } = useDadosEmCache(`pontos:${de}:${ate}`, () => carregarPontosDaEquipe(de, ate));
+  const { dados, erro, recarregar } = useDadosEmCache(`pontos:${de}:${ate}`, () =>
+    servicoPonto.carregarDaEquipe(de, ate),
+  );
   const mostrarCarregando = useCarregamentoCompleto(dados === undefined && !erro, 0);
 
   const [correcao, setCorrecao] = useState<Correcao | null>(null);
@@ -69,10 +56,10 @@ const PresencaProfessores: React.FC = () => {
   // Grade: só os professores atuais e os dias em que algum deles tem ponto no
   // período (do mais antigo ao mais novo). O ponto de quem deixou de ser
   // professor fica guardado no banco, mas não aparece aqui.
-  const { dias, celula, totais } = useMemo(() => {
+  const { dias, celula, pontoDe, totais } = useMemo(() => {
     const atuais = new Set((dados?.professores ?? []).map((p) => p.id));
     const pontos = (dados?.pontos ?? []).filter((p) => atuais.has(p.professor_id));
-    const mapa = new Map(pontos.map((p) => [`${p.professor_id}|${p.data}`, p.situacao]));
+    const mapa = new Map(pontos.map((p) => [`${p.professor_id}|${p.data}`, p]));
     const contagem = new Map<string, Record<SituacaoPonto, number>>();
     for (const p of pontos) {
       const c = contagem.get(p.professor_id) ?? { presente: 0, ausente: 0, justificada: 0 };
@@ -81,7 +68,8 @@ const PresencaProfessores: React.FC = () => {
     }
     return {
       dias: [...new Set(pontos.map((p) => p.data))].sort(),
-      celula: (professorId: string, data: string) => mapa.get(`${professorId}|${data}`),
+      celula: (professorId: string, data: string) => mapa.get(`${professorId}|${data}`)?.situacao,
+      pontoDe: (professorId: string, data: string) => mapa.get(`${professorId}|${data}`),
       totais: (professorId: string) => contagem.get(professorId) ?? { presente: 0, ausente: 0, justificada: 0 },
     };
   }, [dados]);
@@ -96,9 +84,9 @@ const PresencaProfessores: React.FC = () => {
   const salvar = async (professorId: string, nome: string, data: string, situacao: SituacaoPonto | null) => {
     setSalvando(true);
     try {
-      await registrarPonto(data, situacao, professorId);
+      await servicoPonto.registrar(data, situacao, professorId);
     } catch (e) {
-      setMensagem({ tipo: 'erro', texto: mensagemDoErroDePonto(e) });
+      setMensagem({ tipo: 'erro', texto: servicoPonto.mensagemDoErro(e) });
       setCorrecao(null);
       setLancando(false);
       setSalvando(false);
@@ -287,6 +275,10 @@ const PresencaProfessores: React.FC = () => {
               <br />
               Hoje está como: {correcao.atual ? opcaoDoPonto(correcao.atual).rotulo : 'sem registro'}
             </p>
+            <DetalheDaJustificativa
+              justificativa={pontoDe(correcao.professorId, correcao.data)?.justificativa ?? null}
+              atestadoId={pontoDe(correcao.professorId, correcao.data)?.atestado_id ?? null}
+            />
             <OpcoesDePonto
               atual={correcao.atual}
               desabilitado={salvando}

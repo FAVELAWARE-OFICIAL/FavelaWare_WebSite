@@ -9,15 +9,18 @@
  *
  * Não usa a Navbar nem o Footer do site: é área de trabalho.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import MenuLateral, { itemEstaAtivo, type ItemMenu } from './MenuLateral';
 import { IconeMenu } from './Icones';
-import { supabase, alternarPapel, carregarPerfil, type Papel } from '../../lib/supabase';
-import { esquecerCache } from '../../lib/cache';
+import { NOME_DO_PAPEL, PAPEIS_DO_VER_COMO, servicoSessao, type Papel } from '../../lib/sessao';
 import { EVENTO_PERFIL_ALTERADO } from '../../lib/perfil';
+import { StatusProcessamento } from '../../types';
+import { gravarPreferencia, lerPreferencia } from '../../utils/preferencias';
+import { iniciaisDoNome } from '../../utils/texto';
 import Carregamento from './Carregamento';
 import { foco } from './designSystem';
 import './tema-escuro.css';
@@ -32,23 +35,6 @@ function temaInicial(): Tema {
     ? 'escuro'
     : 'claro';
 }
-
-// Preferências deste navegador. localStorage pode falhar (aba anônima,
-// bloqueio): nesse caso só não lembra.
-export const lerPreferencia = (chave: string) => {
-  try {
-    return localStorage.getItem(chave);
-  } catch {
-    return null;
-  }
-};
-export const gravarPreferencia = (chave: string, valor: string) => {
-  try {
-    localStorage.setItem(chave, valor);
-  } catch {
-    /* sem memória, sem problema */
-  }
-};
 
 interface Props {
   itens: ItemMenu[];
@@ -84,10 +70,9 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
   // Relê quando a pessoa muda o nome na tela "Meu perfil".
   useEffect(() => {
     const ler = () =>
-      supabase.auth.getSession().then(async ({ data }) => {
-        const conta = data.session?.user;
-        if (!conta) return;
-        const perfil = await carregarPerfil(conta.id);
+      servicoSessao.contaLogada().then((logada) => {
+        if (!logada) return;
+        const { conta, perfil } = logada;
         setUsuario({
           nome: perfil.nome || (conta.email ?? '').split('@')[0],
           foto: perfil.foto,
@@ -124,20 +109,19 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
   const verComo = async (papel: Papel) => {
     setTrocandoPapel(true);
     setErroTroca(null);
-    try {
-      const destino = await alternarPapel(papel);
-      esquecerCache(); // dados guardados eram do papel anterior
-      navigate(destino, { replace: true });
-    } catch (e) {
-      console.error('[ver como] falha ao trocar de papel', e);
-      const texto = (e as { message?: string } | null)?.message;
-      setErroTroca(texto && /demonstra/i.test(texto) ? texto : 'Não foi possível trocar de papel. Tente de novo.');
-      setTrocandoPapel(false);
+    const { resultado, destino } = await servicoSessao.alternarPapel(papel);
+    if (resultado.status === StatusProcessamento.Sucesso && destino) {
+      // Recarrega de verdade: gestor e parceiro usam o mesmo endereço, e a área
+      // precisa montar de novo com o papel novo (menu, abas, dados)
+      window.location.assign(destino);
+      return;
     }
+    setErroTroca(resultado.mensagem);
+    setTrocandoPapel(false);
   };
 
   const sair = async () => {
-    await supabase.auth.signOut();
+    await servicoSessao.sair();
     navigate('/login', { replace: true });
   };
 
@@ -169,9 +153,11 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
                 onChange={(e) => verComo(e.target.value as Papel)}
                 className="w-full rounded-lg border border-white/15 bg-white/5 py-2 pl-3 pr-8 text-sm font-medium text-white focus:border-transparent focus:ring-2 focus:ring-favela-green-500 disabled:opacity-50 [&>option]:text-gray-900"
               >
-                <option value="gestor">Gestor</option>
-                <option value="professor">Instrutor</option>
-                <option value="aluno">Aluno</option>
+                {PAPEIS_DO_VER_COMO.map((papel) => (
+                  <option key={papel} value={papel}>
+                    {NOME_DO_PAPEL[papel]}
+                  </option>
+                ))}
               </select>
               {erroTroca && (
                 <p role="alert" className="mt-1 text-xs text-red-300">
@@ -267,12 +253,7 @@ const FotoDoUsuario: React.FC<{ nome: string; foto: string | null }> = ({ nome, 
       </span>
     );
   }
-  const iniciais = nome
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]!.toUpperCase())
-    .join('');
+  const iniciais = iniciaisDoNome(nome);
   return (
     <span
       aria-label={nome}
@@ -317,5 +298,50 @@ const IconeLua: React.FC = () => (
 
 /** Carregamento das áreas restritas (com a cara do FavelaWare) */
 export const Carregando: React.FC<{ texto: string }> = ({ texto }) => <Carregamento texto={texto} />;
+
+// Transição entre páginas: o conteúdo entra subindo de leve e sai suave.
+// Com "reduzir movimento" no sistema, o MotionConfig do App tira o deslocamento.
+const TRANSICAO = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -6, transition: { duration: 0.15 } }, // a antiga sai rápido
+  transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+} as const;
+
+/**
+ * Conteúdo das áreas (gestor, instrutor, aluno): o carregamento sai em fade e a
+ * página entra; trocar de página também é suave. flex-1: o carregamento ocupa a
+ * área toda e fica no centro exato.
+ * - `carregando`: mostra a pintura do carregamento;
+ * - `pronta`: a página pode aparecer (falso sem carregar = nada ainda, ex.: erro).
+ * A `pagina` vem do useOutlet: na saída, a antiga continua na tela enquanto some.
+ */
+export const TransicaoDaArea: React.FC<{
+  carregando: boolean;
+  pronta: boolean;
+  texto: string;
+  pagina: React.ReactNode;
+}> = ({ carregando, pronta, texto, pagina }) => {
+  const { pathname } = useLocation();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      {carregando ? (
+        <motion.div
+          key="carregando"
+          className="flex flex-1 flex-col"
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+        >
+          <Carregando texto={texto} />
+        </motion.div>
+      ) : pronta ? (
+        <motion.div key={pathname} className="flex flex-1 flex-col" {...TRANSICAO}>
+          {/* As páginas já foram pré-carregadas: a espera do Suspense é imperceptível */}
+          <Suspense fallback={<Carregando texto={texto} />}>{pagina}</Suspense>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+};
 
 export default Moldura;

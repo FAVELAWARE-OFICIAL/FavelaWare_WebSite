@@ -15,26 +15,29 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { IconeAlerta, IconeClipe, IconeEnviarArquivo, IconeLink, IconeRelogio } from '../admin/Icones';
 import Janela from '../admin/Janela';
-import { Aviso, Botao, classeCampo, classeRotulo, type Mensagem } from '../admin/Ui';
+import { Aviso, Botao, classeCampo, classeRotulo, classeTextoLongo, type Mensagem } from '../admin/Ui';
 import { estado, foco, selo, texto } from '../admin/designSystem';
 import HistoricoDeTentativas from './HistoricoDeTentativas';
 import {
-  enviarTentativa,
-  formatarDataHora,
-  formatosEmTexto,
   podeEnviar,
   ROTULO_SITUACAO,
-  ROTULO_TIPO_LINK,
   situacaoDoAluno,
-  tiposAceitos,
-  type Formato,
-  TAMANHO_MAXIMO_ARQUIVO,
   tentativasDe,
-  validarEntrega,
   type Atividade,
-  type EtapaEnvio,
   type Situacao,
 } from '../../lib/atividades';
+import {
+  formatosEmTexto,
+  ROTULO_TIPO_LINK,
+  servicoEntregas,
+  tiposAceitos,
+  type EtapaEnvio,
+  type Formato,
+} from '../../lib/entregas';
+import { TAMANHO_MAXIMO_ARQUIVO } from '../../config';
+import { StatusProcessamento } from '../../types';
+import { tamanhoLegivel } from '../../utils/arquivos';
+import { formatarDataHora } from '../../utils/datas';
 
 export const COR_SITUACAO: Record<Situacao, string> = {
   pendente: selo.neutro,
@@ -59,11 +62,6 @@ function quantoFalta(prazo: string): string {
   const dias = Math.floor(horas / 24);
   return dias === 1 ? 'falta 1 dia' : `faltam ${dias} dias`;
 }
-
-const tamanhoLegivel = (bytes: number) =>
-  bytes < 1024 * 1024
-    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
-    : `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB`;
 
 // ============================================
 // JANELA DA ATIVIDADE
@@ -124,15 +122,15 @@ const JanelaDaAtividade: React.FC<PropsJanela> = ({ atividade, participanteId, d
 
     if (demonstracao) {
       // Confere igual ao aluno, mas não grava nada
-      const problema = validarEntrega(entrega, atividade);
+      const problema = servicoEntregas.validar(entrega, atividade);
       if (problema) return setMensagem({ tipo: 'erro', texto: problema });
       return setAvisoDemonstracao(true);
     }
 
-    const erro = await enviarTentativa(atividade.id, participanteId, entrega, setEtapa, atividade);
-    if (erro) {
+    const resultado = await servicoEntregas.enviar(atividade.id, participanteId, entrega, setEtapa, atividade);
+    if (resultado.status !== StatusProcessamento.Sucesso) {
       setEtapa(null);
-      return setMensagem({ tipo: 'erro', texto: erro });
+      return setMensagem({ tipo: 'erro', texto: resultado.mensagem! });
     }
     try {
       await aoEnviar(); // a janela passa a mostrar o envio no histórico
@@ -310,7 +308,7 @@ const JanelaDaAtividade: React.FC<PropsJanela> = ({ atividade, participanteId, d
                 placeholder="Conte o que você fez, ou escreva a sua resposta aqui."
                 onChange={(e) => setComentario(e.target.value)}
                 disabled={ocupado}
-                className={`${classeCampo} resize-y`}
+                className={classeTextoLongo}
               />
             </div>
 

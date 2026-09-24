@@ -4,78 +4,124 @@
  * ============================================
  *
  * O aluno entra com o login da turma e a senha padrão; antes de ver a área
- * dele, precisa:
- * 1. trocar a senha padrão por uma só dele;
- * 2. informar data de nascimento e e-mail.
+ * dele, passa por duas etapas (o mesmo design dos dados da bolsa do instrutor):
+ * 1. Sua senha: troca a senha padrão por uma só dele;
+ * 2. Seus dados: nome completo (vem o da turma; ele corrige se precisar), data
+ *    de nascimento e Gmail (e-mail de contato).
  *
  * Sem isso a guarda de rota não deixa entrar em /aluno. A senha é trocada no
  * Supabase Auth; os dados vão pela função concluir_primeiro_acesso do banco,
  * que também libera a conta.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import Carregamento from '../components/admin/Carregamento';
-import { supabase, carregarPerfil, esquecerPerfil, type MeuPerfil } from '../lib/supabase';
+import CamposDeNovaSenha from '../components/CamposDeNovaSenha';
+import TelaDeEtapas from '../components/TelaDeEtapas';
+import { classeCampoDeEtapa, classeRotuloDeEtapa } from '../components/estilosDeAcesso';
+import { useCampos } from '../hooks/useCampos';
+import { servicoPerfil } from '../lib/perfil';
+import { servicoSenha } from '../lib/senha';
+import { servicoSessao, type MeuPerfil } from '../lib/sessao';
+import { StatusProcessamento } from '../types';
+import { hoje as hojeLocal } from '../utils/datas';
+import { emailValido } from '../utils/texto';
 
-const TAMANHO_MINIMO = 8;
+const ETAPAS = [
+  { titulo: 'Sua senha', descricao: 'Troque a senha padrão por uma só sua.', icone: '🔑' },
+  { titulo: 'Seus dados', descricao: 'Confira seu nome e diga como falar com você.', icone: '🪪' },
+];
 
-const classeCampo =
-  'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-favela-green-500 focus:border-transparent transition-all';
+type Campos = { senha: string; confirmacao: string; nome: string; dataNascimento: string; email: string };
+
+/** O problema da etapa (texto e o campo para levar o foco), ou null */
+function problemaDaEtapa(etapa: number, c: Campos): { texto: string; campo: keyof Campos } | null {
+  if (etapa === 0) {
+    const problema = servicoSenha.validarNova(c.senha, c.confirmacao, 'A nova senha');
+    return problema ? { texto: problema, campo: 'senha' } : null;
+  }
+  const nome = c.nome.trim().replace(/\s+/g, ' ');
+  if (nome.length < 3 || !nome.includes(' '))
+    return { texto: 'Informe o nome completo (nome e sobrenome).', campo: 'nome' };
+  if (!c.dataNascimento) return { texto: 'Informe sua data de nascimento.', campo: 'dataNascimento' };
+  if (!emailValido(c.email)) return { texto: 'Informe um Gmail (ou outro e-mail) válido.', campo: 'email' };
+  return null;
+}
 
 const PrimeiroAcesso: React.FC = () => {
   const navigate = useNavigate();
+  const formulario = useRef<HTMLFormElement>(null);
   const [perfil, setPerfil] = useState<MeuPerfil | null | undefined>(undefined); // undefined = verificando
-  const [formData, setFormData] = useState({ senha: '', confirmacao: '', dataNascimento: '', email: '' });
+  const { campos, setCampos, aoAlterarCampo } = useCampos<Campos>({
+    senha: '',
+    confirmacao: '',
+    nome: '',
+    dataNascimento: '',
+    email: '',
+  });
+  const [etapa, setEtapa] = useState(0);
+  const [liberadaAte, setLiberadaAte] = useState(0);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
+  const [focar, setFocar] = useState<keyof Campos | null>(null);
 
-  // Só aluno ligado a uma turma, e que ainda não fez o primeiro acesso
+  // Só aluno ligado a uma turma, e que ainda não fez o primeiro acesso.
+  // O nome vem o da turma (ele confere e corrige se precisar)
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      setPerfil(data.session ? await carregarPerfil(data.session.user.id) : null);
-    });
-  }, []);
+    servicoSessao
+      .contaLogada()
+      .then(async (logada) => {
+        setPerfil(logada?.perfil ?? null);
+        if (logada?.perfil.papel !== 'aluno') return;
+        const dados = await servicoPerfil.carregarMeusDados().catch((e) => {
+          console.error('[primeiro acesso] não carregou os dados da turma', e?.code ?? e?.message);
+          return null;
+        });
+        if (dados) setCampos((c) => ({ ...c, nome: c.nome || dados.nome, email: c.email || dados.aluno?.email || '' }));
+      })
+      .catch((e) => {
+        console.error('[primeiro acesso] não conferiu a conta', e?.code ?? e?.message);
+        setPerfil(null);
+      });
+  }, [setCampos]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((anterior) => ({ ...anterior, [name]: value }));
+  // Leva o foco ao campo com problema (ou ao primeiro da etapa nova)
+  useEffect(() => {
+    if (!focar) return;
+    formulario.current?.querySelector<HTMLElement>(`[name="${focar}"]`)?.focus();
+    setFocar(null);
+  }, [focar, etapa]);
+
+  const irPara = (proxima: number, campo?: keyof Campos) => {
+    setEtapa(proxima);
+    setLiberadaAte((atual) => Math.max(atual, proxima));
+    setFocar(campo ?? (proxima === 0 ? 'senha' : 'nome'));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const aoEnviar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMensagem(null);
-
-    if (formData.senha.length < TAMANHO_MINIMO) {
-      return setMensagem(`A nova senha precisa ter pelo menos ${TAMANHO_MINIMO} caracteres.`);
+    // Confere a etapa atual; na última, confere as duas (dá para pular pelo índice)
+    for (const i of etapa === ETAPAS.length - 1 ? [0, 1] : [etapa]) {
+      const problema = problemaDaEtapa(i, campos);
+      if (problema) {
+        setMensagem(problema.texto);
+        return irPara(i, problema.campo);
+      }
     }
-    if (formData.senha !== formData.confirmacao) return setMensagem('As duas senhas não são iguais.');
-    if (!formData.dataNascimento) return setMensagem('Informe sua data de nascimento.');
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.email.trim())) return setMensagem('Informe um e-mail válido.');
+    if (etapa < ETAPAS.length - 1) return irPara(etapa + 1);
 
     setSalvando(true);
-    const troca = await supabase.auth.updateUser({ password: formData.senha });
-    if (troca.error) {
-      setSalvando(false);
-      return setMensagem(
-        troca.error.code === 'same_password'
-          ? 'A nova senha precisa ser diferente da senha padrão.'
-          : troca.error.code === 'weak_password'
-            ? 'Senha fraca ou já vazada em outros sites. Escolha outra.'
-            : 'Não foi possível trocar a senha. Tente de novo.',
-      );
-    }
-
-    const { error } = await supabase.rpc('concluir_primeiro_acesso', {
-      p_data_nascimento: formData.dataNascimento,
-      p_email: formData.email.trim(),
+    const resultado = await servicoSenha.concluirPrimeiroAcesso(campos.senha, {
+      nome: campos.nome,
+      dataNascimento: campos.dataNascimento,
+      email: campos.email,
     });
-    if (error) {
+    if (resultado.status !== StatusProcessamento.Sucesso) {
       setSalvando(false);
-      return setMensagem('A senha foi trocada, mas não foi possível salvar seus dados. Tente de novo.');
+      return setMensagem(resultado.mensagem);
     }
-
-    esquecerPerfil(); // o perfil mudou (não precisa mais trocar a senha)
     navigate('/aluno', { replace: true });
   };
 
@@ -89,105 +135,94 @@ const PrimeiroAcesso: React.FC = () => {
   if (!perfil || perfil.papel !== 'aluno' || !perfil.participanteId) return <Navigate to="/login" replace />;
   if (!perfil.precisaTrocarSenha) return <Navigate to="/aluno" replace />;
 
-  const hoje = new Date().toISOString().slice(0, 10);
+  // Data local (a mesma regra do "Meu perfil"): em UTC, depois das 21h já seria amanhã
+  const hoje = hojeLocal();
+
+  const etapas = [
+    <div key="senha" className="col-span-2 space-y-4 lg:col-span-6">
+      <CamposDeNovaSenha
+        senha={campos.senha}
+        confirmacao={campos.confirmacao}
+        aoAlterar={aoAlterarCampo}
+        rotuloDaConfirmacao="Repita a nova senha *"
+        dica={<p className="mt-1 text-xs text-gray-500">Diferente da senha padrão, e com:</p>}
+        estilo={{ campo: classeCampoDeEtapa, rotulo: classeRotuloDeEtapa }}
+      />
+    </div>,
+    <div key="dados" className="contents">
+      <div className="col-span-2 lg:col-span-6">
+        <label htmlFor="nome" className={classeRotuloDeEtapa}>
+          Nome completo *
+        </label>
+        <input
+          id="nome"
+          name="nome"
+          autoComplete="name"
+          maxLength={120}
+          value={campos.nome}
+          onChange={aoAlterarCampo}
+          className={classeCampoDeEtapa}
+          placeholder="Ex: Maria Eduarda Souza Lima"
+        />
+        <p className="mt-1 text-xs text-gray-500">Como vai aparecer na chamada e no certificado.</p>
+      </div>
+      <div className="col-span-2 lg:col-span-2">
+        <label htmlFor="dataNascimento" className={classeRotuloDeEtapa}>
+          Data de aniversário *
+        </label>
+        <input
+          id="dataNascimento"
+          name="dataNascimento"
+          type="date"
+          max={hoje}
+          autoComplete="bday"
+          value={campos.dataNascimento}
+          onChange={aoAlterarCampo}
+          className={classeCampoDeEtapa}
+        />
+      </div>
+      <div className="col-span-2 lg:col-span-4">
+        <label htmlFor="email" className={classeRotuloDeEtapa}>
+          Gmail *
+        </label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          maxLength={200}
+          value={campos.email}
+          onChange={aoAlterarCampo}
+          className={classeCampoDeEtapa}
+          placeholder="Ex: maria@gmail.com"
+        />
+      </div>
+    </div>,
+  ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4 py-12">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 md:p-10">
-        <img src="/imgs/logo/logo.png" alt="Logo FavelaWare" className="w-40 object-contain mx-auto mb-6" />
-
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Bem-vindo(a)!</h1>
-        <p className="text-gray-600 mb-6">
-          Este é o seu primeiro acesso. Crie uma senha só sua e complete seus dados para ver o material das aulas.
-        </p>
-
-        {mensagem && (
-          <div role="alert" className="mb-6 p-4 rounded-lg bg-red-100 text-red-800 border border-red-300">
-            {mensagem}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">
-              Nova senha *
-            </label>
-            <input
-              id="senha"
-              name="senha"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={TAMANHO_MINIMO}
-              value={formData.senha}
-              onChange={handleInputChange}
-              className={classeCampo}
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Pelo menos {TAMANHO_MINIMO} caracteres, diferente da senha padrão.
-            </p>
-          </div>
-          <div>
-            <label htmlFor="confirmacao" className="block text-sm font-medium text-gray-700 mb-2">
-              Repita a nova senha *
-            </label>
-            <input
-              id="confirmacao"
-              name="confirmacao"
-              type="password"
-              autoComplete="new-password"
-              required
-              value={formData.confirmacao}
-              onChange={handleInputChange}
-              className={classeCampo}
-            />
-          </div>
-          <div>
-            <label htmlFor="dataNascimento" className="block text-sm font-medium text-gray-700 mb-2">
-              Data de nascimento *
-            </label>
-            <input
-              id="dataNascimento"
-              name="dataNascimento"
-              type="date"
-              required
-              max={hoje}
-              autoComplete="bday"
-              value={formData.dataNascimento}
-              onChange={handleInputChange}
-              className={classeCampo}
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Seu e-mail *
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className={classeCampo}
-              placeholder="Ex: maria@email.com"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={salvando}
-            className={`w-full py-4 px-6 rounded-lg font-bold text-white text-lg shadow-lg transition-all ${
-              salvando
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-favela-green-600 to-favela-blue-600 hover:shadow-xl'
-            }`}
-          >
-            {salvando ? 'Salvando...' : 'SALVAR E ENTRAR'}
-          </button>
-        </form>
-      </div>
-    </div>
+    <TelaDeEtapas
+      titulo="BEM-VINDO(A)!"
+      tituloCurto="Primeiro acesso"
+      descricao="Este é o seu primeiro acesso. Crie uma senha só sua e complete seus dados para ver o material das aulas."
+      privacidade="Seus dados ficam só com você e com a coordenação do FavelaWare. Ninguém mais vê."
+      privacidadeCurta="Seus dados ficam só com você e com a coordenação."
+      etapas={ETAPAS}
+      etapa={etapa}
+      liberadaAte={liberadaAte}
+      concluida={(i) => !problemaDaEtapa(i, campos)}
+      aoIrPara={(i) => {
+        setMensagem(null);
+        irPara(i);
+      }}
+      erro={mensagem}
+      ocupado={salvando}
+      rotuloFinal="SALVAR E ENTRAR"
+      formulario={formulario}
+      aoEnviar={aoEnviar}
+    >
+      {etapas[etapa]}
+    </TelaDeEtapas>
   );
 };
 

@@ -1,6 +1,6 @@
 /**
  * ============================================
- * COMPONENTE GALLERY (GALERIA DE FOTOS)
+ * GALERIA DA PÁGINA INICIAL
  * ============================================
  *
  * Exibe uma galeria de fotos do projeto FavelaWare.
@@ -17,32 +17,9 @@ import { motion } from 'framer-motion';
 // Link do React Router que aceita animações do Framer Motion
 import { MotionLink } from './MotionLink';
 // Importa tipos customizados
-import type { Photo } from '../types';
+import { fotosEmDestaque as fotos } from '../data/galeria';
 
-/**
- * COMPONENTE GALLERY (TypeScript)
- * React.FC indica que é um Functional Component
- */
-const Gallery: React.FC = () => {
-  // Galeria de fotos - array tipado com interface Photo
-  const photos: Photo[] = [
-    {
-      id: 1,
-      title: 'Abertura do Projeto 2022',
-      description:
-        'Abertura do projeto com a professora Samara, Rafaela, Tatiana e Iracema, os parceiros da Mundiale, das Obras Pavonianas e alunos',
-      category: 'Evento',
-      image: '/imgs/gallery/AberturaDoProjeto2022.webp',
-    },
-    {
-      id: 2,
-      title: 'Formatura 2022',
-      description: 'Formatura do projeto FavelaWare na Mundiale - 2022',
-      category: 'Formatura',
-      image: '/imgs/gallery/Formatura2022.webp',
-    },
-  ];
-
+const GaleriaInicial: React.FC = () => {
   return (
     <section id="galeria" className="relative py-20 bg-gradient-to-br from-white via-gray-50 to-white overflow-hidden">
       {/* Background effects */}
@@ -70,9 +47,9 @@ const Gallery: React.FC = () => {
 
         {/* Gallery Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-          {photos.map((photo) => (
+          {fotos.map((foto) => (
             <motion.div
-              key={photo.id}
+              key={foto.id}
               className="relative group"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -83,8 +60,8 @@ const Gallery: React.FC = () => {
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-white border-2 border-gray-200 group-hover:border-favela-green-500 transition-colors duration-300 shadow-lg">
                 {/* Imagem da galeria - SEM ANIMAÇÕES */}
                 <img
-                  src={photo.image}
-                  alt={photo.title}
+                  src={foto.imagem}
+                  alt={foto.titulo}
                   loading="lazy"
                   decoding="async"
                   className="absolute inset-0 w-full h-full object-cover"
@@ -96,12 +73,12 @@ const Gallery: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 flex flex-col justify-end opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                   {/* Category Badge */}
                   <span className="inline-block w-fit px-3 py-1 mb-3 text-xs font-bold bg-favela-green-500 text-white rounded-full">
-                    {photo.category}
+                    {foto.categoria}
                   </span>
 
-                  <h3 className="text-xl font-bold text-white mb-2">{photo.title}</h3>
+                  <h3 className="text-xl font-bold text-white mb-2">{foto.titulo}</h3>
 
-                  <p className="text-sm text-gray-300">{photo.description}</p>
+                  <p className="text-sm text-gray-300">{foto.descricao}</p>
                 </div>
               </div>
             </motion.div>
@@ -135,4 +112,4 @@ const Gallery: React.FC = () => {
   );
 };
 
-export default Gallery;
+export default GaleriaInicial;

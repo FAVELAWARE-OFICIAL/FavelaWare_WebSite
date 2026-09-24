@@ -1,10 +1,11 @@
 # Components
 
-Esta pasta contém todos os componentes React reutilizáveis do projeto.
+Componentes React reutilizáveis.
 
-## Componentes disponíveis:
-- `Navbar.jsx` - Barra de navegação
-- `Hero.jsx` - Seção principal com logo e informações
-- `Gallery.jsx` - Galeria de fotos
-- `Partners.jsx` - Seção de parceiros/idealizadores
-- `Footer.jsx` - Rodapé do site
+- Site público: `Navbar`, `Hero`, `GaleriaInicial`, `Parceiros`, `Footer`, `Lightbox`, `RedesSociais`, `RolarAoTopo`, `MotionLink`
+- Acesso: `RotaProtegida` (guarda de rota por papel) e `estilosDeAcesso.ts`
+- `admin/`: interface das áreas restritas (moldura, menu, janelas, gráficos, formulários)
+- `atividades/`: janela da atividade e formulários de atividade e correção
+- `trilhas/`: cartão, entregas e formulário da página de trilhas da equipe
+
+Componente não fala com o banco: chama um serviço de `src/lib/`.

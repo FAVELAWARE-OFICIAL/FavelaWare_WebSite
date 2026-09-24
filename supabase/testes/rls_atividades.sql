@@ -21,8 +21,11 @@ declare
 
 begin
   -- ===== Montagem (como admin) =====
-  select id, edicao_id into t1, e1 from public.turmas order by id limit 1;
-  select id, edicao_id into t2, e2 from public.turmas where id <> t1 order by id limit 1;
+  -- Duas edições próprias e abertas (as reais podem estar encerradas: não aceitam vínculo)
+  insert into public.edicoes (nome, ordem, arquivo_origem) values ('Teste atividades 1', 9601, 'teste') returning id into e1;
+  insert into public.edicoes (nome, ordem, arquivo_origem) values ('Teste atividades 2', 9602, 'teste') returning id into e2;
+  insert into public.turmas (edicao_id, nome) values (e1, 'Turma 1') returning id into t1;
+  insert into public.turmas (edicao_id, nome) values (e2, 'Turma 1') returning id into t2;
   insert into auth.users (id, email, aud, role) values
     (u_a1, 'atv-a1@exemplo.invalid', 'authenticated', 'authenticated'),
     (u_a2, 'atv-a2@exemplo.invalid', 'authenticated', 'authenticated'),

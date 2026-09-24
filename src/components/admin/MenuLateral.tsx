@@ -17,6 +17,7 @@ import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { IconeFechar, IconeMenu, IconeSair } from './Icones';
 import { foco } from './designSystem';
+import { FUNDO_DA_MARCA, LOGO } from '../../data/imagens';
 
 export interface ItemMenu {
   caminho: string;
@@ -119,7 +120,7 @@ const ConteudoMenu: React.FC<{
 const Marca: React.FC<{ subtitulo: string }> = ({ subtitulo }) => (
   <div className="flex min-w-0 items-center gap-3">
     {/* O logo não é quadrado: dimensiona só pela largura */}
-    <img src="/imgs/logo/logo.png" alt="FavelaWare" className="w-24 object-contain" />
+    <img src={LOGO} alt="FavelaWare" className="w-24 object-contain" />
     <span className="text-[11px] font-semibold uppercase leading-tight tracking-wider text-white/70">{subtitulo}</span>
   </div>
 );
@@ -132,8 +133,7 @@ const classeBotaoTopo = `flex h-10 w-10 shrink-0 items-center justify-center rou
  * para o texto branco ter contraste; a cor de reserva é esse azul, se a imagem não carregar.
  */
 const FUNDO_DO_MENU: React.CSSProperties = {
-  backgroundImage:
-    "linear-gradient(to bottom, rgba(0, 70, 115, 0.96), rgba(0, 127, 193, 0.85) 12%, rgba(0, 127, 193, 0.8) 50%, rgba(0, 96, 150, 0.92)), url('/imgs/backgrounds/fundo.webp')",
+  backgroundImage: `linear-gradient(to bottom, rgba(0, 70, 115, 0.96), rgba(0, 127, 193, 0.85) 12%, rgba(0, 127, 193, 0.8) 50%, rgba(0, 96, 150, 0.92)), url('${FUNDO_DA_MARCA}')`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
 };

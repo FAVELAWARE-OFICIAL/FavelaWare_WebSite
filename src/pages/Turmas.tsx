@@ -7,8 +7,8 @@
  * Cada card leva para a página da turma (/turmas/<slug>), onde aparecem
  * as fotos e os nomes dos alunos.
  *
- * Os dados vêm de src/data/turmas.ts — para acrescentar uma turma nova,
- * basta editar aquele arquivo; esta página se ajusta sozinha.
+ * As edições 1 a 3 vêm de src/data/turmas.ts; da 4ª em diante, direto do
+ * banco (o aluno cadastrado pelo gestor já aparece aqui). Ver useTurmasDoSite.
  *
  * Conceitos importantes:
  * - reduce: agrupa a lista de turmas por edição
@@ -19,8 +19,11 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { turmas as turmasDoArquivo, type Aluno, type Turma } from '../data/turmas';
-import { useAlunosComFotoAtual } from '../lib/fotosDoSite';
+import CabecalhoDaPagina from '../components/CabecalhoDaPagina';
+import { cascata, surgirDeBaixo } from '../components/animacoes';
+import { classeBotaoDestaque } from '../components/estilosDoSite';
+import type { Aluno, TurmaDoSite } from '../data/turmas';
+import { useTurmasDoSite } from '../hooks/useTurmasDoSite';
 
 /** Prévia do card: até 5 fotos sobrepostas e o "+N" de quem ficou de fora. */
 const PreviaAlunos: React.FC<{ alunos: Aluno[] }> = ({ alunos }) => {
@@ -32,7 +35,7 @@ const PreviaAlunos: React.FC<{ alunos: Aluno[] }> = ({ alunos }) => {
     <div className="flex items-center mb-6">
       {comFoto.map((aluno, i) => (
         <img
-          key={aluno.nome}
+          key={aluno.participanteId ?? `${aluno.nome}-${i}`}
           src={aluno.foto}
           alt=""
           loading="lazy"
@@ -46,38 +49,24 @@ const PreviaAlunos: React.FC<{ alunos: Aluno[] }> = ({ alunos }) => {
 };
 
 const Turmas: React.FC = () => {
-  // Fotos atuais do dashboard por cima das do arquivo
-  const turmas = useAlunosComFotoAtual(turmasDoArquivo);
+  // As do arquivo (com a foto atual do dashboard) e as das edições novas, do banco
+  const { turmas } = useTurmasDoSite();
 
   // ============================================
   // AGRUPAMENTO POR EDIÇÃO
   // ============================================
 
   // Transforma a lista plana em { "3ª Edição": [...], "2ª Edição": [...] }
-  const porEdicao = turmas.reduce<Record<string, Turma[]>>((acumulado, turma) => {
+  const porEdicao = turmas.reduce<Record<string, TurmaDoSite[]>>((acumulado, turma) => {
     (acumulado[turma.edicao] ||= []).push(turma);
     return acumulado;
   }, {});
 
-  // Edições da mais recente para a mais antiga
-  const edicoes = Object.keys(porEdicao).sort().reverse();
+  // Edições da mais recente para a mais antiga, pelo número ("10ª" depois de "9ª")
+  const edicoes = Object.keys(porEdicao).sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
 
   // Soma de alunos de todas as turmas, para o número do topo
   const totalAlunos = turmas.reduce((soma, t) => soma + t.alunos.length, 0);
-
-  // ============================================
-  // ANIMAÇÕES
-  // ============================================
-
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6 },
-  };
-
-  const staggerContainer = {
-    animate: { transition: { staggerChildren: 0.15 } },
-  };
 
   // ============================================
   // RENDERIZAÇÃO
@@ -87,53 +76,40 @@ const Turmas: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Navbar />
 
-      {/* Header da página */}
-      <div className="bg-[#2d2a5f] pt-32 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">TURMAS</h1>
-            <p className="text-xl text-white/80 max-w-3xl mx-auto">Conheça as turmas que já passaram pelo FavelaWare</p>
-
-            {/* Números do projeto */}
-            <div className="flex flex-wrap justify-center gap-4 mt-8">
-              <div className="text-center px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
-                <div className="text-3xl font-black text-[#8bc53f]">{totalAlunos}</div>
-                <div className="text-sm text-white/80">Alunos</div>
-              </div>
-              <div className="text-center px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
-                <div className="text-3xl font-black text-[#8bc53f]">{turmas.length}</div>
-                <div className="text-sm text-white/80">Turmas</div>
-              </div>
-              <div className="text-center px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
-                <div className="text-3xl font-black text-[#8bc53f]">{edicoes.length}</div>
-                <div className="text-sm text-white/80">Edições</div>
-              </div>
-            </div>
-          </motion.div>
+      <CabecalhoDaPagina titulo="TURMAS" subtitulo="Conheça as turmas que já passaram pelo FavelaWare">
+        {/* Números do projeto */}
+        <div className="flex flex-wrap justify-center gap-4 mt-8">
+          <div className="text-center px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
+            <div className="text-3xl font-black text-[#8bc53f]">{totalAlunos}</div>
+            <div className="text-sm text-white/80">Alunos</div>
+          </div>
+          <div className="text-center px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
+            <div className="text-3xl font-black text-[#8bc53f]">{turmas.length}</div>
+            <div className="text-sm text-white/80">Turmas</div>
+          </div>
+          <div className="text-center px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
+            <div className="text-3xl font-black text-[#8bc53f]">{edicoes.length}</div>
+            <div className="text-sm text-white/80">Edições</div>
+          </div>
         </div>
-      </div>
+      </CabecalhoDaPagina>
 
       {/* Conteúdo */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {edicoes.map((edicao) => (
-          <motion.section key={edicao} {...fadeInUp} className="mb-16">
+          <motion.section key={edicao} {...surgirDeBaixo} className="mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">{edicao}</h2>
             <div className="w-24 h-1 bg-gradient-to-r from-favela-green-500 to-favela-blue-500 rounded-full mb-8" />
 
             <motion.div
-              variants={staggerContainer}
+              variants={cascata(0.15)}
               initial="initial"
               whileInView="animate"
               viewport={{ once: true }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
               {porEdicao[edicao].map((turma) => (
-                <motion.div key={turma.slug} variants={fadeInUp}>
+                <motion.div key={turma.slug} variants={surgirDeBaixo}>
                   <Link to={`/turmas/${turma.slug}`} className="block h-full">
                     <motion.div
                       whileHover={{ scale: 1.03, y: -5 }}
@@ -167,16 +143,13 @@ const Turmas: React.FC = () => {
         ))}
 
         {/* Atalho para o hall da fama da equipe */}
-        <motion.section {...fadeInUp} className="text-center">
+        <motion.section {...surgirDeBaixo} className="text-center">
           <div className="bg-[#2d2a5f] rounded-2xl shadow-xl p-12">
             <h2 className="text-3xl font-bold text-white mb-4">E quem ensinou todo mundo?</h2>
             <p className="text-white/80 mb-8 max-w-2xl mx-auto">
               O Hall da Fama reúne as equipes de todas as edições do projeto.
             </p>
-            <Link
-              to="/hall-da-fama"
-              className="inline-block bg-[#8bc53f] hover:bg-[#7ab52f] text-[#2d2a5f] font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-md hover:shadow-xl"
-            >
+            <Link to="/hall-da-fama" className={classeBotaoDestaque}>
               VER O HALL DA FAMA
             </Link>
           </div>

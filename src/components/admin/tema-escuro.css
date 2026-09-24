@@ -280,3 +280,15 @@
 .tema-escuro svg text[fill='#4b5563'] {
   fill: #a3acbf;
 }
+
+/* ---------- Conteúdo diferente por tema (ex.: capa do perfil) ---------- */
+/* .so-tema-claro some no escuro; .so-tema-escuro só aparece no escuro */
+.so-tema-escuro {
+  display: none;
+}
+.tema-escuro .so-tema-escuro {
+  display: block;
+}
+.tema-escuro .so-tema-claro {
+  display: none;
+}

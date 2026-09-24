@@ -124,3 +124,16 @@ export const IconePonto: Icone = (p) => (
     <path d="M8 3.5 6 2M16 3.5 18 2" />
   </Svg>
 );
+export const IconeAvaliacao: Icone = (p) => (
+  <Svg {...p}>
+    <path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8-4.3-4.1 5.9-.9z" />
+  </Svg>
+);
+export const IconeMembros: Icone = (p) => (
+  <Svg {...p}>
+    <circle cx="12" cy="7" r="3" />
+    <circle cx="5" cy="10" r="2.2" />
+    <circle cx="19" cy="10" r="2.2" />
+    <path d="M6.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5M1.5 19c0-2 1.4-3.6 3.5-3.9M22.5 19c0-2-1.4-3.6-3.5-3.9" />
+  </Svg>
+);

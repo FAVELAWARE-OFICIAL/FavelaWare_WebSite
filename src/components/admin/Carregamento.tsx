@@ -25,6 +25,7 @@
  * Quem pediu "reduzir movimento" no sistema vê a logo pronta, sem animação.
  */
 import { useEffect, useId, useRef, useState } from 'react';
+import { LOGO } from '../../data/imagens';
 
 // ============================================
 // ROTEIRO (frações do ciclo)
@@ -422,7 +423,7 @@ const Carregamento: React.FC<{ texto: string; modo?: 'bloco' | 'sobreposto' }> =
             keySplines={SPLINES_FASES}
           />
         )}
-        <image href="/imgs/logo/logo.png" x="0" y="0" width={LARGURA} height={ALTURA} />
+        <image href={LOGO} x="0" y="0" width={LARGURA} height={ALTURA} />
       </g>
 
       {/* Legenda dentro do desenho, colada na logo: o centro do quadro é o centro da logo */}
