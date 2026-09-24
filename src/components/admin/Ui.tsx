@@ -11,9 +11,13 @@ import { FAIXAS, FILTROS_INICIAIS, type Filtros } from '../../lib/dashboard';
 import { useAdmin } from '../../pages/admin/contexto';
 import { campo, foco, superficie, texto } from './designSystem';
 
-export const Cartao: React.FC<{ titulo?: string; descricao?: string; acoes?: React.ReactNode; children: React.ReactNode; className?: string }> = ({
-  titulo, descricao, acoes, children, className = '',
-}) => (
+export const Cartao: React.FC<{
+  titulo?: string;
+  descricao?: string;
+  acoes?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ titulo, descricao, acoes, children, className = '' }) => (
   <section className={`${superficie.cartao} ${className}`}>
     {(titulo || acoes) && (
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-100 px-5 py-4">
@@ -28,9 +32,12 @@ export const Cartao: React.FC<{ titulo?: string; descricao?: string; acoes?: Rea
   </section>
 );
 
-export const Indicador: React.FC<{ rotulo: string; valor: string; detalhe?: string; tom?: 'normal' | 'alerta' | 'positivo' }> = ({
-  rotulo, valor, detalhe, tom = 'normal',
-}) => {
+export const Indicador: React.FC<{
+  rotulo: string;
+  valor: string;
+  detalhe?: string;
+  tom?: 'normal' | 'alerta' | 'positivo';
+}> = ({ rotulo, valor, detalhe, tom = 'normal' }) => {
   const cor = { normal: 'text-gray-900', alerta: 'text-red-600', positivo: 'text-favela-green-700' }[tom];
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
@@ -47,9 +54,7 @@ export const Introducao: React.FC<{ children: React.ReactNode }> = ({ children }
 );
 
 export const Vazio: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className={`${superficie.vazio} px-6 py-12 text-center text-sm text-gray-500`}>
-    {children}
-  </div>
+  <div className={`${superficie.vazio} px-6 py-12 text-center text-sm text-gray-500`}>{children}</div>
 );
 
 /** Atalhos com o nome antigo (usados nas páginas) */
@@ -87,7 +92,9 @@ export const Aviso: React.FC<{ mensagem: Mensagem; className?: string }> = ({ me
     <div
       role={mensagem.tipo === 'erro' ? 'alert' : 'status'}
       className={`rounded-lg border p-3 text-sm ${className} ${
-        mensagem.tipo === 'sucesso' ? 'border-green-300 bg-green-50 text-green-800' : 'border-red-300 bg-red-50 text-red-800'
+        mensagem.tipo === 'sucesso'
+          ? 'border-green-300 bg-green-50 text-green-800'
+          : 'border-red-300 bg-red-50 text-red-800'
       }`}
     >
       {mensagem.texto}
@@ -118,40 +125,79 @@ export const BarraDeFiltros: React.FC<{
     <div className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
       {mostrar('turma') && (
         <div className="w-full sm:w-48">
-          <label htmlFor="filtro-turma" className={`${texto.rotulo}`}>Turma</label>
+          <label htmlFor="filtro-turma" className={`${texto.rotulo}`}>
+            Turma
+          </label>
           <select id="filtro-turma" name="turma" value={filtros.turma} onChange={handleFiltro} className={classeCampo}>
             <option value="todas">Todas as turmas</option>
-            {dados.turmas.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+            {dados.turmas.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.nome}
+              </option>
+            ))}
           </select>
         </div>
       )}
       {mostrar('busca') && (
         <div className="w-full sm:w-56">
-          <label htmlFor="filtro-busca" className={`${texto.rotulo}`}>Aluno</label>
-          <input id="filtro-busca" name="busca" type="search" value={filtros.busca} onChange={handleFiltro}
-            placeholder="Nome ou login" className={classeCampo} />
+          <label htmlFor="filtro-busca" className={`${texto.rotulo}`}>
+            Aluno
+          </label>
+          <input
+            id="filtro-busca"
+            name="busca"
+            type="search"
+            value={filtros.busca}
+            onChange={handleFiltro}
+            placeholder="Nome ou login"
+            className={classeCampo}
+          />
         </div>
       )}
       {mostrar('faixa') && (
         <div className="w-full sm:w-44">
-          <label htmlFor="filtro-faixa" className={`${texto.rotulo}`}>Frequência</label>
+          <label htmlFor="filtro-faixa" className={`${texto.rotulo}`}>
+            Frequência
+          </label>
           <select id="filtro-faixa" name="faixa" value={filtros.faixa} onChange={handleFiltro} className={classeCampo}>
             <option value="todas">Todas as faixas</option>
             <option value="risco">Em risco (abaixo de 75%)</option>
-            {FAIXAS.map((f) => <option key={f.valor} value={f.valor}>{f.rotulo}</option>)}
+            {FAIXAS.map((f) => (
+              <option key={f.valor} value={f.valor}>
+                {f.rotulo}
+              </option>
+            ))}
           </select>
         </div>
       )}
       {mostrar('dataDe') && (
         <div className="w-[calc(50%-0.375rem)] sm:w-40">
-          <label htmlFor="filtro-de" className={`${texto.rotulo}`}>De</label>
-          <input id="filtro-de" name="dataDe" type="date" value={filtros.dataDe} onChange={handleFiltro} className={classeCampo} />
+          <label htmlFor="filtro-de" className={`${texto.rotulo}`}>
+            De
+          </label>
+          <input
+            id="filtro-de"
+            name="dataDe"
+            type="date"
+            value={filtros.dataDe}
+            onChange={handleFiltro}
+            className={classeCampo}
+          />
         </div>
       )}
       {mostrar('dataAte') && (
         <div className="w-[calc(50%-0.375rem)] sm:w-40">
-          <label htmlFor="filtro-ate" className={`${texto.rotulo}`}>Até</label>
-          <input id="filtro-ate" name="dataAte" type="date" value={filtros.dataAte} onChange={handleFiltro} className={classeCampo} />
+          <label htmlFor="filtro-ate" className={`${texto.rotulo}`}>
+            Até
+          </label>
+          <input
+            id="filtro-ate"
+            name="dataAte"
+            type="date"
+            value={filtros.dataAte}
+            onChange={handleFiltro}
+            className={classeCampo}
+          />
         </div>
       )}
       {alterado && (

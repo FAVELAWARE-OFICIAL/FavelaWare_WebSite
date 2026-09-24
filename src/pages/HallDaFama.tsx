@@ -61,7 +61,6 @@ const HallDaFama: React.FC = () => {
 
       {/* Conteúdo */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-
         {/* Filtro por edição */}
         <div className="flex flex-wrap justify-center gap-3 mb-16">
           <button
@@ -130,9 +129,7 @@ const HallDaFama: React.FC = () => {
                         />
                       </div>
 
-                      {pessoa.cargo && (
-                        <p className="text-sm font-bold text-[#8bc53f] mb-1">{pessoa.cargo}</p>
-                      )}
+                      {pessoa.cargo && <p className="text-sm font-bold text-[#8bc53f] mb-1">{pessoa.cargo}</p>}
                       <p className="text-base font-bold text-[#2d2a5f] leading-tight">{pessoa.nome}</p>
                       {pessoa.organizacao && (
                         <p className="text-sm text-pink-500 font-semibold">{pessoa.organizacao}</p>

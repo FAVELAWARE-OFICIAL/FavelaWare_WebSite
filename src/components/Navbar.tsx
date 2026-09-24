@@ -47,9 +47,7 @@ const Navbar = () => {
   const getNavbarBg = () => {
     if (location.pathname === '/') {
       // Na home: começa com o fundo verde do hero, muda para roxo ao scroll
-      return isScrolled
-        ? 'bg-[#2d2a5f] shadow-lg'
-        : 'bg-transparent';
+      return isScrolled ? 'bg-[#2d2a5f] shadow-lg' : 'bg-transparent';
     } else if (location.pathname !== '/') {
       // Em todas as páginas internas: sempre roxo para fazer parte do header
       return 'bg-[#2d2a5f]';
@@ -86,17 +84,19 @@ const Navbar = () => {
               // tabindex=0 em quem tem whileTap e o link vira duas paradas de Tab.
               tabIndex={-1}
             >
-              <div className="text-2xl font-bold text-white">
-                FavelaWare
-              </div>
+              <div className="text-2xl font-bold text-white">FavelaWare</div>
             </motion.div>
           </Link>
 
           {/* Desktop Menu */}
           <div className="hidden xl:flex items-center space-x-1">
-            {menuItems.map((item, index) => (
+            {menuItems.map((item, index) =>
               item.type === 'route' ? (
-                <Link key={item.name} to={item.href} className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2d2a5f]">
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2d2a5f]"
+                >
                   <motion.div
                     className="relative px-3 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors group"
                     initial={{ opacity: 0, y: -20 }}
@@ -107,9 +107,7 @@ const Navbar = () => {
                     tabIndex={-1} // o foco fica no Link (ver o comentário do logo)
                   >
                     {item.name}
-                    <motion.span
-                      className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-favela-green-500 to-favela-blue-500 group-hover:w-full transition-all duration-300"
-                    />
+                    <motion.span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-favela-green-500 to-favela-blue-500 group-hover:w-full transition-all duration-300" />
                   </motion.div>
                 </Link>
               ) : (
@@ -124,12 +122,10 @@ const Navbar = () => {
                   whileTap={{ scale: 0.95 }}
                 >
                   {item.name}
-                  <motion.span
-                    className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-favela-green-500 to-favela-blue-500 group-hover:w-full transition-all duration-300"
-                  />
+                  <motion.span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-favela-green-500 to-favela-blue-500 group-hover:w-full transition-all duration-300" />
                 </motion.a>
-              )
-            ))}
+              ),
+            )}
 
             {/* Botão de acesso à área restrita.
                 Fica destacado (e não como mais um item da lista) porque é uma
@@ -137,7 +133,11 @@ const Navbar = () => {
                 Na home sem rolagem a barra é transparente sobre o hero verde:
                 ali o botão fica roxo para não sumir no fundo; com a barra roxa,
                 verde. */}
-            <Link to="/login" aria-label="Entrar na área restrita" className="ml-4 group relative rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2d2a5f]">
+            <Link
+              to="/login"
+              aria-label="Entrar na área restrita"
+              className="ml-4 group relative rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2d2a5f]"
+            >
               <motion.div
                 className={`w-11 h-11 flex items-center justify-center rounded-full shadow-lg ring-2 ring-white/30 group-hover:ring-white transition-all ${
                   location.pathname === '/' && !isScrolled
@@ -152,8 +152,19 @@ const Navbar = () => {
                 tabIndex={-1} // o foco fica no Link (ver o comentário do logo)
               >
                 {/* Ícone de pessoa: é o símbolo usual de "sua conta" */}
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.2}
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
                 </svg>
               </motion.div>
 
@@ -204,9 +215,14 @@ const Navbar = () => {
             className="xl:hidden bg-[#2d2a5f]/95 backdrop-blur-lg border-t border-white/10"
           >
             <div className="px-4 py-6">
-              {menuItems.map((item, index) => (
+              {menuItems.map((item, index) =>
                 item.type === 'route' ? (
-                  <Link key={item.name} to={item.href} onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2d2a5f]">
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2d2a5f]"
+                  >
                     <motion.div
                       className="block px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all"
                       initial={{ opacity: 0, x: -20 }}
@@ -230,8 +246,8 @@ const Navbar = () => {
                   >
                     {item.name}
                   </motion.a>
-                )
-              ))}
+                ),
+              )}
 
               {/* Mesmo acesso à área restrita, agora no menu do celular */}
               <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>

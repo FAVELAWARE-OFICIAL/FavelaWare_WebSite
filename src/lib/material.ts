@@ -58,7 +58,11 @@ export const linkValido = (url: string) => /^https:\/\/\S+$/i.test(url.trim());
 const vazioViraNulo = (texto: string) => (texto.trim() ? texto.trim() : null);
 
 const erroPadrao = (erro: { code?: string }, padrao: string) =>
-  erro.code === '23505' ? 'Já existe uma trilha com esse nome.' : erro.code === '23514' ? 'Confira os campos: algum valor não é aceito.' : padrao;
+  erro.code === '23505'
+    ? 'Já existe uma trilha com esse nome.'
+    : erro.code === '23514'
+      ? 'Confira os campos: algum valor não é aceito.'
+      : padrao;
 
 // ============================================
 // TRILHAS
@@ -71,7 +75,12 @@ export async function salvarTrilha(dados: { nome: string; descricao: string }, i
     return error ? erroPadrao(error, 'Não foi possível salvar a trilha.') : null;
   }
   // Trilha nova entra no fim da lista
-  const { data: ultima } = await supabase.from('trilhas').select('ordem').order('ordem', { ascending: false }).limit(1).maybeSingle();
+  const { data: ultima } = await supabase
+    .from('trilhas')
+    .select('ordem')
+    .order('ordem', { ascending: false })
+    .limit(1)
+    .maybeSingle();
   const { error } = await supabase.from('trilhas').insert({ ...campos, ordem: (ultima?.ordem ?? 0) + 1 });
   return error ? erroPadrao(error, 'Não foi possível criar a trilha.') : null;
 }
@@ -106,8 +115,12 @@ export async function salvarMaterial(
     return error ? erroPadrao(error, 'Não foi possível salvar o material.') : null;
   }
   const { data: ultimo } = await supabase
-    .from('materiais').select('ordem').eq('trilha_id', dados.trilha_id)
-    .order('ordem', { ascending: false }).limit(1).maybeSingle();
+    .from('materiais')
+    .select('ordem')
+    .eq('trilha_id', dados.trilha_id)
+    .order('ordem', { ascending: false })
+    .limit(1)
+    .maybeSingle();
   const { error } = await supabase.from('materiais').insert({ ...campos, ordem: (ultimo?.ordem ?? 0) + 1 });
   return error ? erroPadrao(error, 'Não foi possível adicionar o material.') : null;
 }

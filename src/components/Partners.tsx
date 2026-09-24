@@ -13,7 +13,7 @@
  */
 
 // Importa ferramentas de animação
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 // Importa tipos customizados
 import type { Partner } from '../types';
 
@@ -32,7 +32,7 @@ const Partners: React.FC = () => {
     { name: 'UNA Cristiano Machado', logo: '🎓', image: '/imgs/partners/Una Cristiano Machado.webp' },
   ].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })); // sempre em ordem alfabética
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -42,7 +42,7 @@ const Partners: React.FC = () => {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, scale: 0.5, rotate: -10 },
     visible: {
       opacity: 1,
@@ -57,7 +57,10 @@ const Partners: React.FC = () => {
   };
 
   return (
-    <section id="reconhecimentos" className="relative py-20 bg-gradient-to-br from-gray-50 via-white to-gray-100 overflow-hidden">
+    <section
+      id="reconhecimentos"
+      className="relative py-20 bg-gradient-to-br from-gray-50 via-white to-gray-100 overflow-hidden"
+    >
       {/* Background decorative elements */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute top-10 left-10 w-72 h-72 bg-favela-green-500/20 rounded-full blur-3xl" />
@@ -109,14 +112,10 @@ const Partners: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: '-100px' }}
         >
           {partners.map((partner, index) => (
-            <motion.div
-              key={index}
-              variants={itemVariants}
-              className="group relative"
-            >
+            <motion.div key={index} variants={itemVariants} className="group relative">
               {/* Card */}
               <div className="relative aspect-square bg-white rounded-3xl p-6 flex flex-col items-center justify-center shadow-lg border-2 border-gray-200 group-hover:border-favela-green-500 transition-all duration-300">
                 {/* Logo */}
@@ -130,9 +129,12 @@ const Partners: React.FC = () => {
                       className="w-full h-full object-contain"
                       onError={(e) => {
                         // Se a imagem não carregar, mostra o emoji
-                        e.target.style.display = 'none';
-                        e.target.parentElement.classList.add('text-6xl');
-                        e.target.parentElement.innerHTML = partner.logo;
+                        const imagem = e.currentTarget;
+                        const moldura = imagem.parentElement;
+                        imagem.style.display = 'none';
+                        if (!moldura) return;
+                        moldura.classList.add('text-6xl');
+                        moldura.innerHTML = partner.logo;
                       }}
                     />
                   ) : (
@@ -148,7 +150,6 @@ const Partners: React.FC = () => {
             </motion.div>
           ))}
         </motion.div>
-
       </div>
     </section>
   );

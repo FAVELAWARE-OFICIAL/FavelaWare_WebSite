@@ -18,8 +18,19 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import Carregamento from '../components/admin/Carregamento';
 import { hoje as hojeLocal } from '../lib/chamada';
 import {
-  carregarMeusDadosDeInstrutor, CORES_RACAS, ESTADOS_CIVIS, GRAUS_DE_INSTRUCAO, mascaraCep, mascaraCpf, mascaraPis,
-  mascaraTelefone, nascimentoMaximo, salvarMeusDadosDeInstrutor, UFS, validarDados, type DadosInstrutor,
+  carregarMeusDadosDeInstrutor,
+  CORES_RACAS,
+  ESTADOS_CIVIS,
+  GRAUS_DE_INSTRUCAO,
+  mascaraCep,
+  mascaraCpf,
+  mascaraPis,
+  mascaraTelefone,
+  nascimentoMaximo,
+  salvarMeusDadosDeInstrutor,
+  UFS,
+  validarDados,
+  type DadosInstrutor,
 } from '../lib/dadosInstrutor';
 import { supabase, carregarPerfil } from '../lib/supabase';
 
@@ -28,20 +39,36 @@ const classeCampo =
 const classeRotulo = 'block text-sm font-medium text-gray-700 mb-2';
 
 const VAZIO: DadosInstrutor = {
-  nome_completo: '', cpf: '', identidade: '', pis: '', data_nascimento: '', telefone: '', email: '',
-  cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '',
-  estado_civil: '', cor_raca: '', grau_instrucao: '', linkedin: '',
+  nome_completo: '',
+  cpf: '',
+  identidade: '',
+  pis: '',
+  data_nascimento: '',
+  telefone: '',
+  email: '',
+  cep: '',
+  logradouro: '',
+  numero: '',
+  complemento: '',
+  bairro: '',
+  cidade: '',
+  uf: '',
+  estado_civil: '',
+  cor_raca: '',
+  grau_instrucao: '',
+  linkedin: '',
 };
 
 // Máscara de cada campo numérico (o que a pessoa vê enquanto digita)
 const MASCARAS: Partial<Record<keyof DadosInstrutor, (v: string) => string>> = {
-  cpf: mascaraCpf, pis: mascaraPis, cep: mascaraCep, telefone: mascaraTelefone,
+  cpf: mascaraCpf,
+  pis: mascaraPis,
+  cep: mascaraCep,
+  telefone: mascaraTelefone,
 };
 
 type Estado =
-  | { tipo: 'verificando' }
-  | { tipo: 'sem-acesso' }
-  | { tipo: 'pronto'; usuarioId: string; jaTinha: boolean };
+  { tipo: 'verificando' } | { tipo: 'sem-acesso' } | { tipo: 'pronto'; usuarioId: string; jaTinha: boolean };
 
 const DadosDoInstrutor: React.FC = () => {
   const navigate = useNavigate();
@@ -69,8 +96,10 @@ const DadosDoInstrutor: React.FC = () => {
             ...salvos,
             complemento: salvos.complemento ?? '',
             linkedin: salvos.linkedin ?? '',
-            cpf: mascaraCpf(salvos.cpf), pis: mascaraPis(salvos.pis),
-            cep: mascaraCep(salvos.cep), telefone: mascaraTelefone(salvos.telefone),
+            cpf: mascaraCpf(salvos.cpf),
+            pis: mascaraPis(salvos.pis),
+            cep: mascaraCep(salvos.cep),
+            telefone: mascaraTelefone(salvos.telefone),
           });
         } else {
           // Primeira vez: aproveita o nome e o e-mail que já estão no perfil
@@ -85,7 +114,9 @@ const DadosDoInstrutor: React.FC = () => {
         }
       }
     })();
-    return () => { ativo = false; };
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -132,18 +163,52 @@ const DadosDoInstrutor: React.FC = () => {
   if (estado.tipo === 'sem-acesso') return <Navigate to="/login" replace />;
 
   const hoje = hojeLocal();
-  const campo = (nome: keyof DadosInstrutor, rotulo: string, extras: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
+  const campo = (
+    nome: keyof DadosInstrutor,
+    rotulo: string,
+    extras: React.InputHTMLAttributes<HTMLInputElement> = {},
+  ) => (
     <div>
-      <label htmlFor={nome} className={classeRotulo}>{rotulo}</label>
-      <input id={nome} name={nome} value={formData[nome] ?? ''} onChange={handleInputChange} className={classeCampo} {...extras} />
+      <label htmlFor={nome} className={classeRotulo}>
+        {rotulo}
+      </label>
+      <input
+        id={nome}
+        name={nome}
+        value={formData[nome] ?? ''}
+        onChange={handleInputChange}
+        className={classeCampo}
+        {...extras}
+      />
     </div>
   );
-  const lista = (nome: keyof DadosInstrutor, rotulo: string, opcoes: Record<string, string>, extras: { autoComplete?: string } = {}) => (
+  const lista = (
+    nome: keyof DadosInstrutor,
+    rotulo: string,
+    opcoes: Record<string, string>,
+    extras: { autoComplete?: string } = {},
+  ) => (
     <div>
-      <label htmlFor={nome} className={classeRotulo}>{rotulo}</label>
-      <select id={nome} name={nome} value={formData[nome] ?? ''} onChange={handleInputChange} required className={classeCampo} {...extras}>
-        <option value="" disabled>Escolha…</option>
-        {Object.entries(opcoes).map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
+      <label htmlFor={nome} className={classeRotulo}>
+        {rotulo}
+      </label>
+      <select
+        id={nome}
+        name={nome}
+        value={formData[nome] ?? ''}
+        onChange={handleInputChange}
+        required
+        className={classeCampo}
+        {...extras}
+      >
+        <option value="" disabled>
+          Escolha…
+        </option>
+        {Object.entries(opcoes).map(([valor, texto]) => (
+          <option key={valor} value={valor}>
+            {texto}
+          </option>
+        ))}
       </select>
     </div>
   );
@@ -160,7 +225,8 @@ const DadosDoInstrutor: React.FC = () => {
           {estado.jaTinha
             ? 'Confira e atualize o que mudou.'
             : 'Antes de entrar na área do instrutor, preencha os dados usados no RPA (recibo de pagamento de autônomo).'}{' '}
-          Eles servem só para emitir o seu RPA e cumprir as obrigações previdenciárias, e só você e a gestão do projeto veem estas informações.
+          Eles servem só para emitir o seu RPA e cumprir as obrigações previdenciárias, e só você e a gestão do projeto
+          veem estas informações.
         </p>
 
         {erroCarregar && (
@@ -169,7 +235,9 @@ const DadosDoInstrutor: React.FC = () => {
           </div>
         )}
         {mensagem && (
-          <div role="alert" className="mb-6 rounded-lg border border-red-300 bg-red-100 p-4 text-red-800">{mensagem}</div>
+          <div role="alert" className="mb-6 rounded-lg border border-red-300 bg-red-100 p-4 text-red-800">
+            {mensagem}
+          </div>
         )}
 
         <form ref={formulario} onSubmit={handleSubmit} noValidate className="space-y-8">
@@ -177,20 +245,53 @@ const DadosDoInstrutor: React.FC = () => {
             <legend className="mb-4 text-lg font-bold text-gray-900">Identificação</legend>
             {campo('nome_completo', 'Nome completo *', { autoComplete: 'name', maxLength: 150, required: true })}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {campo('cpf', 'CPF *', { inputMode: 'numeric', placeholder: '000.000.000-00', required: true, autoComplete: 'off' })}
-              {campo('identidade', 'Identidade (RG) *', { placeholder: 'Ex: MG-00.000.000', maxLength: 30, required: true, autoComplete: 'off' })}
-              {campo('pis', 'INSS/PIS *', { inputMode: 'numeric', placeholder: '000.00000.00-0', required: true, autoComplete: 'off' })}
-              {campo('data_nascimento', 'Data de nascimento *', { type: 'date', min: '1900-01-01', max: nascimentoMaximo(hoje), required: true, autoComplete: 'bday' })}
+              {campo('cpf', 'CPF *', {
+                inputMode: 'numeric',
+                placeholder: '000.000.000-00',
+                required: true,
+                autoComplete: 'off',
+              })}
+              {campo('identidade', 'Identidade (RG) *', {
+                placeholder: 'Ex: MG-00.000.000',
+                maxLength: 30,
+                required: true,
+                autoComplete: 'off',
+              })}
+              {campo('pis', 'INSS/PIS *', {
+                inputMode: 'numeric',
+                placeholder: '000.00000.00-0',
+                required: true,
+                autoComplete: 'off',
+              })}
+              {campo('data_nascimento', 'Data de nascimento *', {
+                type: 'date',
+                min: '1900-01-01',
+                max: nascimentoMaximo(hoje),
+                required: true,
+                autoComplete: 'bday',
+              })}
             </div>
           </fieldset>
 
           <fieldset className="space-y-6">
             <legend className="mb-4 text-lg font-bold text-gray-900">Contato</legend>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {campo('telefone', 'Telefone (com DDD) *', { type: 'tel', inputMode: 'tel', placeholder: '(31) 90000-0000', required: true, autoComplete: 'tel' })}
+              {campo('telefone', 'Telefone (com DDD) *', {
+                type: 'tel',
+                inputMode: 'tel',
+                placeholder: '(31) 90000-0000',
+                required: true,
+                autoComplete: 'tel',
+              })}
               {campo('email', 'E-mail *', { type: 'email', maxLength: 254, required: true, autoComplete: 'email' })}
               <div className="md:col-span-2">
-                {campo('linkedin', 'LinkedIn (opcional)', { type: 'url', inputMode: 'url', maxLength: 200, placeholder: 'linkedin.com/in/seu-nome', autoComplete: 'url' })}
+                {campo('linkedin', 'LinkedIn (opcional)', {
+                  type: 'url',
+                  inputMode: 'url',
+                  maxLength: 200,
+                  placeholder: 'linkedin.com/in/seu-nome',
+                  autoComplete: 'url',
+                })}
               </div>
             </div>
           </fieldset>
@@ -198,17 +299,32 @@ const DadosDoInstrutor: React.FC = () => {
           <fieldset className="space-y-6">
             <legend className="mb-4 text-lg font-bold text-gray-900">Endereço</legend>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              {campo('cep', 'CEP *', { inputMode: 'numeric', placeholder: '00000-000', required: true, autoComplete: 'postal-code' })}
+              {campo('cep', 'CEP *', {
+                inputMode: 'numeric',
+                placeholder: '00000-000',
+                required: true,
+                autoComplete: 'postal-code',
+              })}
               <div className="md:col-span-2">
-                {campo('logradouro', 'Rua / avenida *', { maxLength: 150, required: true, autoComplete: 'address-line1' })}
+                {campo('logradouro', 'Rua / avenida *', {
+                  maxLength: 150,
+                  required: true,
+                  autoComplete: 'address-line1',
+                })}
               </div>
               {campo('numero', 'Número *', { maxLength: 20, required: true, placeholder: 'Ex: 120 ou s/n' })}
               <div className="md:col-span-2">
-                {campo('complemento', 'Complemento', { maxLength: 80, placeholder: 'Ex: apto 201', autoComplete: 'address-line2' })}
+                {campo('complemento', 'Complemento', {
+                  maxLength: 80,
+                  placeholder: 'Ex: apto 201',
+                  autoComplete: 'address-line2',
+                })}
               </div>
               {campo('bairro', 'Bairro *', { maxLength: 80, required: true })}
               {campo('cidade', 'Cidade *', { maxLength: 80, required: true, autoComplete: 'address-level2' })}
-              {lista('uf', 'Estado (UF) *', Object.fromEntries(UFS.map((uf) => [uf, uf])), { autoComplete: 'address-level1' })}
+              {lista('uf', 'Estado (UF) *', Object.fromEntries(UFS.map((uf) => [uf, uf])), {
+                autoComplete: 'address-level1',
+              })}
             </div>
           </fieldset>
 
@@ -225,7 +341,9 @@ const DadosDoInstrutor: React.FC = () => {
             type="submit"
             disabled={salvando || erroCarregar}
             className={`w-full rounded-lg px-6 py-4 text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-favela-green-500 focus-visible:ring-offset-2 ${
-              salvando || erroCarregar ? 'cursor-not-allowed bg-gray-400' : 'bg-gradient-to-r from-favela-green-600 to-favela-blue-600 hover:shadow-xl'
+              salvando || erroCarregar
+                ? 'cursor-not-allowed bg-gray-400'
+                : 'bg-gradient-to-r from-favela-green-600 to-favela-blue-600 hover:shadow-xl'
             }`}
           >
             {salvando ? 'Salvando...' : estado.jaTinha ? 'SALVAR ALTERAÇÕES' : 'SALVAR E ENTRAR'}

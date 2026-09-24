@@ -19,7 +19,14 @@ import Janela from '../../components/admin/Janela';
 import { Carregando } from '../../components/admin/Moldura';
 import { Aviso, Botao, Cartao, classeCampo, classeRotulo, type Mensagem } from '../../components/admin/Ui';
 import {
-  apagarTurma, carregarTurmasDaEdicao, chaveTurmas, criarEdicao, criarTurma, renomearEdicao, renomearTurma, NOMES_DE_TURMA,
+  apagarTurma,
+  carregarTurmasDaEdicao,
+  chaveTurmas,
+  criarEdicao,
+  criarTurma,
+  renomearEdicao,
+  renomearTurma,
+  NOMES_DE_TURMA,
   type TurmaComAlunos,
 } from '../../lib/gestao';
 import { useAdmin } from './contexto';
@@ -48,10 +55,11 @@ const Turmas: React.FC = () => {
   const [erroJanela, setErroJanela] = useState<Mensagem>(null);
 
   // Já vem pronto do cache (o layout carrega na abertura); atualiza por trás
-  const { dados: turmas, erro, recarregar: carregar } = useDadosEmCache(
-    chaveTurmas(edicao.id),
-    () => carregarTurmasDaEdicao(edicao.id),
-  );
+  const {
+    dados: turmas,
+    erro,
+    recarregar: carregar,
+  } = useDadosEmCache(chaveTurmas(edicao.id), () => carregarTurmasDaEdicao(edicao.id));
 
   const usados = (turmas ?? []).map((t) => t.nome);
   // Sem os dados: carregamento na hora (nunca tela em branco) e pintura completa
@@ -81,9 +89,11 @@ const Turmas: React.FC = () => {
     }
 
     const erro =
-      janela.tipo === 'renomear-edicao' ? await renomearEdicao(edicao.id, nome)
-      : janela.tipo === 'nova-turma' ? await criarTurma(edicao.id, nome)
-      : await renomearTurma(janela.id, nome);
+      janela.tipo === 'renomear-edicao'
+        ? await renomearEdicao(edicao.id, nome)
+        : janela.tipo === 'nova-turma'
+          ? await criarTurma(edicao.id, nome)
+          : await renomearTurma(janela.id, nome);
     setSalvando(false);
     if (erro) return setErroJanela({ tipo: 'erro', texto: erro });
 
@@ -102,7 +112,8 @@ const Turmas: React.FC = () => {
   };
 
   // Carregando: ocupa a página toda
-  if (erro && turmas === undefined) return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar as turmas.' }} />;
+  if (erro && turmas === undefined)
+    return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar as turmas.' }} />;
   if (mostrarCarregando || turmas === undefined) return <Carregando texto="Carregando turmas" />;
 
   const ehTurma = janela?.tipo === 'nova-turma' || janela?.tipo === 'renomear-turma';
@@ -113,7 +124,7 @@ const Turmas: React.FC = () => {
     <>
       <Aviso mensagem={mensagem} />
 
-      {(
+      {
         <Cartao
           titulo={edicao.nome}
           descricao={`${turmas.length} turma(s) · ${turmas.reduce((s, t) => s + t.alunos, 0)} alunos`}
@@ -125,7 +136,12 @@ const Turmas: React.FC = () => {
               <Botao
                 tamanho="pequeno"
                 variante="primario"
-                onClick={() => abrir({ tipo: 'nova-edicao' }, `Edição ${edicoes.filter((e) => !e.demonstracao).length + 1} (${new Date().getFullYear()})`)}
+                onClick={() =>
+                  abrir(
+                    { tipo: 'nova-edicao' },
+                    `Edição ${edicoes.filter((e) => !e.demonstracao).length + 1} (${new Date().getFullYear()})`,
+                  )
+                }
               >
                 + Nova edição
               </Botao>
@@ -148,7 +164,9 @@ const Turmas: React.FC = () => {
                       Renomear
                     </Botao>
                     {t.alunos === 0 && (
-                      <Botao variante="perigo" tamanho="pequeno" onClick={() => apagar(t)}>Apagar</Botao>
+                      <Botao variante="perigo" tamanho="pequeno" onClick={() => apagar(t)}>
+                        Apagar
+                      </Botao>
                     )}
                   </div>
                 </li>
@@ -159,7 +177,8 @@ const Turmas: React.FC = () => {
             className="w-full"
             onClick={() => {
               // Sugere o próximo nome livre ("Turma Única" só se for a primeira)
-              const sugestao = NOMES_DE_TURMA.find((n) => !usados.includes(n) && (usados.length === 0 || n !== 'Turma Única')) ?? '';
+              const sugestao =
+                NOMES_DE_TURMA.find((n) => !usados.includes(n) && (usados.length === 0 || n !== 'Turma Única')) ?? '';
               abrir({ tipo: 'nova-turma' }, sugestao);
             }}
           >
@@ -171,20 +190,38 @@ const Turmas: React.FC = () => {
             </p>
           )}
         </Cartao>
-      )}
+      }
 
       <Janela titulo={janela ? TITULOS[janela.tipo] : ''} aberta={janela !== null} onFechar={fechar}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Aviso mensagem={erroJanela} className="" />
           <div>
-            <label htmlFor="nome-cadastro" className={classeRotulo}>Nome *</label>
+            <label htmlFor="nome-cadastro" className={classeRotulo}>
+              Nome *
+            </label>
             {ehTurma ? (
-              <select id="nome-cadastro" value={valor} onChange={(e) => setValor(e.target.value)} className={classeCampo}>
-                {nomesLivres.map((n) => <option key={n} value={n}>{n}</option>)}
+              <select
+                id="nome-cadastro"
+                value={valor}
+                onChange={(e) => setValor(e.target.value)}
+                className={classeCampo}
+              >
+                {nomesLivres.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
               </select>
             ) : (
-              <input id="nome-cadastro" value={valor} onChange={(e) => setValor(e.target.value)} required maxLength={60}
-                className={classeCampo} placeholder="Ex: Edição 4 (2026)" />
+              <input
+                id="nome-cadastro"
+                value={valor}
+                onChange={(e) => setValor(e.target.value)}
+                required
+                maxLength={60}
+                className={classeCampo}
+                placeholder="Ex: Edição 4 (2026)"
+              />
             )}
           </div>
           <div className="flex justify-end border-t border-gray-100 pt-4">

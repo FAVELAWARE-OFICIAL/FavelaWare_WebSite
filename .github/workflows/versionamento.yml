@@ -1,0 +1,124 @@
+name: Versionamento
+
+# Fecha o ciclo de versionamento do git-flow, no padrao do padrão da organização:
+#
+#   PR release/*|hotfix/* -> main  : calcula o bump e aplica NA BRANCH DE ORIGEM,
+#                                    para que a main ja nasca com a versao final.
+#   push na main (merge)           : cria a tag v<versao> e a release do GitHub.
+#
+# A tag nao e decorativa: versionar.sh usa a ultima tag de producao como base do
+# proximo incremento e como inicio do intervalo de commits que varre. Sem ela,
+# todo ciclo recalcularia a versao a partir de uma base errada.
+#
+# O deploy em si continua em deploy.yml — este workflow so cuida da versao.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  # `write`: tag-e-release cria tag e release. A permissao do workflow nao pode
+  # exceder a do evento — sem isto o run falha com startup_failure.
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: versionamento-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  versionar:
+    # Only PRs de release/* ou hotfix/* para a main disparam o bump.
+    if: >-
+      github.event_name == 'pull_request' &&
+      (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/'))
+    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      # Runner proprio e persistente: o gitconfig global do job fica no
+      # RUNNER_TEMP (nunca no $HOME) e e apagado no fim, mesmo com falha.
+      # O token so existe no env do passo que empurra; ver versionar.sh.
+      - name: Gitconfig temporario
+        run: echo "GIT_CONFIG_GLOBAL=$RUNNER_TEMP/gitconfig" >> "$GITHUB_ENV"
+
+      - name: Calcular e aplicar a proxima versao
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+          BRANCH_NOME: ${{ github.head_ref }}
+        run: |
+          command -v gh >/dev/null || { echo "::error::gh ausente no runner"; exit 1; }
+          bash .github/scripts/versionar.sh
+
+      - name: Limpar gitconfig temporario
+        if: always()
+        run: rm -f "$RUNNER_TEMP/gitconfig"
+
+  tag-e-release:
+    if: github.event_name == 'push'
+    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # O runner proprio nao traz Node no PATH: o passo abaixo usa `node`.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - name: Ler versao do package.json
+        id: versao
+        run: echo "versao=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Criar tag e release
+        # O token so vive no env deste passo: o push usa um credential helper
+        # passado por `-c` (so na linha de comando), nada vai para disco.
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+          TAG: v${{ steps.versao.outputs.versao }}
+        run: |
+          set -euo pipefail
+          command -v gh >/dev/null || { echo "::error::gh ausente no runner"; exit 1; }
+
+          # Idempotente: um re-run nao pode falhar por tag repetida. So a tag
+          # existir nao basta — um run anterior pode ter empurrado a tag e
+          # falhado antes de criar a release (ex.: API instavel). Sem checar
+          # a release tambem, o re-run pararia aqui e nunca a criaria.
+          tag_existe="false"
+          git rev-parse "$TAG" >/dev/null 2>&1 && tag_existe="true"
+
+          release_existe="false"
+          gh release view "$TAG" >/dev/null 2>&1 && release_existe="true"
+
+          if [[ "$tag_existe" == "true" && "$release_existe" == "true" ]]; then
+            echo "Tag $TAG e release ja existem, nada a fazer."
+            exit 0
+          fi
+
+          if [[ "$tag_existe" != "true" ]]; then
+            git tag "$TAG"
+            # shellcheck disable=SC2016
+            git -c credential.helper= \
+              -c credential.helper='!f() { echo username=x-access-token; echo "password=${GH_TOKEN}"; }; f' \
+              push origin "$TAG"
+          else
+            echo "Tag $TAG ja existe, so falta a release."
+          fi
+
+          if [[ "$release_existe" != "true" ]]; then
+            gh release create "$TAG" --title "$TAG" --generate-notes
+          fi

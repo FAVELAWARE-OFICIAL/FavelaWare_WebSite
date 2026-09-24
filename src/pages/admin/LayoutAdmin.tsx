@@ -20,11 +20,21 @@ import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
 import type { ItemMenu } from '../../components/admin/MenuLateral';
 import AbasDeRota, { ABAS_ALUNOS_E_CHAMADAS, ABAS_PROFESSORES } from '../../components/admin/AbasDeRota';
 import {
-  IconeAlunos, IconeEquipe, IconeMaterial, IconeSolicitacoes, IconeVisaoGeral,
+  IconeAlunos,
+  IconeEquipe,
+  IconeMaterial,
+  IconeSolicitacoes,
+  IconeVisaoGeral,
 } from '../../components/admin/Icones';
 import {
-  carregarDadosDaEdicao, carregarEdicoes, montarPainel, FILTROS_INICIAIS,
-  type DadosDaEdicao, type Edicao, type Filtros, type Presenca,
+  carregarDadosDaEdicao,
+  carregarEdicoes,
+  montarPainel,
+  FILTROS_INICIAIS,
+  type DadosDaEdicao,
+  type Edicao,
+  type Filtros,
+  type Presenca,
 } from '../../lib/dashboard';
 import { buscarComCache, esquecerCache } from '../../lib/cache';
 import { carregarSolicitacoes, carregarTurmasDaEdicao, chaveSolicitacoes, chaveTurmas } from '../../lib/gestao';
@@ -151,7 +161,9 @@ const AreaDoGestor: React.FC = () => {
       .then((d) => ativo && setDados(d))
       .catch(() => ativo && setErro('Não foi possível carregar os dados desta edição.'))
       .finally(() => ativo && setCarregando(false));
-    return () => { ativo = false; };
+    return () => {
+      ativo = false;
+    };
   }, [edicaoId]);
 
   // Depois de cadastrar/corrigir algo: busca de novo sem piscar a tela de carregamento
@@ -175,7 +187,17 @@ const AreaDoGestor: React.FC = () => {
   const edicao = edicoes.find((e) => e.id === edicaoId);
   const contexto: ContextoAdmin | null =
     edicao && dados && painel
-      ? { edicao, edicoes, dados, painel, filtros, setFiltros, recarregarEdicoes, recarregarDados, atualizarPresencaNaTela }
+      ? {
+          edicao,
+          edicoes,
+          dados,
+          painel,
+          filtros,
+          setFiltros,
+          recarregarEdicoes,
+          recarregarDados,
+          atualizarPresencaNaTela,
+        }
       : null;
 
   const { pathname } = useLocation();
@@ -186,14 +208,20 @@ const AreaDoGestor: React.FC = () => {
 
   const seletorDeEdicao = (
     <>
-      <label htmlFor="edicao" className="sr-only">Edição</label>
+      <label htmlFor="edicao" className="sr-only">
+        Edição
+      </label>
       <select
         id="edicao"
         value={edicaoId ?? ''}
         onChange={(e) => setEdicaoId(Number(e.target.value))}
         className="w-36 truncate rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm font-medium focus:border-transparent focus:ring-2 focus:ring-favela-green-500 sm:w-auto"
       >
-        {edicoes.map((e) => <option key={e.id} value={e.id}>{e.nome}</option>)}
+        {edicoes.map((e) => (
+          <option key={e.id} value={e.id}>
+            {e.nome}
+          </option>
+        ))}
       </select>
     </>
   );
@@ -201,7 +229,9 @@ const AreaDoGestor: React.FC = () => {
   return (
     <Moldura itens={ITENS_MENU} subtitulo="Área do gestor" acoesTopo={seletorDeEdicao}>
       {erro && (
-        <div role="alert" className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800">{erro}</div>
+        <div role="alert" className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+          {erro}
+        </div>
       )}
 
       {/* Abas da seção (paradas: só o conteúdo de baixo faz a transição) */}
@@ -211,7 +241,12 @@ const AreaDoGestor: React.FC = () => {
           flex-1: o carregamento ocupa a área toda e fica no centro exato. */}
       <AnimatePresence mode="wait" initial={false}>
         {mostrarCarregando ? (
-          <motion.div key="carregando" className="flex flex-1 flex-col" exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+          <motion.div
+            key="carregando"
+            className="flex flex-1 flex-col"
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
             <Carregando texto="Carregando dados da edição" />
           </motion.div>
         ) : !carregando && contexto ? (

@@ -75,8 +75,33 @@ export const GRAUS_DE_INSTRUCAO: Record<string, string> = {
 };
 
 export const UFS = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA',
-  'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+  'AC',
+  'AL',
+  'AP',
+  'AM',
+  'BA',
+  'CE',
+  'DF',
+  'ES',
+  'GO',
+  'MA',
+  'MT',
+  'MS',
+  'MG',
+  'PA',
+  'PB',
+  'PR',
+  'PE',
+  'PI',
+  'RJ',
+  'RN',
+  'RS',
+  'RO',
+  'RR',
+  'SC',
+  'SP',
+  'SE',
+  'TO',
 ];
 
 // ---------- Números: só dígitos no banco, com máscara na tela ----------
@@ -133,7 +158,8 @@ export function normalizarLinkedin(valor: string | null): string | null | undefi
   const completo = /^https?:\/\//i.test(texto) ? texto.replace(/^https?:/i, 'https:') : `https://${texto}`;
   // Esquema e domínio em minúsculas ("HTTPS://www.LinkedIn.com/in/..." também vale)
   const semBusca = completo.split(/[?#]/)[0].replace(/^https:\/\/[^/]+/i, (inicio) => inicio.toLowerCase());
-  return /^https:\/\/([a-z]{2,3}\.)?linkedin\.com\/in\/[A-Za-z0-9%_-]{2,100}\/?$/.test(semBusca) && semBusca.length <= 200
+  return /^https:\/\/([a-z]{2,3}\.)?linkedin\.com\/in\/[A-Za-z0-9%_-]{2,100}\/?$/.test(semBusca) &&
+    semBusca.length <= 200
     ? semBusca
     : undefined;
 }
@@ -145,29 +171,42 @@ export function nascimentoMaximo(hoje: string): string {
 }
 
 /** Confere tudo antes de enviar. Devolve a primeira mensagem de erro (com o campo), ou null. */
-export function validarDados(dados: DadosInstrutor, hoje: string): { campo: keyof DadosInstrutor; texto: string } | null {
+export function validarDados(
+  dados: DadosInstrutor,
+  hoje: string,
+): { campo: keyof DadosInstrutor; texto: string } | null {
   const vazio = (v: string | null) => !v || !v.trim();
-  if (vazio(dados.nome_completo) || dados.nome_completo.trim().length < 3) return { campo: 'nome_completo', texto: 'Informe seu nome completo.' };
+  if (vazio(dados.nome_completo) || dados.nome_completo.trim().length < 3)
+    return { campo: 'nome_completo', texto: 'Informe seu nome completo.' };
   if (!cpfValido(dados.cpf)) return { campo: 'cpf', texto: 'CPF inválido. Confira os números.' };
-  if (vazio(dados.identidade) || dados.identidade.trim().length < 3) return { campo: 'identidade', texto: 'Informe sua identidade (RG).' };
+  if (vazio(dados.identidade) || dados.identidade.trim().length < 3)
+    return { campo: 'identidade', texto: 'Informe sua identidade (RG).' };
   if (!pisValido(dados.pis)) return { campo: 'pis', texto: 'INSS/PIS inválido. Confira os números.' };
   if (!dados.data_nascimento) return { campo: 'data_nascimento', texto: 'Informe sua data de nascimento.' };
   if (dados.data_nascimento < '1900-01-01' || dados.data_nascimento > nascimentoMaximo(hoje)) {
     return { campo: 'data_nascimento', texto: 'Data de nascimento inválida.' };
   }
-  if (!/^\d{10,11}$/.test(soDigitos(dados.telefone))) return { campo: 'telefone', texto: 'Informe o telefone com DDD.' };
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(dados.email.trim())) return { campo: 'email', texto: 'Informe um e-mail válido.' };
+  if (!/^\d{10,11}$/.test(soDigitos(dados.telefone)))
+    return { campo: 'telefone', texto: 'Informe o telefone com DDD.' };
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(dados.email.trim()))
+    return { campo: 'email', texto: 'Informe um e-mail válido.' };
   if (soDigitos(dados.cep).length !== 8) return { campo: 'cep', texto: 'Informe o CEP com 8 números.' };
-  if (vazio(dados.logradouro) || dados.logradouro.trim().length < 2) return { campo: 'logradouro', texto: 'Informe a rua.' };
+  if (vazio(dados.logradouro) || dados.logradouro.trim().length < 2)
+    return { campo: 'logradouro', texto: 'Informe a rua.' };
   if (vazio(dados.numero)) return { campo: 'numero', texto: 'Informe o número (ou "s/n").' };
   if (vazio(dados.bairro) || dados.bairro.trim().length < 2) return { campo: 'bairro', texto: 'Informe o bairro.' };
   if (vazio(dados.cidade) || dados.cidade.trim().length < 2) return { campo: 'cidade', texto: 'Informe a cidade.' };
   if (!UFS.includes(dados.uf)) return { campo: 'uf', texto: 'Escolha o estado (UF).' };
   if (!(dados.estado_civil in ESTADOS_CIVIS)) return { campo: 'estado_civil', texto: 'Escolha o estado civil.' };
-  if (!(dados.cor_raca in CORES_RACAS)) return { campo: 'cor_raca', texto: 'Escolha a cor/raça (ou "Prefiro não declarar").' };
-  if (!(dados.grau_instrucao in GRAUS_DE_INSTRUCAO)) return { campo: 'grau_instrucao', texto: 'Escolha o grau de instrução.' };
+  if (!(dados.cor_raca in CORES_RACAS))
+    return { campo: 'cor_raca', texto: 'Escolha a cor/raça (ou "Prefiro não declarar").' };
+  if (!(dados.grau_instrucao in GRAUS_DE_INSTRUCAO))
+    return { campo: 'grau_instrucao', texto: 'Escolha o grau de instrução.' };
   if (normalizarLinkedin(dados.linkedin) === undefined) {
-    return { campo: 'linkedin', texto: 'LinkedIn inválido. Use o endereço do perfil, ex.: linkedin.com/in/seu-nome (ou deixe em branco).' };
+    return {
+      campo: 'linkedin',
+      texto: 'LinkedIn inválido. Use o endereço do perfil, ex.: linkedin.com/in/seu-nome (ou deixe em branco).',
+    };
   }
   return null;
 }
@@ -198,7 +237,11 @@ export async function jaPreencheuDados(usuarioId: string): Promise<boolean> {
 
 /** Os dados de quem está logado (null se ainda não preencheu) */
 export async function carregarMeusDadosDeInstrutor(usuarioId: string): Promise<DadosInstrutor | null> {
-  const { data, error } = await supabase.from('dados_instrutores').select(COLUNAS).eq('perfil_id', usuarioId).maybeSingle();
+  const { data, error } = await supabase
+    .from('dados_instrutores')
+    .select(COLUNAS)
+    .eq('perfil_id', usuarioId)
+    .maybeSingle();
   if (error) throw error;
   return data as DadosInstrutor | null;
 }

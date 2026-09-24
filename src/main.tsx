@@ -14,16 +14,16 @@
  */
 
 // Importa o StrictMode do React (ajuda a detectar problemas durante o desenvolvimento)
-import { StrictMode } from 'react'
+import { StrictMode } from 'react';
 
 // Importa a função que permite renderizar componentes React no HTML
-import { createRoot } from 'react-dom/client'
+import { createRoot } from 'react-dom/client';
 
 // Importa os estilos globais da aplicação (Tailwind CSS)
-import './index.css'
+import './index.css';
 
 // Importa o componente principal da aplicação
-import App from './App.jsx'
+import App from './App.jsx';
 
 /**
  * RENDERIZAÇÃO DA APLICAÇÃO
@@ -37,8 +37,8 @@ import App from './App.jsx'
  * - Ajuda a encontrar problemas no código
  * - Não afeta a aplicação em produção
  */
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
-)
+);

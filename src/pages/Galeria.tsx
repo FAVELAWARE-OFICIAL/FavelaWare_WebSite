@@ -178,9 +178,7 @@ const Galeria: React.FC = () => {
             className="text-center"
           >
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">GALERIA</h1>
-            <p className="text-xl text-white/80 max-w-3xl mx-auto">
-              Momentos especiais do FavelaWare
-            </p>
+            <p className="text-xl text-white/80 max-w-3xl mx-auto">Momentos especiais do FavelaWare</p>
           </motion.div>
         </div>
       </div>

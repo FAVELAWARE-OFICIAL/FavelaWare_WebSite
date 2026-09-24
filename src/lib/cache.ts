@@ -66,7 +66,9 @@ export function useDadosEmCache<T>(chave: string, carregar: () => Promise<T>) {
     buscarComCache(chave, carregar, jaTinha !== undefined)
       .then((novos) => ativo && setDados(novos))
       .catch(() => ativo && jaTinha === undefined && setErro(true));
-    return () => { ativo = false; };
+    return () => {
+      ativo = false;
+    };
     // `carregar` muda a cada render; a chave identifica a consulta
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chave]);

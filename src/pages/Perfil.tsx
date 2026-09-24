@@ -17,8 +17,14 @@ import { Aviso, Botao, Cartao, classeCampo, classeRotulo, type Mensagem } from '
 import { espaco, foco, texto } from '../components/admin/designSystem';
 import { hoje as hojeLocal } from '../lib/chamada';
 import {
-  carregarMeusDados, mensagemDoErroDePerfil, salvarDadosDeAluno, salvarNome, TAMANHO_MINIMO_SENHA, trocarSenha,
-  type EtapaSenha, type MeusDados,
+  carregarMeusDados,
+  mensagemDoErroDePerfil,
+  salvarDadosDeAluno,
+  salvarNome,
+  TAMANHO_MINIMO_SENHA,
+  trocarSenha,
+  type EtapaSenha,
+  type MeusDados,
 } from '../lib/perfil';
 
 const NOME_DO_PAPEL = { gestor: 'Gestor', professor: 'Instrutor', aluno: 'Aluno' } as const;
@@ -36,10 +42,13 @@ const Perfil: React.FC = () => {
         console.error('[perfil] falha ao carregar', e);
         if (ativo) setErroAoCarregar(true);
       });
-    return () => { ativo = false; };
+    return () => {
+      ativo = false;
+    };
   }, []);
 
-  if (erroAoCarregar) return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar seu perfil. Recarregue a página.' }} />;
+  if (erroAoCarregar)
+    return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar seu perfil. Recarregue a página.' }} />;
   if (mostrarCarregando || !dados) return <Carregando texto="Abrindo seu perfil" />;
 
   return (
@@ -47,7 +56,10 @@ const Perfil: React.FC = () => {
       <MeusDadosCartao dados={dados} />
       <TrocarSenhaCartao />
       {dados.papel === 'professor' && (
-        <Cartao titulo="Dados para o RPA" descricao="CPF, identidade, INSS/PIS, endereço e os outros dados do recibo de pagamento.">
+        <Cartao
+          titulo="Dados para o RPA"
+          descricao="CPF, identidade, INSS/PIS, endereço e os outros dados do recibo de pagamento."
+        >
           <Link
             to="/dados-do-instrutor"
             className={`inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 ${foco} focus-visible:ring-offset-2`}
@@ -75,7 +87,8 @@ const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
     setMensagem(null);
     if (!ehEquipe) {
       if (!dataNascimento) return setMensagem({ tipo: 'erro', texto: 'Informe sua data de nascimento.' });
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return setMensagem({ tipo: 'erro', texto: 'Informe um e-mail válido.' });
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()))
+        return setMensagem({ tipo: 'erro', texto: 'Informe um e-mail válido.' });
     }
     setSalvando(true);
     try {
@@ -95,10 +108,21 @@ const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
     <Cartao titulo="Meus dados">
       <form onSubmit={salvar} className={espaco.formulario}>
         <div>
-          <label htmlFor="perfil-nome" className={classeRotulo}>Nome</label>
+          <label htmlFor="perfil-nome" className={classeRotulo}>
+            Nome
+          </label>
           {ehEquipe ? (
-            <input id="perfil-nome" value={nome} onChange={(e) => setNome(e.target.value)}
-              required minLength={2} maxLength={80} autoComplete="name" disabled={salvando} className={classeCampo} />
+            <input
+              id="perfil-nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              required
+              minLength={2}
+              maxLength={80}
+              autoComplete="name"
+              disabled={salvando}
+              className={classeCampo}
+            />
           ) : (
             <>
               <input id="perfil-nome" value={nome} readOnly className={`${classeCampo} bg-gray-50 text-gray-600`} />
@@ -108,8 +132,15 @@ const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
         </div>
 
         <div>
-          <label htmlFor="perfil-acesso" className={classeRotulo}>{dados.papel === 'aluno' ? 'Login' : 'E-mail de acesso'}</label>
-          <input id="perfil-acesso" value={dados.acesso} readOnly className={`${classeCampo} bg-gray-50 text-gray-600`} />
+          <label htmlFor="perfil-acesso" className={classeRotulo}>
+            {dados.papel === 'aluno' ? 'Login' : 'E-mail de acesso'}
+          </label>
+          <input
+            id="perfil-acesso"
+            value={dados.acesso}
+            readOnly
+            className={`${classeCampo} bg-gray-50 text-gray-600`}
+          />
           <p className={`mt-1 ${texto.apoio}`}>
             {dados.papel ? NOME_DO_PAPEL[dados.papel] : ''} · o acesso não muda por aqui.
           </p>
@@ -118,15 +149,37 @@ const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
         {dados.aluno && (
           <>
             <div>
-              <label htmlFor="perfil-nascimento" className={classeRotulo}>Data de nascimento</label>
-              <input id="perfil-nascimento" type="date" required max={hoje} autoComplete="bday" value={dataNascimento}
-                onChange={(e) => setDataNascimento(e.target.value)} disabled={salvando} className={classeCampo} />
+              <label htmlFor="perfil-nascimento" className={classeRotulo}>
+                Data de nascimento
+              </label>
+              <input
+                id="perfil-nascimento"
+                type="date"
+                required
+                max={hoje}
+                autoComplete="bday"
+                value={dataNascimento}
+                onChange={(e) => setDataNascimento(e.target.value)}
+                disabled={salvando}
+                className={classeCampo}
+              />
             </div>
             <div>
-              <label htmlFor="perfil-email" className={classeRotulo}>E-mail para contato</label>
-              <input id="perfil-email" type="email" required autoComplete="email" maxLength={200} value={email}
-                onChange={(e) => setEmail(e.target.value)} disabled={salvando} className={classeCampo}
-                placeholder="Ex: maria@email.com" />
+              <label htmlFor="perfil-email" className={classeRotulo}>
+                E-mail para contato
+              </label>
+              <input
+                id="perfil-email"
+                type="email"
+                required
+                autoComplete="email"
+                maxLength={200}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={salvando}
+                className={classeCampo}
+                placeholder="Ex: maria@email.com"
+              />
             </div>
           </>
         )}
@@ -134,7 +187,9 @@ const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
         <Aviso mensagem={mensagem} className="" />
         {podeEditar && (
           <div>
-            <Botao type="submit" variante="primario" disabled={salvando}>{salvando ? 'Salvando…' : 'Salvar dados'}</Botao>
+            <Botao type="submit" variante="primario" disabled={salvando}>
+              {salvando ? 'Salvando…' : 'Salvar dados'}
+            </Botao>
           </div>
         )}
       </form>
@@ -149,15 +204,20 @@ const TrocarSenhaCartao: React.FC = () => {
   const [etapa, setEtapa] = useState<EtapaSenha | null>(null);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
 
-  const mudar = (e: React.ChangeEvent<HTMLInputElement>) => setCampos((c) => ({ ...c, [e.target.name]: e.target.value }));
+  const mudar = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setCampos((c) => ({ ...c, [e.target.name]: e.target.value }));
 
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
     setMensagem(null);
     if (campos.nova.length < TAMANHO_MINIMO_SENHA) {
-      return setMensagem({ tipo: 'erro', texto: `A nova senha precisa ter pelo menos ${TAMANHO_MINIMO_SENHA} caracteres.` });
+      return setMensagem({
+        tipo: 'erro',
+        texto: `A nova senha precisa ter pelo menos ${TAMANHO_MINIMO_SENHA} caracteres.`,
+      });
     }
-    if (campos.nova !== campos.confirmacao) return setMensagem({ tipo: 'erro', texto: 'As duas senhas novas não são iguais.' });
+    if (campos.nova !== campos.confirmacao)
+      return setMensagem({ tipo: 'erro', texto: 'As duas senhas novas não são iguais.' });
 
     const erro = await trocarSenha(campos.atual, campos.nova, setEtapa);
     setEtapa(null);
@@ -172,26 +232,64 @@ const TrocarSenhaCartao: React.FC = () => {
     <Cartao titulo="Trocar senha">
       <form onSubmit={salvar} className={espaco.formulario}>
         <div>
-          <label htmlFor="senha-atual" className={classeRotulo}>Senha atual</label>
-          <input id="senha-atual" name="atual" type="password" autoComplete="current-password" required
-            value={campos.atual} onChange={mudar} disabled={ocupado} className={classeCampo} />
+          <label htmlFor="senha-atual" className={classeRotulo}>
+            Senha atual
+          </label>
+          <input
+            id="senha-atual"
+            name="atual"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={campos.atual}
+            onChange={mudar}
+            disabled={ocupado}
+            className={classeCampo}
+          />
         </div>
         <div>
-          <label htmlFor="senha-nova" className={classeRotulo}>Nova senha</label>
-          <input id="senha-nova" name="nova" type="password" autoComplete="new-password" required minLength={TAMANHO_MINIMO_SENHA}
-            value={campos.nova} onChange={mudar} disabled={ocupado} className={classeCampo} />
+          <label htmlFor="senha-nova" className={classeRotulo}>
+            Nova senha
+          </label>
+          <input
+            id="senha-nova"
+            name="nova"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={TAMANHO_MINIMO_SENHA}
+            value={campos.nova}
+            onChange={mudar}
+            disabled={ocupado}
+            className={classeCampo}
+          />
           <p className={`mt-1 ${texto.apoio}`}>Pelo menos {TAMANHO_MINIMO_SENHA} caracteres.</p>
         </div>
         <div>
-          <label htmlFor="senha-confirmacao" className={classeRotulo}>Repita a nova senha</label>
-          <input id="senha-confirmacao" name="confirmacao" type="password" autoComplete="new-password" required
-            value={campos.confirmacao} onChange={mudar} disabled={ocupado} className={classeCampo} />
+          <label htmlFor="senha-confirmacao" className={classeRotulo}>
+            Repita a nova senha
+          </label>
+          <input
+            id="senha-confirmacao"
+            name="confirmacao"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={campos.confirmacao}
+            onChange={mudar}
+            disabled={ocupado}
+            className={classeCampo}
+          />
         </div>
 
         <Aviso mensagem={mensagem} className="" />
         <div>
           <Botao type="submit" variante="primario" disabled={ocupado}>
-            {etapa === 'conferindo' ? 'Conferindo senha atual…' : etapa === 'salvando' ? 'Salvando nova senha…' : 'Trocar senha'}
+            {etapa === 'conferindo'
+              ? 'Conferindo senha atual…'
+              : etapa === 'salvando'
+                ? 'Salvando nova senha…'
+                : 'Trocar senha'}
           </Botao>
         </div>
       </form>

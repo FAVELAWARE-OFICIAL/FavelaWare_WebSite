@@ -40,9 +40,7 @@ const PreviaAlunos: React.FC<{ alunos: Aluno[] }> = ({ alunos }) => {
           style={{ marginLeft: i === 0 ? 0 : '-14px' }}
         />
       ))}
-      {restantes > 0 && (
-        <span className="ml-3 text-sm font-bold text-gray-500">+{restantes}</span>
-      )}
+      {restantes > 0 && <span className="ml-3 text-sm font-bold text-gray-500">+{restantes}</span>}
     </div>
   );
 };
@@ -99,9 +97,7 @@ const Turmas: React.FC = () => {
             className="text-center"
           >
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">TURMAS</h1>
-            <p className="text-xl text-white/80 max-w-3xl mx-auto">
-              Conheça as turmas que já passaram pelo FavelaWare
-            </p>
+            <p className="text-xl text-white/80 max-w-3xl mx-auto">Conheça as turmas que já passaram pelo FavelaWare</p>
 
             {/* Números do projeto */}
             <div className="flex flex-wrap justify-center gap-4 mt-8">
@@ -156,9 +152,7 @@ const Turmas: React.FC = () => {
                       <PreviaAlunos alunos={turma.alunos} />
 
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-gray-500">
-                          {turma.alunos.length} alunos
-                        </span>
+                        <span className="text-sm font-bold text-gray-500">{turma.alunos.length} alunos</span>
                         <span className="inline-flex items-center gap-2 text-[#8bc53f] font-bold group-hover:gap-3 transition-all">
                           Conheça a turma
                           <span aria-hidden="true">›</span>
@@ -175,9 +169,7 @@ const Turmas: React.FC = () => {
         {/* Atalho para o hall da fama da equipe */}
         <motion.section {...fadeInUp} className="text-center">
           <div className="bg-[#2d2a5f] rounded-2xl shadow-xl p-12">
-            <h2 className="text-3xl font-bold text-white mb-4">
-              E quem ensinou todo mundo?
-            </h2>
+            <h2 className="text-3xl font-bold text-white mb-4">E quem ensinou todo mundo?</h2>
             <p className="text-white/80 mb-8 max-w-2xl mx-auto">
               O Hall da Fama reúne as equipes de todas as edições do projeto.
             </p>

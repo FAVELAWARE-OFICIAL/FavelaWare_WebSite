@@ -56,7 +56,12 @@ export interface MeuPerfil {
 }
 
 const PERFIL_VAZIO: MeuPerfil = {
-  papel: null, nome: null, foto: null, participanteId: null, precisaTrocarSenha: false, podeAlternarPapel: false,
+  papel: null,
+  nome: null,
+  foto: null,
+  participanteId: null,
+  precisaTrocarSenha: false,
+  podeAlternarPapel: false,
 };
 
 // Perfil de quem está logado, buscado UMA vez por sessão e reaproveitado pela

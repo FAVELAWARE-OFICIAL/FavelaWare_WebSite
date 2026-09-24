@@ -33,7 +33,9 @@ const Chamada: React.FC = () => {
   const [mensagem, setMensagem] = useState<Mensagem>(null);
 
   // Enquanto grava, a janela não fecha (senão parece que a correção sumiu)
-  const fechar = useCallback(() => { if (!salvando) setCorrecao(null); }, [salvando]);
+  const fechar = useCallback(() => {
+    if (!salvando) setCorrecao(null);
+  }, [salvando]);
 
   const aplicar = async (situacao: (typeof OPCOES)[number]['valor'] | null) => {
     if (!correcao) return;
@@ -47,7 +49,12 @@ const Chamada: React.FC = () => {
         correcao.aula.id,
         correcao.pessoa.id,
         situacao
-          ? { aula_id: correcao.aula.id, participante_id: correcao.pessoa.id, situacao, registro_original: LETRA_DA_SITUACAO[situacao] }
+          ? {
+              aula_id: correcao.aula.id,
+              participante_id: correcao.pessoa.id,
+              situacao,
+              registro_original: LETRA_DA_SITUACAO[situacao],
+            }
           : null,
       );
       setMensagem({
@@ -86,7 +93,10 @@ const Chamada: React.FC = () => {
                   pessoas={alunos}
                   aulas={painel.aulasDeAlunos.filter((a) => a.turma_id === t.id)}
                   celulas={painel.celulas}
-                  aoClicarCelula={(pessoa, aula, presenca) => { setMensagem(null); setCorrecao({ pessoa, aula, presenca }); }}
+                  aoClicarCelula={(pessoa, aula, presenca) => {
+                    setMensagem(null);
+                    setCorrecao({ pessoa, aula, presenca });
+                  }}
                 />
               </Cartao>
             );
@@ -119,10 +129,13 @@ const Chamada: React.FC = () => {
                       atual ? 'border-gray-900 bg-gray-50' : 'border-gray-200 hover:border-gray-400'
                     }`}
                   >
-                    <span className={`flex h-8 w-8 items-center justify-center rounded font-bold ${ESTILO_SITUACAO[op.valor].classe}`}>
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded font-bold ${ESTILO_SITUACAO[op.valor].classe}`}
+                    >
                       {ESTILO_SITUACAO[op.valor].letra}
                     </span>
-                    {op.rotulo}{atual ? ' (atual)' : ''}
+                    {op.rotulo}
+                    {atual ? ' (atual)' : ''}
                   </button>
                 );
               })}

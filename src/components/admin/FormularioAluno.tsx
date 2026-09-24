@@ -90,7 +90,11 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
   };
 
   if (!turmas.length) {
-    return <p className="text-sm text-gray-600">Crie uma turma nesta edição antes de cadastrar alunos (menu Edições e turmas).</p>;
+    return (
+      <p className="text-sm text-gray-600">
+        Crie uma turma nesta edição antes de cadastrar alunos (menu Edições e turmas).
+      </p>
+    );
   }
 
   return (
@@ -101,40 +105,85 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
       <div className="flex items-center gap-4">
         <Avatar foto={foto} nome={formData.nome || 'aluno'} tamanho="lg" />
         <div className="flex flex-wrap gap-2">
-          <label className={`inline-flex cursor-pointer items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus-within:ring-2 focus-within:ring-favela-green-500 ${enviandoFoto ? 'pointer-events-none opacity-50' : ''}`}>
+          <label
+            className={`inline-flex cursor-pointer items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus-within:ring-2 focus-within:ring-favela-green-500 ${enviandoFoto ? 'pointer-events-none opacity-50' : ''}`}
+          >
             {enviandoFoto ? 'Enviando...' : foto ? 'Trocar foto' : 'Adicionar foto'}
             <input type="file" accept="image/*" onChange={escolherFoto} className="sr-only" />
           </label>
           {foto && (
-            <Botao variante="perigo" onClick={() => setFoto(null)}>Tirar foto</Botao>
+            <Botao variante="perigo" onClick={() => setFoto(null)}>
+              Tirar foto
+            </Botao>
           )}
         </div>
       </div>
 
       <div>
-        <label htmlFor="aluno-nome" className={classeRotulo}>Nome completo *</label>
-        <input id="aluno-nome" name="nome" value={formData.nome} onChange={handleInputChange} required maxLength={120}
-          className={classeCampo} placeholder="Ex: Maria da Silva Santos" />
+        <label htmlFor="aluno-nome" className={classeRotulo}>
+          Nome completo *
+        </label>
+        <input
+          id="aluno-nome"
+          name="nome"
+          value={formData.nome}
+          onChange={handleInputChange}
+          required
+          maxLength={120}
+          className={classeCampo}
+          placeholder="Ex: Maria da Silva Santos"
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="aluno-turma" className={classeRotulo}>Turma *</label>
-          <select id="aluno-turma" name="turma_id" value={formData.turma_id} onChange={handleInputChange} className={classeCampo}>
-            {turmas.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+          <label htmlFor="aluno-turma" className={classeRotulo}>
+            Turma *
+          </label>
+          <select
+            id="aluno-turma"
+            name="turma_id"
+            value={formData.turma_id}
+            onChange={handleInputChange}
+            className={classeCampo}
+          >
+            {turmas.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.nome}
+              </option>
+            ))}
           </select>
         </div>
         <div>
-          <label htmlFor="aluno-login" className={classeRotulo}>Login</label>
-          <input id="aluno-login" name="login" value={formData.login} onChange={handleInputChange} maxLength={60}
-            className={classeCampo} placeholder="Ex: maria.santos" autoComplete="off" />
+          <label htmlFor="aluno-login" className={classeRotulo}>
+            Login
+          </label>
+          <input
+            id="aluno-login"
+            name="login"
+            value={formData.login}
+            onChange={handleInputChange}
+            maxLength={60}
+            className={classeCampo}
+            placeholder="Ex: maria.santos"
+            autoComplete="off"
+          />
         </div>
       </div>
 
       <div>
-        <label htmlFor="aluno-observacao" className={classeRotulo}>Observação</label>
-        <textarea id="aluno-observacao" name="observacao" value={formData.observacao} onChange={handleInputChange}
-          rows={2} maxLength={500} className={classeCampo} />
+        <label htmlFor="aluno-observacao" className={classeRotulo}>
+          Observação
+        </label>
+        <textarea
+          id="aluno-observacao"
+          name="observacao"
+          value={formData.observacao}
+          onChange={handleInputChange}
+          rows={2}
+          maxLength={500}
+          className={classeCampo}
+        />
       </div>
 
       {/* Login e senha do aluno (criar acesso / redefinir senha) */}
@@ -147,13 +196,19 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
           confirmandoRemocao ? (
             <div className="flex flex-wrap items-center gap-2 text-sm text-red-700">
               <span>Remover apaga também o histórico de presença.</span>
-              <Botao variante="perigo" onClick={remover} disabled={salvando}>Confirmar</Botao>
+              <Botao variante="perigo" onClick={remover} disabled={salvando}>
+                Confirmar
+              </Botao>
               <Botao onClick={() => setConfirmandoRemocao(false)}>Cancelar</Botao>
             </div>
           ) : (
-            <Botao variante="perigo" onClick={() => setConfirmandoRemocao(true)}>Remover aluno</Botao>
+            <Botao variante="perigo" onClick={() => setConfirmandoRemocao(true)}>
+              Remover aluno
+            </Botao>
           )
-        ) : <span />}
+        ) : (
+          <span />
+        )}
         <Botao type="submit" variante="primario" disabled={salvando || enviandoFoto}>
           {salvando ? 'Salvando...' : aluno ? 'Salvar alterações' : 'Cadastrar aluno'}
         </Botao>

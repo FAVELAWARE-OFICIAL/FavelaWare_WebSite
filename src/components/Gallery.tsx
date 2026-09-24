@@ -29,7 +29,8 @@ const Gallery: React.FC = () => {
     {
       id: 1,
       title: 'Abertura do Projeto 2022',
-      description: 'Abertura do projeto com a professora Samara, Rafaela, Tatiana e Iracema, os parceiros da Mundiale, das Obras Pavonianas e alunos',
+      description:
+        'Abertura do projeto com a professora Samara, Rafaela, Tatiana e Iracema, os parceiros da Mundiale, das Obras Pavonianas e alunos',
       category: 'Evento',
       image: '/imgs/gallery/AberturaDoProjeto2022.webp',
     },
@@ -98,13 +99,9 @@ const Gallery: React.FC = () => {
                     {photo.category}
                   </span>
 
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    {photo.title}
-                  </h3>
+                  <h3 className="text-xl font-bold text-white mb-2">{photo.title}</h3>
 
-                  <p className="text-sm text-gray-300">
-                    {photo.description}
-                  </p>
+                  <p className="text-sm text-gray-300">{photo.description}</p>
                 </div>
               </div>
             </motion.div>
@@ -127,12 +124,7 @@ const Gallery: React.FC = () => {
           >
             <span className="relative z-10 flex items-center gap-2">
               Ver Mais Fotos
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </span>

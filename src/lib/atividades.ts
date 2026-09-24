@@ -53,7 +53,11 @@ export interface RegrasDeEntrega {
 }
 
 export const SEM_REGRAS: RegrasDeEntrega = {
-  exige_texto: false, exige_link: false, tipo_link: 'qualquer', exige_arquivo: false, formatos: [],
+  exige_texto: false,
+  exige_link: false,
+  tipo_link: 'qualquer',
+  exige_arquivo: false,
+  formatos: [],
 };
 
 export interface Atividade extends RegrasDeEntrega {
@@ -69,8 +73,7 @@ export interface Atividade extends RegrasDeEntrega {
 
 const COLUNAS_TENTATIVA =
   'id, participante_id, numero, comentario, link, arquivo_caminho, arquivo_nome, arquivo_id, arquivo:arquivos_entrega(nome), enviada_em, status, feedback, nota, avaliada_em, avaliada_por_nome';
-const COLUNAS_ATIVIDADE =
-  `id, turma_id, trilha_id, titulo, enunciado, prazo, exige_texto, exige_link, tipo_link, exige_arquivo, formatos, trilha:trilhas(nome, ordem), tentativas(${COLUNAS_TENTATIVA})`;
+const COLUNAS_ATIVIDADE = `id, turma_id, trilha_id, titulo, enunciado, prazo, exige_texto, exige_link, tipo_link, exige_arquivo, formatos, trilha:trilhas(nome, ordem), tentativas(${COLUNAS_TENTATIVA})`;
 
 /** Chaves do cache (ver lib/cache.ts) */
 export const CHAVE_ATIVIDADES_ALUNO = 'atividades:aluno';
@@ -90,7 +93,11 @@ export const tentativasDe = (atividade: Atividade, participanteId: number) =>
 export function porTrilha(atividades: Atividade[]): { trilha: string; atividades: Atividade[] }[] {
   const grupos = new Map<number, { trilha: string; ordem: number; atividades: Atividade[] }>();
   for (const a of atividades) {
-    const g = grupos.get(a.trilha_id) ?? { trilha: a.trilha?.nome ?? 'Trilha', ordem: a.trilha?.ordem ?? 0, atividades: [] };
+    const g = grupos.get(a.trilha_id) ?? {
+      trilha: a.trilha?.nome ?? 'Trilha',
+      ordem: a.trilha?.ordem ?? 0,
+      atividades: [],
+    };
     g.atividades.push(a);
     grupos.set(a.trilha_id, g);
   }
@@ -125,14 +132,29 @@ export const ROTULO_SITUACAO: Record<Situacao, string> = {
 const FUSO = 'America/Sao_Paulo';
 
 export const formatarDataHora = (iso: string) =>
-  new Date(iso).toLocaleString('pt-BR', { timeZone: FUSO, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  new Date(iso).toLocaleString('pt-BR', {
+    timeZone: FUSO,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
 /** timestamptz -> valor de <input type="datetime-local"> no horário de Brasília */
 export function paraCampoDataHora(iso: string): string {
   const partes = Object.fromEntries(
     new Intl.DateTimeFormat('en-CA', {
-      timeZone: FUSO, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-    }).formatToParts(new Date(iso)).map((p) => [p.type, p.value]),
+      timeZone: FUSO,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    })
+      .formatToParts(new Date(iso))
+      .map((p) => [p.type, p.value]),
   );
   return `${partes.year}-${partes.month}-${partes.day}T${partes.hour}:${partes.minute}`;
 }
@@ -173,7 +195,8 @@ export async function carregarAtividadesDoAluno(): Promise<AtividadesDoAluno> {
   if (!perfil.papel) throw new Error('Não foi possível carregar o perfil');
 
   const visualizacao = !perfil.participanteId && perfil.podeAlternarPapel;
-  if (!perfil.participanteId && !visualizacao) return { participanteId: null, visualizacao: false, turmas: [], atividades: [] };
+  if (!perfil.participanteId && !visualizacao)
+    return { participanteId: null, visualizacao: false, turmas: [], atividades: [] };
 
   const [atividades, turmas] = await Promise.all([
     supabase.from('atividades').select(COLUNAS_ATIVIDADE),
@@ -344,7 +367,9 @@ async function mensagemDaFuncao(erro: unknown, padrao: string): Promise<string> 
     try {
       const corpo = await erro.context.json();
       if (typeof corpo?.erro === 'string') return corpo.erro;
-    } catch { /* resposta sem JSON: fica o padrão */ }
+    } catch {
+      /* resposta sem JSON: fica o padrão */
+    }
   }
   return padrao;
 }
@@ -354,9 +379,13 @@ async function mensagemDaFuncao(erro: unknown, padrao: string): Promise<string> 
  * - Arquivo no Google Drive: o servidor confere quem pode ver e devolve o link.
  * - Arquivo antigo no Storage do Supabase: URL assinada, como antes.
  */
-export async function linkDoArquivo(t: Pick<Tentativa, 'arquivo_id' | 'arquivo_caminho' | 'arquivo_nome'>): Promise<string> {
+export async function linkDoArquivo(
+  t: Pick<Tentativa, 'arquivo_id' | 'arquivo_caminho' | 'arquivo_nome'>,
+): Promise<string> {
   if (t.arquivo_id) {
-    const { data, error } = await supabase.functions.invoke('entregas-drive/link', { body: { arquivo_id: t.arquivo_id } });
+    const { data, error } = await supabase.functions.invoke('entregas-drive/link', {
+      body: { arquivo_id: t.arquivo_id },
+    });
     if (error) throw new Error(await mensagemDaFuncao(error, 'Não foi possível baixar o arquivo.'));
     return (data as { url: string }).url;
   }
@@ -399,11 +428,15 @@ export interface DadosDaAtividade extends RegrasDeEntrega {
 }
 
 /** Cria (com turma) ou edita (com id). Devolve null se deu certo, ou o texto do erro. */
-export async function salvarAtividade(dados: DadosDaAtividade, alvo: { turmaId: number } | { id: number }): Promise<string | null> {
+export async function salvarAtividade(
+  dados: DadosDaAtividade,
+  alvo: { turmaId: number } | { id: number },
+): Promise<string | null> {
   const campos = { ...dados, titulo: dados.titulo.trim(), enunciado: dados.enunciado.trim() };
-  const { error } = 'id' in alvo
-    ? await supabase.from('atividades').update(campos).eq('id', alvo.id)
-    : await supabase.from('atividades').insert({ ...campos, turma_id: alvo.turmaId });
+  const { error } =
+    'id' in alvo
+      ? await supabase.from('atividades').update(campos).eq('id', alvo.id)
+      : await supabase.from('atividades').insert({ ...campos, turma_id: alvo.turmaId });
   if (!error) return null;
   console.error('[atividades] falha ao salvar a atividade', error.code);
   if (error.code === '22023') return 'O prazo precisa ser depois de agora.';

@@ -17,11 +17,11 @@
  * Define a estrutura de cada foto exibida na galeria
  */
 export interface Photo {
-  id: number;              // Identificador único da foto
-  title: string;           // Título da foto
-  description: string;     // Descrição detalhada
-  category: string;        // Categoria (Evento, Formatura, etc)
-  image: string;           // Caminho para a imagem
+  id: number; // Identificador único da foto
+  title: string; // Título da foto
+  description: string; // Descrição detalhada
+  category: string; // Categoria (Evento, Formatura, etc)
+  image: string; // Caminho para a imagem
 }
 
 /**
@@ -29,9 +29,9 @@ export interface Photo {
  * Define a estrutura de cada parceiro do projeto
  */
 export interface Partner {
-  name: string;            // Nome do parceiro
-  logo: string;            // Emoji ou ícone
-  image?: string;          // Caminho para logo (opcional)
+  name: string; // Nome do parceiro
+  logo: string; // Emoji ou ícone
+  image?: string; // Caminho para logo (opcional)
 }
 
 /**
@@ -39,8 +39,8 @@ export interface Partner {
  * Versão estendida com informações completas
  */
 export interface DetailedPartner extends Partner {
-  descricao: string;       // Descrição do parceiro
-  link: string;            // Link para site
+  descricao: string; // Descrição do parceiro
+  link: string; // Link para site
 }
 
 /**
@@ -48,10 +48,10 @@ export interface DetailedPartner extends Partner {
  * Define links de redes sociais no footer
  */
 export interface SocialLink {
-  name: string;            // Nome da rede social
-  icon: string;            // Emoji ou ícone
-  href: string;            // URL do link
-  color: string;           // Classes de cor (Tailwind)
+  name: string; // Nome da rede social
+  icon: string; // Emoji ou ícone
+  href: string; // URL do link
+  color: string; // Classes de cor (Tailwind)
 }
 
 /**
@@ -59,22 +59,22 @@ export interface SocialLink {
  * Define cada evento na timeline
  */
 export interface TimelineEvent {
-  titleTop: string;        // Título superior
-  dateTop: string;         // Data superior
-  titleBottom: string;     // Título inferior
-  dateBottom: string;      // Data inferior
-  posicao?: number;        // Posição na timeline (opcional)
+  titleTop: string; // Título superior
+  dateTop: string; // Data superior
+  titleBottom: string; // Título inferior
+  dateBottom: string; // Data inferior
+  posicao?: number; // Posição na timeline (opcional)
 }
 
 /**
  * TIPO: Item do Cronograma (versão Sobre)
  */
 export interface CronogramaItem {
-  data: string;            // Data do evento
-  titulo: string;          // Título do evento
-  subtitulo: string;       // Subtítulo (opcional)
-  subtituloTexto: string;  // Texto do subtítulo
-  posicao: number;         // Posição na timeline
+  data: string; // Data do evento
+  titulo: string; // Título do evento
+  subtitulo: string; // Subtítulo (opcional)
+  subtituloTexto: string; // Texto do subtítulo
+  posicao: number; // Posição na timeline
 }
 
 /**
@@ -82,10 +82,10 @@ export interface CronogramaItem {
  * Define cada membro fundador do projeto
  */
 export interface Idealizador {
-  nome: string;            // Nome completo
-  cargo: string;           // Cargo/função
-  organizacao: string;     // Organização
-  foto?: string;           // Foto (opcional)
+  nome: string; // Nome completo
+  cargo: string; // Cargo/função
+  organizacao: string; // Organização
+  foto?: string; // Foto (opcional)
 }
 
 /**
@@ -93,9 +93,9 @@ export interface Idealizador {
  * Define os propósitos do projeto
  */
 export interface Proposito {
-  titulo: string;          // Título do propósito
-  descricao: string;       // Descrição
-  cor: string;             // Classe de cor (Tailwind)
+  titulo: string; // Título do propósito
+  descricao: string; // Descrição
+  cor: string; // Classe de cor (Tailwind)
 }
 
 /**
@@ -103,9 +103,9 @@ export interface Proposito {
  * Define membros das equipes passadas
  */
 export interface TeamMember {
-  nome: string;            // Nome do membro
-  cargo: string;           // Cargo/função
-  foto: string | null;     // Foto (pode ser null)
+  nome: string; // Nome do membro
+  cargo: string; // Cargo/função
+  foto: string | null; // Foto (pode ser null)
 }
 
 /**
@@ -113,8 +113,8 @@ export interface TeamMember {
  * Agrupa membros por ano
  */
 export interface YearTeam {
-  ano: string;             // Ano da equipe
-  membros: TeamMember[];   // Array de membros
+  ano: string; // Ano da equipe
+  membros: TeamMember[]; // Array de membros
 }
 
 /**
@@ -128,9 +128,9 @@ export type Topico = string;
  * Define um módulo dentro de uma trilha
  */
 export interface Modulo {
-  nome: string;            // Nome do módulo
-  duracao: string;         // Duração (ex: "18 horas")
-  topicos: Topico[];       // Lista de tópicos
+  nome: string; // Nome do módulo
+  duracao: string; // Duração (ex: "18 horas")
+  topicos: Topico[]; // Lista de tópicos
 }
 
 /**
@@ -138,10 +138,10 @@ export interface Modulo {
  * Define uma trilha completa do projeto
  */
 export interface Trilha {
-  id: number;              // ID único
-  titulo: string;          // Título da trilha
-  horas: string;           // Total de horas
-  modulos: Modulo[];       // Módulos da trilha
+  id: number; // ID único
+  titulo: string; // Título da trilha
+  horas: string; // Total de horas
+  modulos: Modulo[]; // Módulos da trilha
 }
 
 /**
@@ -149,8 +149,8 @@ export interface Trilha {
  * Define edições passadas do projeto
  */
 export interface EdicaoAnterior {
-  nome: string;            // Nome da edição
-  ano: string;             // Ano
+  nome: string; // Nome da edição
+  ano: string; // Ano
 }
 
 /**
@@ -158,8 +158,8 @@ export interface EdicaoAnterior {
  * Números exibidos no Hero
  */
 export interface Estatistica {
-  number: string;          // Número (ex: "150+")
-  label: string;           // Rótulo (ex: "Alunos")
+  number: string; // Número (ex: "150+")
+  label: string; // Rótulo (ex: "Alunos")
 }
 
 /**
@@ -167,12 +167,12 @@ export interface Estatistica {
  * Define artigos publicados sobre o projeto
  */
 export interface ArtigoCientifico {
-  id: number;              // ID único
-  titulo: string;          // Título do artigo
-  descricao: string;       // Descrição/resumo
-  doi: string;             // DOI ou link do artigo
-  ano: string;             // Ano de publicação
-  icone: string;           // Emoji ou ícone
+  id: number; // ID único
+  titulo: string; // Título do artigo
+  descricao: string; // Descrição/resumo
+  doi: string; // DOI ou link do artigo
+  ano: string; // Ano de publicação
+  icone: string; // Emoji ou ícone
 }
 
 /**
@@ -180,13 +180,13 @@ export interface ArtigoCientifico {
  * Define prêmios e reconhecimentos recebidos
  */
 export interface Premio {
-  id: number;              // ID único
-  titulo: string;          // Nome do prêmio
-  descricao: string;       // Descrição do prêmio
-  ano: string;             // Ano de recebimento
-  link?: string;           // Link para mais informações (opcional)
-  imagens: string[];       // Array de caminhos de imagens
-  icone: string;           // Emoji ou ícone
+  id: number; // ID único
+  titulo: string; // Nome do prêmio
+  descricao: string; // Descrição do prêmio
+  ano: string; // Ano de recebimento
+  link?: string; // Link para mais informações (opcional)
+  imagens: string[]; // Array de caminhos de imagens
+  icone: string; // Emoji ou ícone
 }
 
 /**
@@ -195,8 +195,8 @@ export interface Premio {
  */
 export interface ContatoInfo {
   tipo: 'email' | 'telefone' | 'endereco'; // Tipo de contato
-  titulo: string;          // Título da seção
-  valor: string;           // Valor do contato (email, número, endereço)
-  link?: string;           // Link (mailto:, tel:, etc) - opcional
-  icone: string;           // Emoji ou ícone
+  titulo: string; // Título da seção
+  valor: string; // Valor do contato (email, número, endereço)
+  link?: string; // Link (mailto:, tel:, etc) - opcional
+  icone: string; // Emoji ou ícone
 }

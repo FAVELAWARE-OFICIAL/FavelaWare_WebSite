@@ -24,7 +24,9 @@ export const LegendaSituacoes: React.FC<{ situacoes: Situacao[] }> = ({ situacoe
   <ul className="flex flex-wrap gap-4 text-sm text-gray-700">
     {situacoes.map((s) => (
       <li key={s} className="flex items-center gap-2">
-        <span className={`inline-flex w-6 h-6 items-center justify-center rounded text-xs font-bold ${ESTILO_SITUACAO[s].classe}`}>
+        <span
+          className={`inline-flex w-6 h-6 items-center justify-center rounded text-xs font-bold ${ESTILO_SITUACAO[s].classe}`}
+        >
           {ESTILO_SITUACAO[s].letra}
         </span>
         {ESTILO_SITUACAO[s].rotulo}
@@ -56,7 +58,10 @@ const PlanilhaDeChamada: React.FC<{
         <caption className="sr-only">{titulo}</caption>
         <thead>
           <tr className="bg-gray-50">
-            <th scope="col" className="sticky left-0 z-10 w-32 min-w-[8rem] bg-gray-50 px-3 py-2 text-left font-semibold text-gray-700 sm:w-auto sm:min-w-[12rem]">
+            <th
+              scope="col"
+              className="sticky left-0 z-10 w-32 min-w-[8rem] bg-gray-50 px-3 py-2 text-left font-semibold text-gray-700 sm:w-auto sm:min-w-[12rem]"
+            >
               Nome
             </th>
             {aulas.map((a) => (
@@ -74,7 +79,11 @@ const PlanilhaDeChamada: React.FC<{
         <tbody>
           {pessoas.map((p) => (
             <tr key={p.id} className="border-t border-gray-100">
-              <th scope="row" className="sticky left-0 z-10 max-w-[8rem] truncate whitespace-nowrap bg-white px-3 py-1 text-left font-medium text-gray-800 sm:max-w-none" title={p.nome}>
+              <th
+                scope="row"
+                className="sticky left-0 z-10 max-w-[8rem] truncate whitespace-nowrap bg-white px-3 py-1 text-left font-medium text-gray-800 sm:max-w-none"
+                title={p.nome}
+              >
                 {p.nome}
               </th>
               {aulas.map((a) => {
@@ -95,7 +104,9 @@ const PlanilhaDeChamada: React.FC<{
                         {estilo?.letra}
                       </button>
                     ) : (
-                      <span title={descricao} className={classe}>{estilo?.letra}</span>
+                      <span title={descricao} className={classe}>
+                        {estilo?.letra}
+                      </span>
                     )}
                   </td>
                 );

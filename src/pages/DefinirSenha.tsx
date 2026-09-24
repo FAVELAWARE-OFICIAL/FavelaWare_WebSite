@@ -80,7 +80,11 @@ const DefinirSenha: React.FC = () => {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 md:p-10">
         <img src="/imgs/logo/logo.png" alt="Logo FavelaWare" className="w-40 object-contain mx-auto mb-6" />
 
-        {estado === 'verificando' && <p className="text-center text-gray-600" role="status">Verificando o convite...</p>}
+        {estado === 'verificando' && (
+          <p className="text-center text-gray-600" role="status">
+            Verificando o convite...
+          </p>
+        )}
 
         {estado === 'sem-convite' && (
           <div className="text-center">
@@ -100,26 +104,51 @@ const DefinirSenha: React.FC = () => {
             <p className="text-gray-600 mb-6">Você vai usar esta senha, com o seu e-mail, para entrar no FavelaWare.</p>
 
             {mensagem && (
-              <div role="alert" className="mb-6 p-4 rounded-lg bg-red-100 text-red-800 border border-red-300">{mensagem}</div>
+              <div role="alert" className="mb-6 p-4 rounded-lg bg-red-100 text-red-800 border border-red-300">
+                {mensagem}
+              </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">Nova senha *</label>
-                <input id="senha" name="senha" type="password" autoComplete="new-password" required minLength={TAMANHO_MINIMO}
-                  value={formData.senha} onChange={handleInputChange} className={classeCampo} />
+                <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">
+                  Nova senha *
+                </label>
+                <input
+                  id="senha"
+                  name="senha"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={TAMANHO_MINIMO}
+                  value={formData.senha}
+                  onChange={handleInputChange}
+                  className={classeCampo}
+                />
                 <p className="mt-1 text-xs text-gray-500">Pelo menos {TAMANHO_MINIMO} caracteres.</p>
               </div>
               <div>
-                <label htmlFor="confirmacao" className="block text-sm font-medium text-gray-700 mb-2">Repita a senha *</label>
-                <input id="confirmacao" name="confirmacao" type="password" autoComplete="new-password" required
-                  value={formData.confirmacao} onChange={handleInputChange} className={classeCampo} />
+                <label htmlFor="confirmacao" className="block text-sm font-medium text-gray-700 mb-2">
+                  Repita a senha *
+                </label>
+                <input
+                  id="confirmacao"
+                  name="confirmacao"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={formData.confirmacao}
+                  onChange={handleInputChange}
+                  className={classeCampo}
+                />
               </div>
               <button
                 type="submit"
                 disabled={salvando}
                 className={`w-full py-4 px-6 rounded-lg font-bold text-white text-lg shadow-lg transition-all ${
-                  salvando ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-favela-green-600 to-favela-blue-600 hover:shadow-xl'
+                  salvando
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-favela-green-600 to-favela-blue-600 hover:shadow-xl'
                 }`}
               >
                 {salvando ? 'Salvando...' : 'SALVAR SENHA E ENTRAR'}

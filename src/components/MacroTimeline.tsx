@@ -23,32 +23,32 @@ const MacroTimeline = () => {
       titleTop: 'Início das divulgações',
       dateTop: '29/05',
       titleBottom: 'Pré-inscrições para as oficinas',
-      dateBottom: '26/05'
+      dateBottom: '26/05',
     },
     {
       titleTop: 'Oficina Mundo Tech',
       dateTop: '18/06',
       titleBottom: 'Oficina Developer na Prática',
-      dateBottom: '11/06'
+      dateBottom: '11/06',
     },
     {
       titleTop: 'Oficina ChatBot e IA',
       dateTop: '25/06',
       titleBottom: 'Inscrições FavelaWare',
-      dateBottom: '25/06'
+      dateBottom: '25/06',
     },
     {
       titleTop: 'Início das aulas',
       dateTop: '05/08',
       titleBottom: '',
-      dateBottom: '05/08'
+      dateBottom: '05/08',
     },
     {
       titleTop: 'Formatura',
       dateTop: '01/08/26',
       titleBottom: '',
-      dateBottom: '01/08/26'
-    }
+      dateBottom: '01/08/26',
+    },
   ];
 
   return (
@@ -79,10 +79,7 @@ const MacroTimeline = () => {
             <div className="relative h-full flex justify-between">
               {/* Eventos */}
               {timelineEvents.map((event, index) => (
-                <div
-                  key={index}
-                  className="flex-1 flex flex-col items-center relative"
-                >
+                <div key={index} className="flex-1 flex flex-col items-center relative">
                   {/* Wrapper com altura total */}
                   <div className="relative h-full flex flex-col items-center">
                     {/* Parte superior - textos */}
@@ -90,9 +87,7 @@ const MacroTimeline = () => {
                       <p className="text-xs sm:text-sm text-slate-700 leading-tight mb-1 max-w-[80px] sm:max-w-[100px]">
                         {event.titleTop}
                       </p>
-                      <p className="text-xs sm:text-sm font-semibold text-[#25255c]">
-                        {event.dateTop}
-                      </p>
+                      <p className="text-xs sm:text-sm font-semibold text-[#25255c]">{event.dateTop}</p>
                     </div>
 
                     {/* Container central com linha verde e círculos */}
@@ -117,9 +112,7 @@ const MacroTimeline = () => {
                           {event.titleBottom}
                         </p>
                       )}
-                      <p className="text-xs sm:text-sm font-semibold text-[#25255c]">
-                        {event.dateBottom}
-                      </p>
+                      <p className="text-xs sm:text-sm font-semibold text-[#25255c]">{event.dateBottom}</p>
                     </div>
                   </div>
                 </div>

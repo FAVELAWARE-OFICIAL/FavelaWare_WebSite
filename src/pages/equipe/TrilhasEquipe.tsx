@@ -24,14 +24,30 @@ import { Aviso, Botao, Cartao, Vazio, classeCampo, classeRotulo, type Mensagem }
 import { espaco, foco, selo, superficie, texto } from '../../components/admin/designSystem';
 import { Corrigir, FormularioDeAtividade } from '../../components/atividades/FormulariosDaEquipe';
 import {
-  apagarAtividade, carregarAtividadesDaTurma, resumoDasRegras, chaveAtividadesDaTurma, formatarDataHora, situacaoDoAluno, tentativasDe,
-  type AlunoDaTurma, type Atividade, type AtividadesDaTurma, type Situacao,
+  apagarAtividade,
+  carregarAtividadesDaTurma,
+  resumoDasRegras,
+  chaveAtividadesDaTurma,
+  formatarDataHora,
+  situacaoDoAluno,
+  tentativasDe,
+  type AlunoDaTurma,
+  type Atividade,
+  type AtividadesDaTurma,
+  type Situacao,
 } from '../../lib/atividades';
 import { useDadosEmCache } from '../../lib/cache';
 import { carregarMinhasTurmas } from '../../lib/chamada';
 import {
-  apagarMaterial, apagarTrilha, carregarTrilhas, CHAVE_MATERIAL, dominioDoLink, salvarMaterial, salvarTrilha,
-  type MaterialDaTrilha, type Trilha,
+  apagarMaterial,
+  apagarTrilha,
+  carregarTrilhas,
+  CHAVE_MATERIAL,
+  dominioDoLink,
+  salvarMaterial,
+  salvarTrilha,
+  type MaterialDaTrilha,
+  type Trilha,
 } from '../../lib/material';
 
 const PREFERENCIA_TURMA = 'professor:turma';
@@ -62,9 +78,8 @@ const TrilhasEquipe: React.FC = () => {
   const trilhas = useDadosEmCache(CHAVE_MATERIAL, carregarTrilhas);
   const turmas = useDadosEmCache('minhas-turmas', carregarMinhasTurmas);
   const [turmaId, setTurmaId] = useState<number | null>(null);
-  const daTurma = useDadosEmCache(
-    turmaId === null ? 'atividades:sem-turma' : chaveAtividadesDaTurma(turmaId),
-    () => (turmaId === null ? Promise.resolve(SEM_TURMA) : carregarAtividadesDaTurma(turmaId)),
+  const daTurma = useDadosEmCache(turmaId === null ? 'atividades:sem-turma' : chaveAtividadesDaTurma(turmaId), () =>
+    turmaId === null ? Promise.resolve(SEM_TURMA) : carregarAtividadesDaTurma(turmaId),
   );
 
   const [janela, setJanela] = useState<JanelaAberta | null>(null);
@@ -86,19 +101,25 @@ const TrilhasEquipe: React.FC = () => {
   const falhou = trilhas.erro && trilhas.dados === undefined;
   const mostrarCarregando = useCarregamentoCompleto(trilhas.dados === undefined && !falhou, 0);
 
-  if (falhou) return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar as trilhas. Recarregue a página.' }} />;
+  if (falhou)
+    return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar as trilhas. Recarregue a página.' }} />;
   if (mostrarCarregando || trilhas.dados === undefined) return <Carregando texto="Carregando as trilhas" />;
 
   const listaDeTrilhas = trilhas.dados;
   const listaDeTurmas = turmas.dados;
   const turma = daTurma.dados ?? SEM_TURMA;
   const estadoAtividades: EstadoAtividades =
-    turmas.erro && listaDeTurmas === undefined ? 'erro-turmas'
-    : listaDeTurmas === undefined ? 'carregando'
-    : listaDeTurmas.length === 0 ? 'sem-turma'
-    : daTurma.erro && daTurma.dados === undefined ? 'erro'
-    : turmaId === null || daTurma.dados === undefined ? 'carregando'
-    : 'pronto';
+    turmas.erro && listaDeTurmas === undefined
+      ? 'erro-turmas'
+      : listaDeTurmas === undefined
+        ? 'carregando'
+        : listaDeTurmas.length === 0
+          ? 'sem-turma'
+          : daTurma.erro && daTurma.dados === undefined
+            ? 'erro'
+            : turmaId === null || daTurma.dados === undefined
+              ? 'carregando'
+              : 'pronto';
   const idsDosAlunos = new Set(turma.alunos.map((a) => a.id));
 
   // Depois de gravar, busca de novo só o que mudou
@@ -113,27 +134,39 @@ const TrilhasEquipe: React.FC = () => {
   };
 
   const apagar = async (
-    alvo: { tipo: 'trilha'; trilha: Trilha } | { tipo: 'material'; material: MaterialDaTrilha } | { tipo: 'atividade'; atividade: Atividade },
+    alvo:
+      | { tipo: 'trilha'; trilha: Trilha }
+      | { tipo: 'material'; material: MaterialDaTrilha }
+      | { tipo: 'atividade'; atividade: Atividade },
   ) => {
     const pergunta =
-      alvo.tipo === 'trilha' ? `Apagar a trilha "${alvo.trilha.nome}" e os ${alvo.trilha.materiais.length} materiais dela?`
-      : alvo.tipo === 'material' ? `Apagar "${alvo.material.titulo}"?`
-      : `Apagar a atividade "${alvo.atividade.titulo}"?`;
+      alvo.tipo === 'trilha'
+        ? `Apagar a trilha "${alvo.trilha.nome}" e os ${alvo.trilha.materiais.length} materiais dela?`
+        : alvo.tipo === 'material'
+          ? `Apagar "${alvo.material.titulo}"?`
+          : `Apagar a atividade "${alvo.atividade.titulo}"?`;
     if (!window.confirm(pergunta)) return;
     setMensagem(null);
     const falha =
-      alvo.tipo === 'trilha' ? await apagarTrilha(alvo.trilha.id)
-      : alvo.tipo === 'material' ? await apagarMaterial(alvo.material.id)
-      : await apagarAtividade(alvo.atividade.id);
+      alvo.tipo === 'trilha'
+        ? await apagarTrilha(alvo.trilha.id)
+        : alvo.tipo === 'material'
+          ? await apagarMaterial(alvo.material.id)
+          : await apagarAtividade(alvo.atividade.id);
     if (falha) return setMensagem({ tipo: 'erro', texto: falha });
     if (alvo.tipo === 'atividade') await recarregar('atividades', `Atividade "${alvo.atividade.titulo}" apagada.`);
     else await recarregar('trilhas', alvo.tipo === 'trilha' ? 'Trilha apagada.' : 'Material apagado.');
   };
 
-  const abrir = (j: JanelaAberta) => { setMensagem(null); setJanela(j); };
+  const abrir = (j: JanelaAberta) => {
+    setMensagem(null);
+    setJanela(j);
+  };
 
   const turmaEscolhida = listaDeTurmas?.find((t) => t.id === turmaId);
-  const nomeDaTurma = turmaEscolhida ? `${turmaEscolhida.nome}${turmaEscolhida.edicao ? ` · ${turmaEscolhida.edicao}` : ''}` : undefined;
+  const nomeDaTurma = turmaEscolhida
+    ? `${turmaEscolhida.nome}${turmaEscolhida.edicao ? ` · ${turmaEscolhida.edicao}` : ''}`
+    : undefined;
 
   const atividadeDaJanela =
     janela && (janela.tipo === 'entregas' || janela.tipo === 'corrigir')
@@ -144,16 +177,36 @@ const TrilhasEquipe: React.FC = () => {
     <>
       {/* Turma: as atividades são de uma turma (os materiais valem para todas) */}
       {estadoAtividades === 'erro-turmas' ? (
-        <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar as turmas. Os materiais continuam disponíveis; recarregue a página para ver as atividades.' }} />
+        <Aviso
+          mensagem={{
+            tipo: 'erro',
+            texto:
+              'Não foi possível carregar as turmas. Os materiais continuam disponíveis; recarregue a página para ver as atividades.',
+          }}
+        />
       ) : listaDeTurmas === undefined ? (
         <p className={`${espaco.entreBlocos} ${texto.apoio}`}>Carregando as turmas…</p>
       ) : listaDeTurmas.length > 0 ? (
         <div className={`${espaco.entreBlocos} flex flex-wrap items-end justify-between gap-3`}>
           <div className="w-full sm:max-w-sm">
-            <label htmlFor="trilhas-turma" className={classeRotulo}>Turma das atividades</label>
-            <select id="trilhas-turma" value={turmaId ?? ''} className={classeCampo}
-              onChange={(e) => { setTurmaId(Number(e.target.value)); gravarPreferencia(PREFERENCIA_TURMA, e.target.value); }}>
-              {listaDeTurmas.map((t) => <option key={t.id} value={t.id}>{t.nome}{t.edicao ? ` · ${t.edicao}` : ''}</option>)}
+            <label htmlFor="trilhas-turma" className={classeRotulo}>
+              Turma das atividades
+            </label>
+            <select
+              id="trilhas-turma"
+              value={turmaId ?? ''}
+              className={classeCampo}
+              onChange={(e) => {
+                setTurmaId(Number(e.target.value));
+                gravarPreferencia(PREFERENCIA_TURMA, e.target.value);
+              }}
+            >
+              {listaDeTurmas.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nome}
+                  {t.edicao ? ` · ${t.edicao}` : ''}
+                </option>
+              ))}
             </select>
           </div>
           {estadoAtividades === 'pronto' && <p className={texto.apoio}>{turma.alunos.length} aluno(s) nesta turma</p>}
@@ -181,48 +234,91 @@ const TrilhasEquipe: React.FC = () => {
         ))}
 
         {/* Última "caixa": criar trilha nova */}
-        <button type="button" onClick={() => abrir({ tipo: 'trilha' })}
-          className={`${superficie.vazio} flex min-h-[8rem] items-center justify-center p-6 text-sm font-semibold text-gray-600 transition-colors hover:border-favela-green-500 hover:text-favela-green-700 ${foco}`}>
+        <button
+          type="button"
+          onClick={() => abrir({ tipo: 'trilha' })}
+          className={`${superficie.vazio} flex min-h-[8rem] items-center justify-center p-6 text-sm font-semibold text-gray-600 transition-colors hover:border-favela-green-500 hover:text-favela-green-700 ${foco}`}
+        >
           + Nova trilha
         </button>
       </div>
 
       {/* ============ JANELAS ============ */}
       <Janela
-        titulo={janela?.tipo === 'trilha' ? (janela.trilha ? 'Editar trilha' : 'Nova trilha') : janela?.tipo === 'material' ? (janela.material ? 'Editar material' : 'Adicionar link') : ''}
+        titulo={
+          janela?.tipo === 'trilha'
+            ? janela.trilha
+              ? 'Editar trilha'
+              : 'Nova trilha'
+            : janela?.tipo === 'material'
+              ? janela.material
+                ? 'Editar material'
+                : 'Adicionar link'
+              : ''
+        }
         aberta={janela?.tipo === 'trilha' || janela?.tipo === 'material'}
         onFechar={fechar}
       >
         {(janela?.tipo === 'trilha' || janela?.tipo === 'material') && (
           <FormularioDeTrilhaOuMaterial
-            key={janela.tipo === 'trilha' ? `t-${janela.trilha?.id ?? 'nova'}` : `m-${janela.trilhaId}-${janela.material?.id ?? 'novo'}`}
-            alvo={janela} trilhas={listaDeTrilhas} aoSalvar={(texto) => recarregar('trilhas', texto)} />
+            key={
+              janela.tipo === 'trilha'
+                ? `t-${janela.trilha?.id ?? 'nova'}`
+                : `m-${janela.trilhaId}-${janela.material?.id ?? 'novo'}`
+            }
+            alvo={janela}
+            trilhas={listaDeTrilhas}
+            aoSalvar={(texto) => recarregar('trilhas', texto)}
+          />
         )}
       </Janela>
 
-      <Janela titulo={janela?.tipo === 'atividade' && janela.atividade ? 'Editar atividade' : 'Nova atividade'}
-        aberta={janela?.tipo === 'atividade'} onFechar={fechar}>
+      <Janela
+        titulo={janela?.tipo === 'atividade' && janela.atividade ? 'Editar atividade' : 'Nova atividade'}
+        aberta={janela?.tipo === 'atividade'}
+        onFechar={fechar}
+      >
         {janela?.tipo === 'atividade' && turmaId !== null && (
-          <FormularioDeAtividade key={`${janela.trilhaId}-${janela.atividade?.id ?? 'nova'}`} turmaId={turmaId} atividade={janela.atividade} trilhaInicial={janela.trilhaId} aoSalvar={(texto) => recarregar('atividades', texto)} />
+          <FormularioDeAtividade
+            key={`${janela.trilhaId}-${janela.atividade?.id ?? 'nova'}`}
+            turmaId={turmaId}
+            atividade={janela.atividade}
+            trilhaInicial={janela.trilhaId}
+            aoSalvar={(texto) => recarregar('atividades', texto)}
+          />
         )}
       </Janela>
 
-      <Janela titulo={atividadeDaJanela ? `Entregas · ${atividadeDaJanela.titulo}` : ''}
+      <Janela
+        titulo={atividadeDaJanela ? `Entregas · ${atividadeDaJanela.titulo}` : ''}
         subtitulo={nomeDaTurma}
-        aberta={janela?.tipo === 'entregas' && atividadeDaJanela !== undefined} onFechar={fechar} larga>
+        aberta={janela?.tipo === 'entregas' && atividadeDaJanela !== undefined}
+        onFechar={fechar}
+        larga
+      >
         {janela?.tipo === 'entregas' && atividadeDaJanela && (
-          <ListaDeEntregas atividade={atividadeDaJanela} alunos={turma.alunos}
-            aoCorrigir={(aluno) => setJanela({ tipo: 'corrigir', atividadeId: atividadeDaJanela.id, aluno })} />
+          <ListaDeEntregas
+            atividade={atividadeDaJanela}
+            alunos={turma.alunos}
+            aoCorrigir={(aluno) => setJanela({ tipo: 'corrigir', atividadeId: atividadeDaJanela.id, aluno })}
+          />
         )}
       </Janela>
 
-      <Janela titulo={janela?.tipo === 'corrigir' ? janela.aluno.nome : ''}
+      <Janela
+        titulo={janela?.tipo === 'corrigir' ? janela.aluno.nome : ''}
         subtitulo={atividadeDaJanela ? [atividadeDaJanela.titulo, nomeDaTurma].filter(Boolean).join(' · ') : undefined}
-        aberta={janela?.tipo === 'corrigir' && atividadeDaJanela !== undefined} onFechar={fechar} larga>
+        aberta={janela?.tipo === 'corrigir' && atividadeDaJanela !== undefined}
+        onFechar={fechar}
+        larga
+      >
         {janela?.tipo === 'corrigir' && atividadeDaJanela && (
           <div className="space-y-4">
-            <button type="button" onClick={() => setJanela({ tipo: 'entregas', atividadeId: atividadeDaJanela.id })}
-              className={`rounded text-sm font-medium text-favela-green-700 hover:underline ${foco}`}>
+            <button
+              type="button"
+              onClick={() => setJanela({ tipo: 'entregas', atividadeId: atividadeDaJanela.id })}
+              className={`rounded text-sm font-medium text-favela-green-700 hover:underline ${foco}`}
+            >
               ← Voltar para as entregas
             </button>
             <Corrigir atividade={atividadeDaJanela} aluno={janela.aluno} aoSalvar={daTurma.recarregar} />
@@ -244,11 +340,22 @@ interface PropsCartao {
   estadoAtividades: EstadoAtividades;
   aoAbrir: (j: JanelaAberta) => void;
   aoApagar: (
-    alvo: { tipo: 'trilha'; trilha: Trilha } | { tipo: 'material'; material: MaterialDaTrilha } | { tipo: 'atividade'; atividade: Atividade },
+    alvo:
+      | { tipo: 'trilha'; trilha: Trilha }
+      | { tipo: 'material'; material: MaterialDaTrilha }
+      | { tipo: 'atividade'; atividade: Atividade },
   ) => void;
 }
 
-const CartaoDaTrilha: React.FC<PropsCartao> = ({ trilha, atividades, idsDosAlunos, totalDeAlunos, estadoAtividades, aoAbrir, aoApagar }) => {
+const CartaoDaTrilha: React.FC<PropsCartao> = ({
+  trilha,
+  atividades,
+  idsDosAlunos,
+  totalDeAlunos,
+  estadoAtividades,
+  aoAbrir,
+  aoApagar,
+}) => {
   // Até a pessoa escolher, a aba segue os dados: trilha sem material, mas com
   // atividade, abre em Atividades (as atividades chegam depois dos materiais)
   const [escolhida, setEscolhida] = useState<Aba | null>(null);
@@ -256,7 +363,9 @@ const CartaoDaTrilha: React.FC<PropsCartao> = ({ trilha, atividades, idsDosAluno
 
   // Entregas esperando correção nesta trilha (só de quem está na turma)
   const paraCorrigir = atividades.reduce(
-    (total, a) => total + a.tentativas.filter((t) => t.status === 'aguardando' && idsDosAlunos.has(t.participante_id)).length, 0,
+    (total, a) =>
+      total + a.tentativas.filter((t) => t.status === 'aguardando' && idsDosAlunos.has(t.participante_id)).length,
+    0,
   );
 
   const painelMateriais = (
@@ -268,77 +377,113 @@ const CartaoDaTrilha: React.FC<PropsCartao> = ({ trilha, atividades, idsDosAluno
           {trilha.materiais.map((m) => (
             <li key={m.id} className="flex flex-wrap items-start justify-between gap-2 py-2.5">
               <div className="min-w-0 flex-1">
-                <a href={m.url} target="_blank" rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-1 rounded ${texto.destaque} hover:text-favela-green-700 hover:underline ${foco}`}>
+                <a
+                  href={m.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center gap-1 rounded ${texto.destaque} hover:text-favela-green-700 hover:underline ${foco}`}
+                >
                   {m.titulo}
                   <IconeLinkExterno className="h-3.5 w-3.5" />
                   <span className="sr-only">(abre em nova aba)</span>
                 </a>
-                <p className={texto.apoio}>{m.descricao ? `${m.descricao} · ` : ''}{dominioDoLink(m.url)}</p>
+                <p className={texto.apoio}>
+                  {m.descricao ? `${m.descricao} · ` : ''}
+                  {dominioDoLink(m.url)}
+                </p>
               </div>
               <div className="flex gap-1">
-                <Botao tamanho="pequeno" onClick={() => aoAbrir({ tipo: 'material', trilhaId: trilha.id, material: m })}>Editar</Botao>
-                <Botao tamanho="pequeno" variante="perigo" onClick={() => aoApagar({ tipo: 'material', material: m })}>Apagar</Botao>
+                <Botao
+                  tamanho="pequeno"
+                  onClick={() => aoAbrir({ tipo: 'material', trilhaId: trilha.id, material: m })}
+                >
+                  Editar
+                </Botao>
+                <Botao tamanho="pequeno" variante="perigo" onClick={() => aoApagar({ tipo: 'material', material: m })}>
+                  Apagar
+                </Botao>
               </div>
             </li>
           ))}
         </ul>
       )}
-      <Botao className="w-full" onClick={() => aoAbrir({ tipo: 'material', trilhaId: trilha.id })}>+ Adicionar link</Botao>
+      <Botao className="w-full" onClick={() => aoAbrir({ tipo: 'material', trilhaId: trilha.id })}>
+        + Adicionar link
+      </Botao>
     </>
   );
 
-  const painelAtividades = estadoAtividades === 'carregando' ? (
-    <p className={`py-2 ${texto.apoio}`}>Carregando as atividades…</p>
-  ) : estadoAtividades === 'erro' ? (
-    <p className="py-2 text-sm text-red-700">Não foi possível carregar as atividades desta turma. Recarregue a página.</p>
-  ) : estadoAtividades === 'erro-turmas' ? (
-    <p className="py-2 text-sm text-red-700">Não foi possível carregar as turmas. Recarregue a página.</p>
-  ) : estadoAtividades === 'sem-turma' ? (
-    <p className={`py-2 ${texto.apoio}`}>Sem turma, não há atividades para mostrar.</p>
-  ) : (
-    <>
-      {atividades.length === 0 ? (
-        <p className={`py-2 ${texto.apoio}`}>Nenhuma atividade desta trilha nesta turma.</p>
-      ) : (
-        <ul className="-my-1 mb-3 divide-y divide-gray-100">
-          {atividades.map((a) => {
-            const daTurma = a.tentativas.filter((t) => idsDosAlunos.has(t.participante_id));
-            const aguardando = daTurma.filter((t) => t.status === 'aguardando').length;
-            const entregaram = new Set(daTurma.map((t) => t.participante_id)).size;
-            const encerrada = new Date(a.prazo) < new Date();
-            return (
-              <li key={a.id} className="py-3">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className={texto.destaque}>{a.titulo}</p>
-                    <p className={texto.apoio}>
-                      Prazo: {formatarDataHora(a.prazo)}{encerrada ? ' (encerrado)' : ''} · {entregaram} de {totalDeAlunos} entregaram
-                    </p>
-                    {resumoDasRegras(a) && <p className={`mt-0.5 ${texto.apoio}`}>Exige: {resumoDasRegras(a)}</p>}
+  const painelAtividades =
+    estadoAtividades === 'carregando' ? (
+      <p className={`py-2 ${texto.apoio}`}>Carregando as atividades…</p>
+    ) : estadoAtividades === 'erro' ? (
+      <p className="py-2 text-sm text-red-700">
+        Não foi possível carregar as atividades desta turma. Recarregue a página.
+      </p>
+    ) : estadoAtividades === 'erro-turmas' ? (
+      <p className="py-2 text-sm text-red-700">Não foi possível carregar as turmas. Recarregue a página.</p>
+    ) : estadoAtividades === 'sem-turma' ? (
+      <p className={`py-2 ${texto.apoio}`}>Sem turma, não há atividades para mostrar.</p>
+    ) : (
+      <>
+        {atividades.length === 0 ? (
+          <p className={`py-2 ${texto.apoio}`}>Nenhuma atividade desta trilha nesta turma.</p>
+        ) : (
+          <ul className="-my-1 mb-3 divide-y divide-gray-100">
+            {atividades.map((a) => {
+              const daTurma = a.tentativas.filter((t) => idsDosAlunos.has(t.participante_id));
+              const aguardando = daTurma.filter((t) => t.status === 'aguardando').length;
+              const entregaram = new Set(daTurma.map((t) => t.participante_id)).size;
+              const encerrada = new Date(a.prazo) < new Date();
+              return (
+                <li key={a.id} className="py-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className={texto.destaque}>{a.titulo}</p>
+                      <p className={texto.apoio}>
+                        Prazo: {formatarDataHora(a.prazo)}
+                        {encerrada ? ' (encerrado)' : ''} · {entregaram} de {totalDeAlunos} entregaram
+                      </p>
+                      {resumoDasRegras(a) && <p className={`mt-0.5 ${texto.apoio}`}>Exige: {resumoDasRegras(a)}</p>}
+                    </div>
+                    {aguardando > 0 && (
+                      <span className={`${selo.base} ${selo.informacao}`}>{aguardando} para corrigir</span>
+                    )}
                   </div>
-                  {aguardando > 0 && <span className={`${selo.base} ${selo.informacao}`}>{aguardando} para corrigir</span>}
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  <Botao tamanho="pequeno" variante={aguardando > 0 ? 'primario' : 'secundario'}
-                    onClick={() => aoAbrir({ tipo: 'entregas', atividadeId: a.id })}>
-                    Entregas
-                  </Botao>
-                  <Botao tamanho="pequeno" onClick={() => aoAbrir({ tipo: 'atividade', trilhaId: trilha.id, atividade: a })}>
-                    Editar e prazo
-                  </Botao>
-                  {a.tentativas.length === 0 && (
-                    <Botao tamanho="pequeno" variante="perigo" onClick={() => aoApagar({ tipo: 'atividade', atividade: a })}>Apagar</Botao>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      <Botao className="w-full" onClick={() => aoAbrir({ tipo: 'atividade', trilhaId: trilha.id, atividade: null })}>+ Nova atividade</Botao>
-    </>
-  );
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    <Botao
+                      tamanho="pequeno"
+                      variante={aguardando > 0 ? 'primario' : 'secundario'}
+                      onClick={() => aoAbrir({ tipo: 'entregas', atividadeId: a.id })}
+                    >
+                      Entregas
+                    </Botao>
+                    <Botao
+                      tamanho="pequeno"
+                      onClick={() => aoAbrir({ tipo: 'atividade', trilhaId: trilha.id, atividade: a })}
+                    >
+                      Editar e prazo
+                    </Botao>
+                    {a.tentativas.length === 0 && (
+                      <Botao
+                        tamanho="pequeno"
+                        variante="perigo"
+                        onClick={() => aoApagar({ tipo: 'atividade', atividade: a })}
+                      >
+                        Apagar
+                      </Botao>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <Botao className="w-full" onClick={() => aoAbrir({ tipo: 'atividade', trilhaId: trilha.id, atividade: null })}>
+          + Nova atividade
+        </Botao>
+      </>
+    );
 
   return (
     <Cartao
@@ -346,8 +491,12 @@ const CartaoDaTrilha: React.FC<PropsCartao> = ({ trilha, atividades, idsDosAluno
       descricao={trilha.descricao ?? undefined}
       acoes={
         <div className="flex gap-1">
-          <Botao tamanho="pequeno" onClick={() => aoAbrir({ tipo: 'trilha', trilha })}>Editar</Botao>
-          <Botao tamanho="pequeno" variante="perigo" onClick={() => aoApagar({ tipo: 'trilha', trilha })}>Apagar</Botao>
+          <Botao tamanho="pequeno" onClick={() => aoAbrir({ tipo: 'trilha', trilha })}>
+            Editar
+          </Botao>
+          <Botao tamanho="pequeno" variante="perigo" onClick={() => aoApagar({ tipo: 'trilha', trilha })}>
+            Apagar
+          </Botao>
         </div>
       }
     >
@@ -359,7 +508,9 @@ const CartaoDaTrilha: React.FC<PropsCartao> = ({ trilha, atividades, idsDosAluno
         abas={[
           { valor: 'materiais', rotulo: 'Materiais', total: trilha.materiais.length, painel: painelMateriais },
           {
-            valor: 'atividades', rotulo: 'Atividades', total: estadoAtividades === 'pronto' ? atividades.length : undefined,
+            valor: 'atividades',
+            rotulo: 'Atividades',
+            total: estadoAtividades === 'pronto' ? atividades.length : undefined,
             alerta: paraCorrigir > 0 ? `${paraCorrigir} para corrigir` : undefined,
             painel: painelAtividades,
           },
@@ -372,9 +523,11 @@ const CartaoDaTrilha: React.FC<PropsCartao> = ({ trilha, atividades, idsDosAluno
 // ============================================
 // ENTREGAS DE UMA ATIVIDADE (alunos e situação)
 // ============================================
-const ListaDeEntregas: React.FC<{ atividade: Atividade; alunos: AlunoDaTurma[]; aoCorrigir: (aluno: AlunoDaTurma) => void }> = ({
-  atividade, alunos, aoCorrigir,
-}) => (
+const ListaDeEntregas: React.FC<{
+  atividade: Atividade;
+  alunos: AlunoDaTurma[];
+  aoCorrigir: (aluno: AlunoDaTurma) => void;
+}> = ({ atividade, alunos, aoCorrigir }) => (
   <div className="space-y-4">
     <p className={`whitespace-pre-wrap break-words rounded-lg bg-gray-50 p-3 ${texto.corpo}`}>{atividade.enunciado}</p>
     {!alunos.length ? (
@@ -396,7 +549,11 @@ const ListaDeEntregas: React.FC<{ atividade: Atividade; alunos: AlunoDaTurma[]; 
                 )}
                 <span className={`${selo.base} ${estilo.cor}`}>{estilo.rotulo}</span>
                 {ultima && (
-                  <Botao tamanho="pequeno" variante={ultima.status === 'aguardando' ? 'primario' : 'secundario'} onClick={() => aoCorrigir(aluno)}>
+                  <Botao
+                    tamanho="pequeno"
+                    variante={ultima.status === 'aguardando' ? 'primario' : 'secundario'}
+                    onClick={() => aoCorrigir(aluno)}
+                  >
                     {ultima.status === 'aguardando' ? 'Corrigir' : 'Ver entrega'}
                   </Botao>
                 )}
@@ -421,8 +578,11 @@ const FormularioDeTrilhaOuMaterial: React.FC<{
     alvo.tipo === 'trilha'
       ? { nome: alvo.trilha?.nome ?? '', titulo: '', descricao: alvo.trilha?.descricao ?? '', url: '', trilha_id: '' }
       : {
-          nome: '', titulo: alvo.material?.titulo ?? '', descricao: alvo.material?.descricao ?? '',
-          url: alvo.material?.url ?? 'https://', trilha_id: String(alvo.trilhaId),
+          nome: '',
+          titulo: alvo.material?.titulo ?? '',
+          descricao: alvo.material?.descricao ?? '',
+          url: alvo.material?.url ?? 'https://',
+          trilha_id: String(alvo.trilhaId),
         },
   );
   const [salvando, setSalvando] = useState(false);
@@ -440,7 +600,12 @@ const FormularioDeTrilhaOuMaterial: React.FC<{
       alvo.tipo === 'trilha'
         ? await salvarTrilha({ nome: formData.nome, descricao: formData.descricao }, alvo.trilha?.id)
         : await salvarMaterial(
-            { trilha_id: Number(formData.trilha_id), titulo: formData.titulo, descricao: formData.descricao, url: formData.url },
+            {
+              trilha_id: Number(formData.trilha_id),
+              titulo: formData.titulo,
+              descricao: formData.descricao,
+              url: formData.url,
+            },
             alvo.material?.id,
           );
     setSalvando(false);
@@ -454,43 +619,107 @@ const FormularioDeTrilhaOuMaterial: React.FC<{
       {alvo.tipo === 'trilha' ? (
         <>
           <div>
-            <label htmlFor="trilha-nome" className={classeRotulo}>Nome da trilha *</label>
-            <input id="trilha-nome" name="nome" value={formData.nome} onChange={handleInputChange} required maxLength={80}
-              className={classeCampo} placeholder="Ex: Git e GitHub" />
+            <label htmlFor="trilha-nome" className={classeRotulo}>
+              Nome da trilha *
+            </label>
+            <input
+              id="trilha-nome"
+              name="nome"
+              value={formData.nome}
+              onChange={handleInputChange}
+              required
+              maxLength={80}
+              className={classeCampo}
+              placeholder="Ex: Git e GitHub"
+            />
           </div>
           <div>
-            <label htmlFor="trilha-descricao" className={classeRotulo}>Descrição</label>
-            <textarea id="trilha-descricao" name="descricao" value={formData.descricao} onChange={handleInputChange}
-              rows={2} maxLength={300} className={classeCampo} placeholder="Ex: Versionamento de código e trabalho em equipe" />
+            <label htmlFor="trilha-descricao" className={classeRotulo}>
+              Descrição
+            </label>
+            <textarea
+              id="trilha-descricao"
+              name="descricao"
+              value={formData.descricao}
+              onChange={handleInputChange}
+              rows={2}
+              maxLength={300}
+              className={classeCampo}
+              placeholder="Ex: Versionamento de código e trabalho em equipe"
+            />
           </div>
         </>
       ) : (
         <>
           <div>
-            <label htmlFor="material-trilha" className={classeRotulo}>Trilha *</label>
-            <select id="material-trilha" name="trilha_id" value={formData.trilha_id} onChange={handleInputChange} className={classeCampo}>
-              {trilhas.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+            <label htmlFor="material-trilha" className={classeRotulo}>
+              Trilha *
+            </label>
+            <select
+              id="material-trilha"
+              name="trilha_id"
+              value={formData.trilha_id}
+              onChange={handleInputChange}
+              className={classeCampo}
+            >
+              {trilhas.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nome}
+                </option>
+              ))}
             </select>
           </div>
           <div>
-            <label htmlFor="material-titulo" className={classeRotulo}>Título *</label>
-            <input id="material-titulo" name="titulo" value={formData.titulo} onChange={handleInputChange} required maxLength={120}
-              className={classeCampo} placeholder="Ex: Slides da aula 1" />
+            <label htmlFor="material-titulo" className={classeRotulo}>
+              Título *
+            </label>
+            <input
+              id="material-titulo"
+              name="titulo"
+              value={formData.titulo}
+              onChange={handleInputChange}
+              required
+              maxLength={120}
+              className={classeCampo}
+              placeholder="Ex: Slides da aula 1"
+            />
           </div>
           <div>
-            <label htmlFor="material-url" className={classeRotulo}>Link (https://) *</label>
-            <input id="material-url" name="url" type="url" value={formData.url} onChange={handleInputChange} required
-              className={classeCampo} placeholder="https://..." />
+            <label htmlFor="material-url" className={classeRotulo}>
+              Link (https://) *
+            </label>
+            <input
+              id="material-url"
+              name="url"
+              type="url"
+              value={formData.url}
+              onChange={handleInputChange}
+              required
+              className={classeCampo}
+              placeholder="https://..."
+            />
           </div>
           <div>
-            <label htmlFor="material-descricao" className={classeRotulo}>Descrição</label>
-            <textarea id="material-descricao" name="descricao" value={formData.descricao} onChange={handleInputChange}
-              rows={2} maxLength={300} className={classeCampo} placeholder="Ex: Pasta no Google Drive com os exercícios" />
+            <label htmlFor="material-descricao" className={classeRotulo}>
+              Descrição
+            </label>
+            <textarea
+              id="material-descricao"
+              name="descricao"
+              value={formData.descricao}
+              onChange={handleInputChange}
+              rows={2}
+              maxLength={300}
+              className={classeCampo}
+              placeholder="Ex: Pasta no Google Drive com os exercícios"
+            />
           </div>
         </>
       )}
       <div className="flex justify-end border-t border-gray-100 pt-4">
-        <Botao type="submit" variante="primario" disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar'}</Botao>
+        <Botao type="submit" variante="primario" disabled={salvando}>
+          {salvando ? 'Salvando...' : 'Salvar'}
+        </Botao>
       </div>
     </form>
   );

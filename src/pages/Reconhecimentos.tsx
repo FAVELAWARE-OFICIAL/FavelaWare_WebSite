@@ -48,8 +48,10 @@ const Reconhecimentos: React.FC = () => {
   const artigos: ArtigoCientifico[] = [
     {
       id: 1,
-      titulo: 'Extension Project Based on Flipped Classroom to the Development of Hard and Soft Skills in Brazilian Outskirts: Case studies',
-      descricao: 'Artigo científico sobre o projeto de extensão baseado em sala de aula invertida para o desenvolvimento de habilidades técnicas e comportamentais em comunidades brasileiras.',
+      titulo:
+        'Extension Project Based on Flipped Classroom to the Development of Hard and Soft Skills in Brazilian Outskirts: Case studies',
+      descricao:
+        'Artigo científico sobre o projeto de extensão baseado em sala de aula invertida para o desenvolvimento de habilidades técnicas e comportamentais em comunidades brasileiras.',
       doi: 'https://doi.org/10.33422/ijsfle.v2i2.464',
       ano: '2024',
       icone: '📄',
@@ -64,7 +66,8 @@ const Reconhecimentos: React.FC = () => {
     {
       id: 1,
       titulo: 'Prêmio Ser Humano 2023',
-      descricao: 'Reconhecimento pela ABRH-Brasil pelo impacto social e desenvolvimento humano através da capacitação de jovens programadores em comunidades de Belo Horizonte/MG.',
+      descricao:
+        'Reconhecimento pela ABRH-Brasil pelo impacto social e desenvolvimento humano através da capacitação de jovens programadores em comunidades de Belo Horizonte/MG.',
       ano: '2023',
       link: 'https://www.abrhbrasil.org.br/psh/',
       imagens: [
@@ -113,9 +116,7 @@ const Reconhecimentos: React.FC = () => {
           >
             {/* text-3xl no celular: "RECONHECIMENTOS" é uma palavra só e, em
                 text-4xl, passava da largura da tela (rolagem lateral) */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
-              RECONHECIMENTOS
-            </h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">RECONHECIMENTOS</h1>
             <p className="text-xl text-white/80 max-w-3xl mx-auto">
               Artigos científicos e prêmios que destacam nosso impacto social
             </p>
@@ -125,18 +126,12 @@ const Reconhecimentos: React.FC = () => {
 
       {/* Conteúdo Principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-
         {/* ============================================
             SEÇÃO 1: ARTIGOS CIENTÍFICOS
             ============================================ */}
-        <motion.section
-          {...fadeInUp}
-          className="mb-20"
-        >
+        <motion.section {...fadeInUp} className="mb-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              📚 Artigo Científico
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">📚 Artigo Científico</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Publicações acadêmicas sobre nossa metodologia e resultados
             </p>
@@ -172,13 +167,9 @@ const Reconhecimentos: React.FC = () => {
                       <span className="md:hidden text-3xl">{artigo.icone}</span>
                     </div>
 
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                      {artigo.titulo}
-                    </h3>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">{artigo.titulo}</h3>
 
-                    <p className="text-gray-600 mb-6 leading-relaxed">
-                      {artigo.descricao}
-                    </p>
+                    <p className="text-gray-600 mb-6 leading-relaxed">{artigo.descricao}</p>
 
                     <motion.a
                       href={artigo.doi}
@@ -200,25 +191,15 @@ const Reconhecimentos: React.FC = () => {
         {/* ============================================
             SEÇÃO 2: PRÊMIOS
             ============================================ */}
-        <motion.section
-          {...fadeInUp}
-          transition={{ delay: 0.3 }}
-        >
+        <motion.section {...fadeInUp} transition={{ delay: 0.3 }}>
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              🏆 Prêmio Ser Humano 2023
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">🏆 Prêmio Ser Humano 2023</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Reconhecimentos que validam nosso compromisso social
             </p>
           </div>
 
-          <motion.div
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
-            className="space-y-12"
-          >
+          <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-12">
             {premios.map((premio) => (
               <motion.div
                 key={premio.id}
@@ -230,18 +211,14 @@ const Reconhecimentos: React.FC = () => {
                   <div className="flex items-center space-x-4 mb-4">
                     <span className="text-6xl">{premio.icone}</span>
                     <div>
-                      <h3 className="text-3xl font-bold text-gray-900 mb-2">
-                        {premio.titulo}
-                      </h3>
+                      <h3 className="text-3xl font-bold text-gray-900 mb-2">{premio.titulo}</h3>
                       <span className="px-4 py-1 bg-orange-200 text-orange-800 rounded-full text-sm font-bold">
                         {premio.ano}
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                    {premio.descricao}
-                  </p>
+                  <p className="text-lg text-gray-700 leading-relaxed mb-6">{premio.descricao}</p>
 
                   {premio.link && (
                     <motion.a
@@ -267,7 +244,9 @@ const Reconhecimentos: React.FC = () => {
                       whileHover={{ scale: 1.05, y: -5 }}
                       whileTap={{ scale: 0.95 }}
                       className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-favela-green-500 focus-visible:ring-offset-2"
-                      onClick={() => setImagemAmpliada({ src: imagem, legenda: `${premio.titulo} - Foto ${index + 1}` })}
+                      onClick={() =>
+                        setImagemAmpliada({ src: imagem, legenda: `${premio.titulo} - Foto ${index + 1}` })
+                      }
                     >
                       <img
                         src={imagem}

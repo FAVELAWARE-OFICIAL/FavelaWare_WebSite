@@ -37,13 +37,15 @@ export async function carregarEquipe(): Promise<{ turmas: TurmaComEdicao[]; prof
 export async function carregarTodasTurmas(): Promise<TurmaComEdicao[]> {
   const { data, error } = await supabase.from('turmas').select('id, nome, edicoes(nome, ordem)');
   if (error) throw error;
-  return data
-    .map((t) => {
-      const edicao = t.edicoes as unknown as { nome: string; ordem: number } | null;
-      return { id: t.id, nome: t.nome, edicao: edicao?.nome ?? '', ordemEdicao: edicao?.ordem ?? 0 };
-    })
-    // Edição mais recente primeiro: é onde o gestor mais mexe
-    .sort((a, b) => b.ordemEdicao - a.ordemEdicao || a.nome.localeCompare(b.nome, 'pt-BR'));
+  return (
+    data
+      .map((t) => {
+        const edicao = t.edicoes as unknown as { nome: string; ordem: number } | null;
+        return { id: t.id, nome: t.nome, edicao: edicao?.nome ?? '', ordemEdicao: edicao?.ordem ?? 0 };
+      })
+      // Edição mais recente primeiro: é onde o gestor mais mexe
+      .sort((a, b) => b.ordemEdicao - a.ordemEdicao || a.nome.localeCompare(b.nome, 'pt-BR'))
+  );
 }
 
 export async function carregarProfessores(): Promise<Professor[]> {
@@ -70,7 +72,9 @@ export async function convidarProfessor(nome: string, email: string, turmas: num
     try {
       const corpo = await error.context.json();
       if (typeof corpo?.erro === 'string') return corpo.erro;
-    } catch { /* resposta sem JSON: cai na mensagem genérica */ }
+    } catch {
+      /* resposta sem JSON: cai na mensagem genérica */
+    }
   }
   return 'Não foi possível cadastrar agora. Tente de novo em instantes.';
 }

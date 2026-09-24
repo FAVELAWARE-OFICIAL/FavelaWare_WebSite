@@ -15,7 +15,9 @@ export const FOTO_PADRAO = '/imgs/turmas/sem-foto.webp';
 const TAMANHOS = { sm: 'h-9 w-9', md: 'h-12 w-12', lg: 'h-20 w-20' };
 
 const Avatar: React.FC<{ foto: string | null; nome: string; tamanho?: keyof typeof TAMANHOS }> = ({
-  foto, nome, tamanho = 'sm',
+  foto,
+  nome,
+  tamanho = 'sm',
 }) => {
   const [falhou, setFalhou] = useState(false);
   return (

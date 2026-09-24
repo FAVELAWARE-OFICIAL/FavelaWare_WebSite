@@ -1,0 +1,10 @@
+# Code owners deste repositório.
+#
+# A main e a develop exigem aprovação de code owner (rulesets protect-main e
+# protect-develop). Só o time mantenedores-site faz bypass; o resto da
+# organização, inclusive donos, precisa da aprovação abaixo para fazer merge.
+#
+# Todo dono listado precisa ter permissão WRITE no repositório. Sem isso o
+# GitHub o ignora em silêncio e nenhum PR consegue ser aprovado.
+
+* @LucelhoSilva

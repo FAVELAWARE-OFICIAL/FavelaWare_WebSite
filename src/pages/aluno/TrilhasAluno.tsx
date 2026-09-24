@@ -21,8 +21,14 @@ import { Aviso, Cartao, Vazio } from '../../components/admin/Ui';
 import { espaco, foco, selo, texto } from '../../components/admin/designSystem';
 import JanelaDaAtividade, { COR_SITUACAO } from '../../components/atividades/JanelaDaAtividade';
 import {
-  carregarAtividadesDoAluno, CHAVE_ATIVIDADES_ALUNO, formatarDataHora, podeEnviar, ROTULO_SITUACAO, situacaoDoAluno,
-  tentativasDe, type Atividade,
+  carregarAtividadesDoAluno,
+  CHAVE_ATIVIDADES_ALUNO,
+  formatarDataHora,
+  podeEnviar,
+  ROTULO_SITUACAO,
+  situacaoDoAluno,
+  tentativasDe,
+  type Atividade,
 } from '../../lib/atividades';
 import { useDadosEmCache } from '../../lib/cache';
 import { carregarTrilhas, CHAVE_MATERIAL, dominioDoLink, type Trilha } from '../../lib/material';
@@ -38,7 +44,8 @@ const TrilhasAluno: React.FC = () => {
   const [abertaId, setAbertaId] = useState<number | null>(null);
   const fechar = useCallback(() => setAbertaId(null), []);
 
-  if (falhou) return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar as trilhas. Recarregue a página.' }} />;
+  if (falhou)
+    return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar as trilhas. Recarregue a página.' }} />;
   if (mostrarCarregando || material.dados === undefined || atividades.dados === undefined) {
     return <Carregando texto="Carregando as trilhas" />;
   }
@@ -101,10 +108,14 @@ interface PropsCartao {
 
 const CartaoDaTrilha: React.FC<PropsCartao> = ({ trilha, atividades, participanteId, aoAbrir }) => {
   // Trilha sem material, mas com atividade, já abre nas atividades
-  const [aba, setAba] = useState<Aba>(trilha.materiais.length === 0 && atividades.length > 0 ? 'atividades' : 'materiais');
+  const [aba, setAba] = useState<Aba>(
+    trilha.materiais.length === 0 && atividades.length > 0 ? 'atividades' : 'materiais',
+  );
 
   // Quantas o aluno ainda pode entregar (pendente ou refazer): ponto de alerta na aba
-  const paraEntregar = atividades.filter((a) => podeEnviar(situacaoDoAluno(tentativasDe(a, participanteId), a.prazo))).length;
+  const paraEntregar = atividades.filter((a) =>
+    podeEnviar(situacaoDoAluno(tentativasDe(a, participanteId), a.prazo)),
+  ).length;
 
   return (
     <Cartao titulo={trilha.nome} descricao={trilha.descricao ?? undefined}>
@@ -114,9 +125,16 @@ const CartaoDaTrilha: React.FC<PropsCartao> = ({ trilha, atividades, participant
         ativa={aba}
         aoTrocar={setAba}
         abas={[
-          { valor: 'materiais', rotulo: 'Materiais', total: trilha.materiais.length, painel: <ListaDeMateriais trilha={trilha} /> },
           {
-            valor: 'atividades', rotulo: 'Atividades', total: atividades.length,
+            valor: 'materiais',
+            rotulo: 'Materiais',
+            total: trilha.materiais.length,
+            painel: <ListaDeMateriais trilha={trilha} />,
+          },
+          {
+            valor: 'atividades',
+            rotulo: 'Atividades',
+            total: atividades.length,
             alerta: paraEntregar > 0 ? `${paraEntregar} para entregar` : undefined,
             painel: <ListaDeAtividades atividades={atividades} participanteId={participanteId} aoAbrir={aoAbrir} />,
           },
@@ -133,8 +151,12 @@ const ListaDeMateriais: React.FC<{ trilha: Trilha }> = ({ trilha }) =>
     <ul className="-my-1 divide-y divide-gray-100">
       {trilha.materiais.map((m) => (
         <li key={m.id}>
-          <a href={m.url} target="_blank" rel="noopener noreferrer"
-            className={`group -mx-2 flex items-start gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-gray-50 ${foco}`}>
+          <a
+            href={m.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`group -mx-2 flex items-start gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-gray-50 ${foco}`}
+          >
             <span className="min-w-0 flex-1">
               <span className={`block ${texto.destaque} group-hover:text-favela-green-700`}>{m.titulo}</span>
               {m.descricao && <span className={`block ${texto.corpo}`}>{m.descricao}</span>}
@@ -148,9 +170,11 @@ const ListaDeMateriais: React.FC<{ trilha: Trilha }> = ({ trilha }) =>
     </ul>
   );
 
-const ListaDeAtividades: React.FC<{ atividades: Atividade[]; participanteId: number; aoAbrir: (id: number) => void }> = ({
-  atividades, participanteId, aoAbrir,
-}) =>
+const ListaDeAtividades: React.FC<{
+  atividades: Atividade[];
+  participanteId: number;
+  aoAbrir: (id: number) => void;
+}> = ({ atividades, participanteId, aoAbrir }) =>
   atividades.length === 0 ? (
     <p className={`py-2 ${texto.apoio}`}>Nenhuma atividade nesta trilha por enquanto.</p>
   ) : (
@@ -161,8 +185,11 @@ const ListaDeAtividades: React.FC<{ atividades: Atividade[]; participanteId: num
         const ultima = tentativas[tentativas.length - 1];
         return (
           <li key={a.id}>
-            <button type="button" onClick={() => aoAbrir(a.id)}
-              className={`-mx-2 flex w-[calc(100%+1rem)] flex-wrap items-center justify-between gap-3 rounded-lg px-2 py-3 text-left transition-colors hover:bg-gray-50 ${foco}`}>
+            <button
+              type="button"
+              onClick={() => aoAbrir(a.id)}
+              className={`-mx-2 flex w-[calc(100%+1rem)] flex-wrap items-center justify-between gap-3 rounded-lg px-2 py-3 text-left transition-colors hover:bg-gray-50 ${foco}`}
+            >
               <span className="min-w-0">
                 <span className={`block ${texto.destaque}`}>{a.titulo}</span>
                 <span className={`block ${texto.apoio}`}>Prazo: {formatarDataHora(a.prazo)}</span>

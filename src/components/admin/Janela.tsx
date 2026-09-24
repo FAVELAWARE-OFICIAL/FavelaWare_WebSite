@@ -38,7 +38,15 @@ interface Props {
 }
 
 const Janela: React.FC<Props> = ({
-  titulo, subtitulo, aberta, onFechar, children, larga = false, topo, rodape, focoInicial = 'campo',
+  titulo,
+  subtitulo,
+  aberta,
+  onFechar,
+  children,
+  larga = false,
+  topo,
+  rodape,
+  focoInicial = 'campo',
 }) => {
   const caixaRef = useRef<HTMLDivElement>(null);
 
@@ -48,8 +56,11 @@ const Janela: React.FC<Props> = ({
     // Foco no primeiro campo da janela; sem campo, no primeiro botão
     const caixa = caixaRef.current;
     if (focoInicial === 'fechar') caixa?.querySelector<HTMLElement>('button[data-fechar]')?.focus();
-    else (caixa?.querySelector<HTMLElement>('input:not([type="file"]), select, textarea')
-      ?? caixa?.querySelector<HTMLElement>('button:not([data-fechar])'))?.focus();
+    else
+      (
+        caixa?.querySelector<HTMLElement>('input:not([type="file"]), select, textarea') ??
+        caixa?.querySelector<HTMLElement>('button:not([data-fechar])')
+      )?.focus();
 
     const aoTeclar = (e: KeyboardEvent) => e.key === 'Escape' && onFechar();
     document.addEventListener('keydown', aoTeclar);
@@ -88,13 +99,18 @@ const Janela: React.FC<Props> = ({
         }`}
       >
         {/* Faixa da marca */}
-        <div className="h-1.5 shrink-0 bg-gradient-to-r from-favela-green-500 via-favela-green-600 to-favela-blue-600" aria-hidden="true" />
+        <div
+          className="h-1.5 shrink-0 bg-gradient-to-r from-favela-green-500 via-favela-green-600 to-favela-blue-600"
+          aria-hidden="true"
+        />
         {/* Puxador (celular) */}
         <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-gray-300 sm:hidden" aria-hidden="true" />
 
         <div className="flex shrink-0 items-start justify-between gap-4 px-6 pb-4 pt-4 sm:pt-5">
           <div className="min-w-0">
-            <h2 id="titulo-janela" className="text-lg font-semibold leading-snug text-gray-900">{titulo}</h2>
+            <h2 id="titulo-janela" className="text-lg font-semibold leading-snug text-gray-900">
+              {titulo}
+            </h2>
             {subtitulo && <p className="mt-0.5 text-sm text-gray-500">{subtitulo}</p>}
           </div>
           <button

@@ -48,7 +48,12 @@ function AbasDoCartao<T extends string>({ id, rotulo, abas, ativa, aoTrocar }: P
 
   return (
     <>
-      <div role="tablist" aria-label={rotulo} onKeyDown={aoTeclar} className="-mt-2 mb-3 flex gap-1 border-b border-gray-200">
+      <div
+        role="tablist"
+        aria-label={rotulo}
+        onKeyDown={aoTeclar}
+        className="-mt-2 mb-3 flex gap-1 border-b border-gray-200"
+      >
         {abas.map((a) => {
           const selecionada = a.valor === ativa;
           return (
@@ -62,7 +67,9 @@ function AbasDoCartao<T extends string>({ id, rotulo, abas, ativa, aoTrocar }: P
               tabIndex={selecionada ? 0 : -1}
               onClick={() => aoTrocar(a.valor)}
               className={`-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition-colors ${foco} ${
-                selecionada ? 'border-favela-green-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-800'
+                selecionada
+                  ? 'border-favela-green-600 text-gray-900'
+                  : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
               {a.rotulo}
@@ -77,8 +84,15 @@ function AbasDoCartao<T extends string>({ id, rotulo, abas, ativa, aoTrocar }: P
 
       {/* tabIndex: o Tab para no painel mesmo quando ele só tem texto */}
       {abas.map((a) => (
-        <div key={a.valor} role="tabpanel" id={idPainel(a.valor)} aria-labelledby={idAba(a.valor)}
-          hidden={a.valor !== ativa} tabIndex={0} className={`rounded-lg ${foco}`}>
+        <div
+          key={a.valor}
+          role="tabpanel"
+          id={idPainel(a.valor)}
+          aria-labelledby={idAba(a.valor)}
+          hidden={a.valor !== ativa}
+          tabIndex={0}
+          className={`rounded-lg ${foco}`}
+        >
           {a.painel}
         </div>
       ))}

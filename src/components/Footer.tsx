@@ -43,19 +43,21 @@ const Footer = () => {
     <footer className="relative bg-[#2d2a5f] border-t-4 border-[#8bc53f] overflow-hidden">
       {/* Code pattern background */}
       <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
             repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.05) 2px, rgba(255,255,255,0.05) 4px),
             repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.05) 2px, rgba(255,255,255,0.05) 4px)
           `,
-          backgroundSize: '40px 40px'
-        }} />
+            backgroundSize: '40px 40px',
+          }}
+        />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Main Content */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
-
           {/* Brand Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -111,9 +113,7 @@ const Footer = () => {
                   whileHover={{ x: 10 }}
                 >
                   <span className="flex items-center gap-2">
-                    <motion.span
-                      className="w-0 h-0.5 bg-favela-green-400 group-hover:w-4 transition-all duration-300"
-                    />
+                    <motion.span className="w-0 h-0.5 bg-favela-green-400 group-hover:w-4 transition-all duration-300" />
                     {link.nome}
                   </span>
                 </MotionLink>
@@ -180,9 +180,7 @@ const Footer = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <p>
-            © 2024 FavelaWare. Todos os direitos reservados.
-          </p>
+          <p>© 2024 FavelaWare. Todos os direitos reservados.</p>
 
           <motion.div
             className="flex items-center gap-2"

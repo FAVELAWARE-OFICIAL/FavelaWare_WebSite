@@ -20,8 +20,14 @@ import Janela from '../../components/admin/Janela';
 import { Carregando } from '../../components/admin/Moldura';
 import { Aviso, Botao, Cartao, Vazio, classeCampo, classeRotulo, type Mensagem } from '../../components/admin/Ui';
 import {
-  carregarSolicitacoes, chaveSolicitacoes, registrarSolicitacao, responderSolicitacao, TIPOS_SOLICITACAO,
-  type Solicitacao, type StatusSolicitacao, type TipoSolicitacao,
+  carregarSolicitacoes,
+  chaveSolicitacoes,
+  registrarSolicitacao,
+  responderSolicitacao,
+  TIPOS_SOLICITACAO,
+  type Solicitacao,
+  type StatusSolicitacao,
+  type TipoSolicitacao,
 } from '../../lib/gestao';
 import { useAdmin } from './contexto';
 import { foco, texto } from '../../components/admin/designSystem';
@@ -44,14 +50,20 @@ const Recebidas: React.FC = () => {
   const alunoPorId = useMemo(() => new Map(alunos.map((a) => [a.id, a])), [alunos]);
 
   // Já vem pronto do cache (o layout carrega na abertura); atualiza por trás
-  const { dados: lista, erro, recarregar } = useDadosEmCache(
-    chaveSolicitacoes(edicao.id),
-    () => carregarSolicitacoes(edicao.id),
-  );
+  const {
+    dados: lista,
+    erro,
+    recarregar,
+  } = useDadosEmCache(chaveSolicitacoes(edicao.id), () => carregarSolicitacoes(edicao.id));
   const [mostrar, setMostrar] = useState<'pendentes' | 'todas'>('pendentes');
   const [nova, setNova] = useState(false);
   const [respondendo, setRespondendo] = useState<Solicitacao | null>(null);
-  const [formData, setFormData] = useState({ participante_id: '', tipo: 'mudanca_turno' as TipoSolicitacao, descricao: '', resposta: '' });
+  const [formData, setFormData] = useState({
+    participante_id: '',
+    tipo: 'mudanca_turno' as TipoSolicitacao,
+    descricao: '',
+    resposta: '',
+  });
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
   const [erroJanela, setErroJanela] = useState<Mensagem>(null);
@@ -96,7 +108,8 @@ const Recebidas: React.FC = () => {
   // Sem os dados: carregamento na hora (nunca tela em branco) e pintura completa
   const mostrarCarregando = useCarregamentoCompleto(lista === undefined && !erro, 0);
   // Carregando: ocupa a página toda (sem os botões do topo ao lado)
-  if (erro && lista === undefined) return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar as solicitações.' }} />;
+  if (erro && lista === undefined)
+    return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar as solicitações.' }} />;
   if (mostrarCarregando || lista === undefined) return <Carregando texto="Carregando solicitações" />;
 
   const visiveis = (lista ?? []).filter((s) => mostrar === 'todas' || s.status === 'pendente');
@@ -105,7 +118,11 @@ const Recebidas: React.FC = () => {
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-lg border border-gray-300 bg-white p-1 text-sm" role="group" aria-label="Quais mostrar">
+        <div
+          className="inline-flex rounded-lg border border-gray-300 bg-white p-1 text-sm"
+          role="group"
+          aria-label="Quais mostrar"
+        >
           {(['pendentes', 'todas'] as const).map((op) => (
             <button
               key={op}
@@ -138,7 +155,9 @@ const Recebidas: React.FC = () => {
 
       {!visiveis.length ? (
         <Vazio>
-          {mostrar === 'pendentes' ? 'Nenhuma solicitação pendente nesta edição.' : 'Nenhuma solicitação registrada nesta edição.'}
+          {mostrar === 'pendentes'
+            ? 'Nenhuma solicitação pendente nesta edição.'
+            : 'Nenhuma solicitação registrada nesta edição.'}
           <br />
           Quando um aluno pedir algo (por exemplo, mudar de turno), registre aqui para acompanhar a resposta.
         </Vazio>
@@ -153,7 +172,9 @@ const Recebidas: React.FC = () => {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-medium text-gray-900">{aluno?.nome}</p>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${ESTILO_STATUS[s.status].classe}`}>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${ESTILO_STATUS[s.status].classe}`}
+                      >
                         {ESTILO_STATUS[s.status].rotulo}
                       </span>
                     </div>
@@ -163,7 +184,9 @@ const Recebidas: React.FC = () => {
                     </p>
                     <p className="mt-2 whitespace-pre-line text-sm text-gray-800">{s.descricao}</p>
                     {s.resposta && (
-                      <p className="mt-2 rounded-md bg-gray-50 p-2 text-sm text-gray-700"><strong>Resposta:</strong> {s.resposta}</p>
+                      <p className="mt-2 rounded-md bg-gray-50 p-2 text-sm text-gray-700">
+                        <strong>Resposta:</strong> {s.resposta}
+                      </p>
                     )}
                   </div>
                   <Botao
@@ -188,25 +211,61 @@ const Recebidas: React.FC = () => {
         <form onSubmit={registrar} className="space-y-4">
           <Aviso mensagem={erroJanela} className="" />
           <div>
-            <label htmlFor="sol-aluno" className={classeRotulo}>Aluno *</label>
-            <select id="sol-aluno" name="participante_id" value={formData.participante_id} onChange={handleInputChange} className={classeCampo}>
+            <label htmlFor="sol-aluno" className={classeRotulo}>
+              Aluno *
+            </label>
+            <select
+              id="sol-aluno"
+              name="participante_id"
+              value={formData.participante_id}
+              onChange={handleInputChange}
+              className={classeCampo}
+            >
               <option value="">Escolha o aluno</option>
-              {alunos.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
+              {alunos.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.nome}
+                </option>
+              ))}
             </select>
           </div>
           <div>
-            <label htmlFor="sol-tipo" className={classeRotulo}>Tipo de pedido *</label>
-            <select id="sol-tipo" name="tipo" value={formData.tipo} onChange={handleInputChange} className={classeCampo}>
-              {Object.entries(TIPOS_SOLICITACAO).map(([valor, rotulo]) => <option key={valor} value={valor}>{rotulo}</option>)}
+            <label htmlFor="sol-tipo" className={classeRotulo}>
+              Tipo de pedido *
+            </label>
+            <select
+              id="sol-tipo"
+              name="tipo"
+              value={formData.tipo}
+              onChange={handleInputChange}
+              className={classeCampo}
+            >
+              {Object.entries(TIPOS_SOLICITACAO).map(([valor, rotulo]) => (
+                <option key={valor} value={valor}>
+                  {rotulo}
+                </option>
+              ))}
             </select>
           </div>
           <div>
-            <label htmlFor="sol-descricao" className={classeRotulo}>O que o aluno pediu *</label>
-            <textarea id="sol-descricao" name="descricao" rows={4} maxLength={2000} value={formData.descricao} onChange={handleInputChange}
-              className={classeCampo} placeholder="Ex: pediu para passar do turno da manhã para o da tarde, porque começou a trabalhar." />
+            <label htmlFor="sol-descricao" className={classeRotulo}>
+              O que o aluno pediu *
+            </label>
+            <textarea
+              id="sol-descricao"
+              name="descricao"
+              rows={4}
+              maxLength={2000}
+              value={formData.descricao}
+              onChange={handleInputChange}
+              className={classeCampo}
+              placeholder="Ex: pediu para passar do turno da manhã para o da tarde, porque começou a trabalhar."
+            />
           </div>
           <div className="flex justify-end border-t border-gray-100 pt-4">
-            <Botao type="submit" variante="primario" disabled={salvando}>{salvando ? 'Salvando...' : 'Registrar'}</Botao>
+            <Botao type="submit" variante="primario" disabled={salvando}>
+              {salvando ? 'Salvando...' : 'Registrar'}
+            </Botao>
           </div>
         </form>
       </Janela>
@@ -217,20 +276,37 @@ const Recebidas: React.FC = () => {
           <div className="space-y-4">
             <Aviso mensagem={erroJanela} className="" />
             <p className="text-sm text-gray-700">
-              <strong>{alunoPorId.get(respondendo.participante_id)?.nome}</strong> · {TIPOS_SOLICITACAO[respondendo.tipo]}
+              <strong>{alunoPorId.get(respondendo.participante_id)?.nome}</strong> ·{' '}
+              {TIPOS_SOLICITACAO[respondendo.tipo]}
             </p>
             <p className="rounded-md bg-gray-50 p-3 text-sm text-gray-800">{respondendo.descricao}</p>
             <div>
-              <label htmlFor="sol-resposta" className={classeRotulo}>Resposta (opcional)</label>
-              <textarea id="sol-resposta" name="resposta" rows={3} maxLength={2000} value={formData.resposta} onChange={handleInputChange}
-                className={classeCampo} placeholder="Ex: aprovado a partir da próxima semana." />
+              <label htmlFor="sol-resposta" className={classeRotulo}>
+                Resposta (opcional)
+              </label>
+              <textarea
+                id="sol-resposta"
+                name="resposta"
+                rows={3}
+                maxLength={2000}
+                value={formData.resposta}
+                onChange={handleInputChange}
+                className={classeCampo}
+                placeholder="Ex: aprovado a partir da próxima semana."
+              />
             </div>
             <div className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
               {respondendo.status !== 'pendente' && (
-                <Botao onClick={() => responder('pendente')} disabled={salvando}>Voltar para pendente</Botao>
+                <Botao onClick={() => responder('pendente')} disabled={salvando}>
+                  Voltar para pendente
+                </Botao>
               )}
-              <Botao onClick={() => responder('recusada')} disabled={salvando}>Recusar</Botao>
-              <Botao variante="primario" onClick={() => responder('aprovada')} disabled={salvando}>Aprovar</Botao>
+              <Botao onClick={() => responder('recusada')} disabled={salvando}>
+                Recusar
+              </Botao>
+              <Botao variante="primario" onClick={() => responder('aprovada')} disabled={salvando}>
+                Aprovar
+              </Botao>
             </div>
           </div>
         )}
@@ -252,7 +328,9 @@ const HORARIOS = [
 const MudancaDeHorario: React.FC = () => {
   const { edicao, dados } = useAdmin();
   const alunoPorId = new Map(dados.participantes.map((p) => [p.id, p]));
-  const turma = dados.turmas.find((t) => dados.mudancasHorario.some((m) => alunoPorId.get(m.participante_id)?.turma_id === t.id));
+  const turma = dados.turmas.find((t) =>
+    dados.mudancasHorario.some((m) => alunoPorId.get(m.participante_id)?.turma_id === t.id),
+  );
 
   if (!dados.mudancasHorario.length) {
     return (
@@ -270,8 +348,8 @@ const MudancaDeHorario: React.FC = () => {
     <>
       <Cartao className="mb-6">
         <p className="text-sm text-gray-700">
-          <strong>O que é:</strong> durante o curso, a <strong>{turma?.nome ?? 'turma'}</strong> da {edicao.nome} precisou
-          mudar o horário das aulas. Cada aluno escolheu um dos três horários abaixo.
+          <strong>O que é:</strong> durante o curso, a <strong>{turma?.nome ?? 'turma'}</strong> da {edicao.nome}{' '}
+          precisou mudar o horário das aulas. Cada aluno escolheu um dos três horários abaixo.
         </p>
         <p className="mt-2 text-sm text-gray-700">
           <strong>Resultado:</strong> {escolheram} de {dados.mudancasHorario.length} alunos escolheram um horário.
@@ -286,7 +364,10 @@ const MudancaDeHorario: React.FC = () => {
             .filter(Boolean)
             .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
           return (
-            <section key={h.rotulo} className={`rounded-lg border border-t-4 border-gray-200 bg-white p-5 shadow-sm ${h.cor}`}>
+            <section
+              key={h.rotulo}
+              className={`rounded-lg border border-t-4 border-gray-200 bg-white p-5 shadow-sm ${h.cor}`}
+            >
               <p className={`${texto.rotuloMaiusculo}`}>{h.periodo}</p>
               <h3 className="mt-1 text-lg font-semibold text-gray-900">{h.rotulo}</h3>
               <p className="mb-4 text-sm text-gray-600">
@@ -296,7 +377,9 @@ const MudancaDeHorario: React.FC = () => {
                 {alunos.map((a) => (
                   <li key={a.id} className="flex items-center gap-2 text-sm text-gray-800">
                     <Avatar foto={a.foto} nome={a.nome} />
-                    <span className="min-w-0 truncate" title={a.nome}>{a.nome}</span>
+                    <span className="min-w-0 truncate" title={a.nome}>
+                      {a.nome}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -331,7 +414,12 @@ const Solicitacoes: React.FC = () => {
 
   return (
     <>
-      <div role="tablist" aria-label="Solicitações" onKeyDown={aoTeclar} className="mb-6 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-gray-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        role="tablist"
+        aria-label="Solicitações"
+        onKeyDown={aoTeclar}
+        className="mb-6 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-gray-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {ABAS.map((a) => (
           <button
             key={a.id}
@@ -343,7 +431,9 @@ const Solicitacoes: React.FC = () => {
             tabIndex={aba === a.id ? 0 : -1}
             onClick={() => setAba(a.id)}
             className={`-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium ${foco} ${
-              aba === a.id ? 'border-favela-green-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-800'
+              aba === a.id
+                ? 'border-favela-green-600 text-gray-900'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
             {a.rotulo}

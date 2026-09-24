@@ -126,6 +126,7 @@ export function mensagemDoErroDePerfil(erro: unknown, deAluno: boolean): string 
   console.error('[perfil] falha ao salvar', (erro as { code?: string } | null)?.code); // só o código: o detalhe traz a linha com os dados
   const codigo = (erro as { code?: string } | null)?.code;
   if (codigo === '23514') return 'Confira o e-mail e a data de nascimento.';
-  if (codigo === '22023') return deAluno ? 'Informe a data de nascimento e o e-mail.' : 'O nome precisa ter entre 2 e 80 letras.';
+  if (codigo === '22023')
+    return deAluno ? 'Informe a data de nascimento e o e-mail.' : 'O nome precisa ter entre 2 e 80 letras.';
   return 'Não foi possível salvar. Tente de novo.';
 }
