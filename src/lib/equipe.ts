@@ -34,6 +34,9 @@ export interface MembroDaEquipe {
   papel: Papel;
   /** A dona do portal: tem todas as personas ("Ver como"); a função dela só ela muda */
   todasAsPersonas: boolean;
+  /** Vínculo (Mundiale, AOPA, Ânima...) e cargo: saem no cartão da página Sobre e do Hall da Fama */
+  organizacao: string | null;
+  cargo: string | null;
 }
 
 /** Funções que o gestor pode dar na tela Equipe (aluno tem acesso pela turma) */
@@ -67,7 +70,7 @@ export class ServicoEquipe {
   async listarMembros(): Promise<MembroDaEquipe[]> {
     const { data, error } = await supabase
       .from('perfis')
-      .select('id, nome, email, foto, papel, pode_alternar_papel')
+      .select('id, nome, email, foto, papel, pode_alternar_papel, organizacao, cargo')
       .or('papel.neq.aluno,pode_alternar_papel.eq.true')
       .order('nome');
     if (error) throw error;
@@ -78,7 +81,28 @@ export class ServicoEquipe {
       foto: p.foto,
       papel: p.papel as Papel,
       todasAsPersonas: p.pode_alternar_papel,
+      organizacao: p.organizacao,
+      cargo: p.cargo,
     }));
+  }
+
+  /**
+   * Gestor: vínculo e cargo da pessoa (vazio apaga). Gestor, parceiro e a líder
+   * discente só aparecem no site com cargo; o instrutor sem cargo sai como "Instrutor(a)".
+   */
+  async salvarVinculoECargo(id: string, vinculo: { organizacao: string; cargo: string }): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('perfis')
+      .update({ organizacao: vinculo.organizacao.trim() || null, cargo: vinculo.cargo.trim() || null })
+      .eq('id', id)
+      .select('id');
+    // Sem erro e sem linha: a RLS recusou (quem salvou não é gestor)
+    if (!error && data.length) return null;
+    if (!error) return 'Só a coordenação define o vínculo e o cargo.';
+    console.error('[equipe] falha ao salvar vínculo e cargo', error.code);
+    return error.code === '23514'
+      ? 'Vínculo e cargo têm até 60 letras, sem < e >.'
+      : 'Não foi possível salvar o vínculo e o cargo.';
   }
 
   /** Gestor: troca a função da pessoa (o banco não deixa mexer na dona nem dar todas as personas) */
@@ -140,15 +164,17 @@ export class ServicoEquipe {
    * página Sobre. Troca a antiga, que sai do Storage. Devolve a URL nova.
    */
   async trocarFoto(professorId: string, arquivo: File, fotoAntiga: string | null): Promise<string> {
-    const url = await servicoFotoPadronizada.enviar(arquivo, 'equipe');
-    const { error } = await supabase.from('perfis').update({ foto: url }).eq('id', professorId);
-    if (error) {
-      console.error('[equipe] foto enviada, mas não gravada no perfil', error.code);
-      await servicoFotoPadronizada.apagar(url);
-      throw new Error('Não foi possível salvar a foto.');
-    }
-    await servicoFotoPadronizada.apagar(fotoAntiga);
-    return url;
+    return servicoFotoPadronizada.trocar(
+      arquivo,
+      'equipe',
+      async (url) => {
+        const { error } = await supabase.from('perfis').update({ foto: url }).eq('id', professorId);
+        if (!error) return;
+        console.error('[equipe] foto enviada, mas não gravada no perfil', error.code);
+        throw new Error('Não foi possível salvar a foto.');
+      },
+      fotoAntiga,
+    );
   }
 
   async vincularTurma(professorId: string, turmaId: number, vincular: boolean): Promise<void> {

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('./supabase', () => import('../testes/supabaseFalso'));
 
+import { contarPessoas } from '../data/hallDaFama';
 import { consultaFalha, removerDoStorage } from '../testes/supabaseFalso';
 import { servicoAtestados } from './atestados';
 import { notasCompletas, servicoAvaliacoes, somaDasNotas } from './avaliacoes';
@@ -171,6 +172,35 @@ describe('fotos enviadas e não salvas', () => {
   });
 });
 
+describe('troca de foto', () => {
+  const antiga = 'http://localhost:54321/storage/v1/object/public/fotos-alunos/perfis/antiga.webp';
+  const nova = 'http://localhost:54321/storage/v1/object/public/fotos-alunos/perfis/nova.webp';
+  const arquivo = new File(['x'], 'foto.png', { type: 'image/png' });
+
+  it('gravou: a antiga sai do Storage e volta a nova', async () => {
+    removerDoStorage.mockClear();
+    vi.spyOn(servicoFotoPadronizada, 'enviar').mockResolvedValueOnce(nova);
+    const gravar = vi.fn(async () => {});
+    expect(await servicoFotoPadronizada.trocar(arquivo, 'perfis', gravar, antiga)).toBe(nova);
+    expect(gravar).toHaveBeenCalledWith(nova);
+    expect(removerDoStorage).toHaveBeenCalledWith(['perfis/antiga.webp']);
+    expect(removerDoStorage).not.toHaveBeenCalledWith(['perfis/nova.webp']);
+  });
+
+  it('não gravou: a nova sai do Storage, a antiga fica e o erro segue', async () => {
+    removerDoStorage.mockClear();
+    vi.spyOn(servicoFotoPadronizada, 'enviar').mockResolvedValueOnce(nova);
+    const gravar = vi.fn(async () => {
+      throw new Error('Não foi possível salvar a foto.');
+    });
+    await expect(servicoFotoPadronizada.trocar(arquivo, 'perfis', gravar, antiga)).rejects.toThrow(
+      'Não foi possível salvar a foto.',
+    );
+    expect(removerDoStorage).toHaveBeenCalledWith(['perfis/nova.webp']);
+    expect(removerDoStorage).not.toHaveBeenCalledWith(['perfis/antiga.webp']);
+  });
+});
+
 describe('falha ao ler a próxima ordem', () => {
   it('não grava e não culpa o nome', async () => {
     consultaFalha.ativa = true;
@@ -315,6 +345,73 @@ describe('site público', () => {
       ['4ª Edição', true],
       ['3ª Edição', false],
     ]);
+  });
+});
+
+describe('equipe no site e Hall da Fama', () => {
+  // Linhas como o banco devolve (equipe_da_edicao_atual e hall_da_fama_do_site)
+  const linha = (nome: string, organizacao: string | null, extra: Record<string, unknown> = {}) => ({
+    edicao_ordem: 4,
+    edicao_nome: 'Edição 4 (2026)',
+    nome,
+    cargo: 'Instrutor(a)',
+    organizacao,
+    foto: null,
+    linkedin: null,
+    ...extra,
+  });
+  const chamar = (linhas: unknown[]) =>
+    vi
+      .spyOn(servicoSitePublico as unknown as { chamar: () => Promise<unknown[]> }, 'chamar')
+      .mockResolvedValueOnce(linhas);
+
+  it('Sobre: título da edição e pessoas em ordem Mundiale, AOPA, Ânima e outras', async () => {
+    chamar([
+      linha('Rui Lima', 'Outra'),
+      linha('Ana Dias', 'Ânima'),
+      linha('Bia Reis', 'Mundiale'),
+      linha('Caio Luz', null),
+    ]);
+    const equipe = await servicoSitePublico.equipeDaEdicaoAtual();
+    expect(equipe?.titulo).toBe('EQUIPE — EDIÇÃO IV');
+    expect(equipe?.pessoas.map((p) => p.nome)).toEqual(['Bia Reis', 'Ana Dias', 'Rui Lima', 'Caio Luz']);
+  });
+
+  it('Sobre: foto de outro endereço e LinkedIn que não é perfil viram nada', async () => {
+    chamar([
+      linha('Ana Dias', 'Ânima', { foto: 'https://outro.site/x.webp', linkedin: 'https://evil.example/in/ana' }),
+    ]);
+    const equipe = await servicoSitePublico.equipeDaEdicaoAtual();
+    expect(equipe?.pessoas[0].foto).toBeUndefined();
+    expect(equipe?.pessoas[0].linkedin).toBeUndefined();
+  });
+
+  it('Sobre: sem equipe na edição aberta, a seção não aparece', async () => {
+    chamar([]);
+    expect(await servicoSitePublico.equipeDaEdicaoAtual()).toBeNull();
+  });
+
+  it('Hall: uma edição por grupo, com nome e período no formato do arquivo', async () => {
+    chamar([
+      linha('Ana Dias', 'Ânima', { edicao_ordem: 5, edicao_nome: 'Edição 5 (2027)' }),
+      linha('Bia Reis', 'Mundiale'),
+      linha('Caio Luz', 'AOPA'),
+    ]);
+    const grupos = await servicoSitePublico.hallDoBanco();
+    expect(grupos.map((g) => [g.id, g.nome, g.periodo, g.membros.map((m) => m.nome)])).toEqual([
+      ['edicao-5', '5ª Edição', '2027', ['Ana Dias']],
+      ['edicao-4', '4ª Edição', '2026', ['Bia Reis', 'Caio Luz']],
+    ]);
+  });
+
+  it('Hall: o total conta cada pessoa uma vez, mesmo em duas edições', () => {
+    const grupo = (id: string, nomes: string[]) => ({
+      id,
+      nome: id,
+      periodo: '',
+      membros: nomes.map((nome) => ({ nome, cargo: '' })),
+    });
+    expect(contarPessoas([grupo('a', ['Ana', 'Bia']), grupo('b', ['Ana', 'Caio'])])).toBe(3);
   });
 });
 

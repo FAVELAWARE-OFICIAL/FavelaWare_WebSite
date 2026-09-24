@@ -51,7 +51,7 @@ begin
   update public.edicoes set encerrada = true where ordem between 1 and 9700 and not demonstracao and not encerrada;
   perform set_config('request.jwt.claims', '{"role":"anon"}', true);
   set local role anon;
-  select count(*) into v_n from public.equipe_da_edicao_atual() where nome = 'Conta Ver Como';
+  select count(*) into v_n from public.equipe_da_edicao_atual() where nome in ('Conta Ver Como', 'Conta Como');
   r := r || E'\n' || case when v_n = 0 then 'ok' else 'FALHOU' end || ' - conta do Ver como fica fora da equipe do site';
   reset role;
 

@@ -223,7 +223,7 @@ const Sobre = () => {
         </div>
       </section>
 
-      {/* Equipe da edição em andamento (instrutores, direto do banco) */}
+      {/* Equipe da edição em andamento (instrutores, coordenação e parceiros, direto do banco) */}
       {equipeAtual && (
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -236,12 +236,13 @@ const Sobre = () => {
               {equipeAtual.titulo}
             </motion.h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
-              {equipeAtual.instrutores.map((pessoa, index) => (
+              {equipeAtual.pessoas.map((pessoa, index) => (
                 <CartaoDePessoa
                   key={`${pessoa.nome}-${index}`}
                   nome={pessoa.nome}
                   foto={pessoa.foto}
-                  cargo="Instrutor(a)"
+                  cargo={pessoa.cargo}
+                  organizacao={pessoa.organizacao}
                   linkedin={pessoa.linkedin}
                   atraso={(index % 5) * 0.1}
                 />

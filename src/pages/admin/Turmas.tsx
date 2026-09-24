@@ -105,7 +105,7 @@ const Turmas: React.FC = () => {
   const encerrarEdicao = async () => {
     const pergunta =
       `Encerrar a ${edicao.nome}? A chamada fica só para consulta e ninguém mais altera a presença. ` +
-      'Pelo site não dá para reabrir.';
+      'A equipe desta edição vai para o Hall da Fama. Pelo site não dá para reabrir.';
     if (!window.confirm(pergunta)) return;
     const erro = await servicoEdicoes.encerrar(edicao.id);
     if (erro) return setMensagem({ tipo: 'erro', texto: erro });

@@ -183,7 +183,8 @@ Todas as tabelas com RLS, testadas em `supabase/testes/`.
 
 | Tabelas | Guardam |
 | --- | --- |
-| `perfis` | identidade, papel e redes |
+| `perfis` | identidade, papel, redes, vínculo e cargo |
+| `hall_da_fama` | retrato da equipe de cada edição encerrada (lido só por `hall_da_fama_do_site`) |
 | `avaliacoes_instrutor`, `membros_banca`, `notas_banca` | avaliação final da edição e banca avaliadora |
 | `edicoes`, `turmas`, `participantes`, `duplas` | edições, turmas e alunos |
 | `aulas`, `presencas`, `mudancas_horario` | cronograma e chamada (`mudancas_horario` é histórico de 2022, sem tela) |

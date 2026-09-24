@@ -175,6 +175,28 @@ export class ServicoFotoPadronizada {
     return supabase.storage.from(BUCKET_FOTOS_ALUNOS).getPublicUrl(caminho).data.publicUrl;
   }
 
+  /**
+   * Troca uma foto: envia a nova e grava onde ela é usada (`gravar`). Se a
+   * gravação falhar, a nova sai do Storage e o erro segue; se der certo, sai a
+   * antiga. Devolve a URL nova.
+   */
+  async trocar(
+    arquivo: File,
+    pasta: string,
+    gravar: (url: string) => Promise<void>,
+    fotoAntiga: string | null,
+  ): Promise<string> {
+    const url = await this.enviar(arquivo, pasta);
+    try {
+      await gravar(url);
+    } catch (erro) {
+      await this.apagar(url);
+      throw erro;
+    }
+    await this.apagar(fotoAntiga);
+    return url;
+  }
+
   /** Apaga do Storage uma foto que não é mais usada (só as do nosso bucket; as do site, em /imgs, ficam) */
   async apagar(url: string | null): Promise<void> {
     if (!PREFIXO_FOTOS_PUBLICAS || !url?.startsWith(PREFIXO_FOTOS_PUBLICAS)) return;

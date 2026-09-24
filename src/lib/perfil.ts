@@ -14,6 +14,7 @@
  */
 import { emailValido, normalizarGithub, normalizarLinkedin } from '../utils/texto';
 import { CODIGO_REGRA_DO_BANCO, codigoDoErro } from './banco';
+import { servicoFotoPadronizada } from './fotoPadronizada';
 import { servicoSessao, type Papel } from './sessao';
 import { supabase } from './supabase';
 
@@ -93,6 +94,27 @@ export class ServicoPerfil {
     });
     if (error) throw error;
     this.avisarQueMudou();
+  }
+
+  /**
+   * A própria foto (qualquer papel), no padrão do site. O aluno troca a da ficha
+   * da turma; os outros, a do perfil. O banco confere que a foto foi enviada
+   * pela própria pessoa. Devolve a URL nova.
+   */
+  async trocarMinhaFoto(arquivo: File, fotoAntiga: string | null): Promise<string> {
+    const url = await servicoFotoPadronizada.trocar(
+      arquivo,
+      'perfis',
+      async (nova) => {
+        const { error } = await supabase.rpc('atualizar_minha_foto', { p_foto: nova });
+        if (!error) return;
+        console.error('[perfil] foto enviada, mas não gravada', codigoDoErro(error));
+        throw new Error('Não foi possível salvar a foto.');
+      },
+      fotoAntiga,
+    );
+    this.avisarQueMudou();
+    return url;
   }
 
   /**

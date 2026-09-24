@@ -6,7 +6,8 @@
  * Reúne todas as pessoas que já formaram a equipe do FavelaWare,
  * agrupadas pela edição em que participaram.
  *
- * Os dados vêm de src/data/hallDaFama.ts.
+ * As edições 1 a 3 vêm de src/data/hallDaFama.ts; as novas entram sozinhas
+ * quando o gestor encerra a edição (hook useHallDaFama).
  *
  * Conceitos importantes:
  * - useState: guarda qual edição está selecionada nos botões de filtro
@@ -18,7 +19,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { edicoes, membrosDaEdicao, totalDePessoas } from '../data/hallDaFama';
+import { contarPessoas } from '../data/hallDaFama';
+import { useHallDaFama } from '../hooks/useHallDaFama';
 import CabecalhoDaPagina from '../components/CabecalhoDaPagina';
 import CartaoDePessoa from '../components/CartaoDePessoa';
 import { cascata, surgirDeBaixo } from '../components/animacoes';
@@ -27,6 +29,7 @@ import { classeBotaoDestaque } from '../components/estilosDoSite';
 const HallDaFama: React.FC = () => {
   // 'todos' mostra a linha do tempo inteira; uma edição filtra só ela
   const [edicaoSelecionada, setEdicaoSelecionada] = useState<string>('todos');
+  const edicoes = useHallDaFama();
 
   // Quais edições desenhar: todas, ou só a escolhida
   const edicoesVisiveis = edicaoSelecionada === 'todos' ? edicoes : edicoes.filter((e) => e.id === edicaoSelecionada);
@@ -37,7 +40,7 @@ const HallDaFama: React.FC = () => {
 
       <CabecalhoDaPagina
         titulo="HALL DA FAMA"
-        subtitulo={`${totalDePessoas} pessoas que construíram o FavelaWare ao longo das edições`}
+        subtitulo={`${contarPessoas(edicoes)} pessoas que construíram o FavelaWare ao longo das edições`}
       />
 
       {/* Conteúdo */}
@@ -82,7 +85,7 @@ const HallDaFama: React.FC = () => {
                     {edicao.nome} <span className="text-xl font-semibold text-gray-500">({edicao.periodo})</span>
                   </h2>
                   <span className="px-3 py-1 bg-favela-green-100 text-favela-green-700 text-sm font-bold rounded-full">
-                    {membrosDaEdicao(edicao).length} pessoas
+                    {edicao.membros.length} pessoas
                   </span>
                   <div className="flex-1 h-1 bg-gradient-to-r from-favela-green-500 to-transparent rounded-full" />
                 </div>
@@ -94,8 +97,8 @@ const HallDaFama: React.FC = () => {
                   viewport={{ once: true }}
                   className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8"
                 >
-                  {/* LinkedIn só aparece para quem tem o perfil cadastrado em data/hallDaFama.ts */}
-                  {membrosDaEdicao(edicao).map((pessoa) => (
+                  {/* LinkedIn só aparece para quem tem o perfil cadastrado (arquivo ou "Meu perfil") */}
+                  {edicao.membros.map((pessoa) => (
                     <CartaoDePessoa
                       key={`${edicao.id}-${pessoa.nome}`}
                       nome={pessoa.nome}

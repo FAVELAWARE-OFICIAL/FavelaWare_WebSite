@@ -10,7 +10,10 @@
  *   aparece junto (cada aluno de src/data/turmas.ts tem o participanteId);
  * - turmas_do_site: as turmas e os alunos das edições novas (a 4ª em diante),
  *   que não estão escritas à mão em src/data/turmas.ts;
- * - equipe_da_edicao_atual: os instrutores da edição atual, na página Sobre.
+ * - equipe_da_edicao_atual: a equipe da edição aberta (instrutores, coordenação e
+ *   parceiros, com cargo e vínculo), na página Sobre;
+ * - hall_da_fama_do_site: a equipe de cada edição nova encerrada (retrato do
+ *   encerramento), no Hall da Fama, antes das edições do arquivo.
  *
  * Aqui mora a regra (montar as turmas no formato do site, juntar com as do
  * arquivo, o título da equipe). Os hooks de src/hooks/ só guardam o estado.
@@ -19,6 +22,7 @@
  * leve. Se o banco não responder, a página fica só com o que está no arquivo.
  */
 import { CHAVE_PUBLICAVEL_SUPABASE, PREFIXO_FOTOS_PUBLICAS, URL_SUPABASE } from '../config';
+import { ordenarPorOrganizacao, type GrupoDoHall, type PessoaDoHall } from '../data/hallDaFama';
 import type { TurmaDoSite } from '../data/turmas';
 import { perfilLinkedinValido } from '../utils/texto';
 
@@ -53,20 +57,20 @@ export interface AlunoAtualizado {
 const linkedinConfiavel = (valor: unknown): string | null =>
   typeof valor === 'string' && perfilLinkedinValido(valor) ? valor : null;
 
-/** Linha de equipe_da_edicao_atual */
-export interface InstrutorDaEdicao {
-  edicaoOrdem: number;
-  edicaoNome: string;
-  nome: string;
-  foto: string | null;
-  linkedin: string | null;
-}
-
 /** A equipe da edição atual, pronta para a página Sobre */
 export interface EquipeDaEdicao {
   titulo: string;
-  instrutores: InstrutorDaEdicao[];
+  pessoas: PessoaDoHall[];
 }
+
+/** Linha de equipe_da_edicao_atual ou hall_da_fama_do_site -> cartão do site */
+const linhaParaPessoa = (l: Record<string, unknown>): PessoaDoHall => ({
+  nome: String(l.nome ?? 'Instrutor'),
+  cargo: String(l.cargo ?? ''),
+  organizacao: typeof l.organizacao === 'string' ? l.organizacao : undefined,
+  foto: fotoConfiavel(l.foto) ?? undefined,
+  linkedin: linkedinConfiavel(l.linkedin) ?? undefined,
+});
 
 export class ServicoSitePublico {
   /** Cada consulta é buscada uma vez por visita e reaproveitada entre as páginas */
@@ -115,19 +119,36 @@ export class ServicoSitePublico {
     return [...novas, ...(temAtualNoBanco ? comFotos.map((t) => ({ ...t, atual: false })) : comFotos)];
   }
 
-  /** Instrutores da edição atual com o título da seção (null se não houver edição aberta com instrutor) */
+  /** Equipe da edição atual com o título da seção (null se não houver edição aberta com equipe) */
   async equipeDaEdicaoAtual(): Promise<EquipeDaEdicao | null> {
     const linhas = await this.chamar<Record<string, unknown>>('equipe_da_edicao_atual');
-    const instrutores = linhas.map((l) => ({
-      edicaoOrdem: Number(l.edicao_ordem),
-      edicaoNome: String(l.edicao_nome ?? ''),
-      nome: String(l.nome ?? 'Instrutor'),
-      foto: fotoConfiavel(l.foto),
-      linkedin: linkedinConfiavel(l.linkedin),
-    }));
-    if (!instrutores.length) return null;
+    if (!linhas.length) return null;
     // O título segue o das edições anteriores: "EQUIPE — EDIÇÃO IV"
-    return { titulo: `EQUIPE — EDIÇÃO ${this.numeroRomano(instrutores[0].edicaoOrdem)}`, instrutores };
+    return {
+      titulo: `EQUIPE — EDIÇÃO ${this.numeroRomano(Number(linhas[0].edicao_ordem))}`,
+      pessoas: ordenarPorOrganizacao(linhas.map(linhaParaPessoa)),
+    };
+  }
+
+  /** Edições novas encerradas, da mais recente para a mais antiga, no formato do Hall da Fama */
+  async hallDoBanco(): Promise<GrupoDoHall[]> {
+    const linhas = await this.chamar<Record<string, unknown>>('hall_da_fama_do_site');
+    const porEdicao = new Map<number, GrupoDoHall>();
+    for (const l of linhas) {
+      const ordem = Number(l.edicao_ordem);
+      let grupo = porEdicao.get(ordem);
+      if (!grupo) {
+        grupo = {
+          id: `edicao-${ordem}`,
+          nome: this.nomeDaEdicao(ordem),
+          periodo: this.periodoDaEdicao(String(l.edicao_nome ?? '')),
+          membros: [],
+        };
+        porEdicao.set(ordem, grupo);
+      }
+      grupo.membros.push(linhaParaPessoa(l));
+    }
+    return [...porEdicao.values()].map((g) => ({ ...g, membros: ordenarPorOrganizacao(g.membros) }));
   }
 
   /** Linhas do banco (uma por aluno) -> turmas no formato do site */
@@ -139,9 +160,8 @@ export class ServicoSitePublico {
         turma = {
           slug: `edicao-${l.edicaoOrdem}-${this.paraSlug(l.turmaNome)}`,
           nome: l.turmaNome,
-          edicao: `${l.edicaoOrdem}ª Edição`,
-          // "Edição 4 (2026)" -> "2026"
-          periodo: /\(([^)]+)\)/.exec(l.edicaoNome)?.[1] ?? '',
+          edicao: this.nomeDaEdicao(l.edicaoOrdem),
+          periodo: this.periodoDaEdicao(l.edicaoNome),
           atual: !l.encerrada,
           alunos: [],
         };
@@ -152,6 +172,16 @@ export class ServicoSitePublico {
       }
     }
     return [...porTurma.values()];
+  }
+
+  /** 4 -> "4ª Edição" (turmas e Hall da Fama) */
+  private nomeDaEdicao(ordem: number): string {
+    return `${ordem}ª Edição`;
+  }
+
+  /** "Edição 4 (2026)" -> "2026" */
+  private periodoDaEdicao(nome: string): string {
+    return /\(([^)]+)\)/.exec(nome)?.[1] ?? '';
   }
 
   /** "Turma 1" -> "turma-1" (sem acento, para a URL) */

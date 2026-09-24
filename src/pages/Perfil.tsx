@@ -1,9 +1,10 @@
 /**
  * ============================================
- * MEU PERFIL (gestor, professor, aluno e parceiro, este só para ver)
+ * MEU PERFIL (todos os papéis)
  * ============================================
  *
- * Aberta pela foto na barra superior. Dois cartões:
+ * Aberta pela foto na barra superior. No topo, a identidade com a foto (cada
+ * pessoa troca a própria; ela aparece no site onde a pessoa já aparece). Cartões:
  * 1. Meus dados: o que cada papel pode alterar (ver lib/perfil.ts).
  * 2. Trocar senha: pede a senha atual antes de gravar a nova.
  * O instrutor tem um terceiro: o atalho para atualizar os dados do RPA.
@@ -26,7 +27,17 @@ import { servicoSenha, type EtapaSenha } from '../lib/senha';
 import { StatusProcessamento } from '../types';
 import { hoje as hojeLocal } from '../utils/datas';
 import { emailValido } from '../utils/texto';
-import { NOME_DO_PAPEL } from '../lib/sessao';
+import { NOME_DO_PAPEL, type Papel } from '../lib/sessao';
+import EscolherFoto from '../components/admin/EscolherFoto';
+
+/** Onde a pessoa aparece no site (foto e LinkedIn), pelo papel; null = só no portal */
+const ondeApareceNoSite = (papel: Papel | null): string | null => {
+  if (papel === 'aluno') return 'na página da sua turma';
+  if (papel === 'professor') return 'na equipe da página Sobre';
+  if (papel === 'gestor' || papel === 'parceiro')
+    return 'na equipe da página Sobre, quando a coordenação preenche seu cargo';
+  return null;
+};
 
 const Perfil: React.FC = () => {
   const [dados, setDados] = useState<MeusDados | null>(null);
@@ -80,24 +91,63 @@ const Perfil: React.FC = () => {
  * papel e acesso. A capa é a verde no tema claro e a azul no escuro; o resto usa
  * as cores do design system, que têm versão no tema escuro.
  */
-const Identidade: React.FC<{ dados: MeusDados }> = ({ dados }) => (
-  <section aria-label="Quem está logado" className={`${superficie.cartao} ${espaco.entreBlocos} overflow-hidden`}>
-    {/* Faixa baixa com a arte inteira (sem cortar): as laterais ficam na cor de fundo da própria capa */}
-    <img src={CAPA_VERDE} alt="" className="so-tema-claro h-24 w-full bg-[#91d429] object-contain sm:h-32" />
-    <img src={CAPA_AZUL} alt="" className="so-tema-escuro h-24 w-full bg-[#21225f] object-contain sm:h-32" />
-    <div className="flex flex-col items-center gap-3 px-5 pb-5 text-center sm:flex-row sm:items-end sm:gap-5 sm:text-left">
-      {/* A foto sobe sobre a faixa; o anel tem a cor do cartão (clara ou escura) */}
-      <span className="-mt-10 shrink-0 rounded-full bg-white p-1 shadow-md sm:-mt-12">
-        <Avatar foto={dados.foto} nome={dados.nome} tamanho="lg" />
-      </span>
-      <div className="min-w-0 flex-1 sm:pb-1">
-        <h2 className="truncate text-lg font-semibold text-gray-900">{dados.nome || 'Sem nome'}</h2>
-        <p className={`mt-0.5 truncate ${texto.apoio}`}>{dados.acesso}</p>
+const Identidade: React.FC<{ dados: MeusDados }> = ({ dados }) => {
+  const [foto, setFoto] = useState(dados.foto);
+  const [enviando, setEnviando] = useState(false);
+  const [mensagem, setMensagem] = useState<Mensagem>(null);
+  const noSite = ondeApareceNoSite(dados.papel);
+
+  const trocarFoto = async (arquivo: File) => {
+    setEnviando(true);
+    setMensagem(null);
+    try {
+      const nova = await servicoPerfil.trocarMinhaFoto(arquivo, foto);
+      await aguardarCicloCompleto(); // a pintura do carregamento termina antes do resultado
+      setFoto(nova);
+      setMensagem({ tipo: 'sucesso', texto: `Foto atualizada.${noSite ? ` Ela aparece ${noSite}.` : ''}` });
+    } catch (erro) {
+      setMensagem({ tipo: 'erro', texto: (erro as Error).message || 'Não foi possível salvar a foto.' });
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <section
+      aria-label="Quem está logado"
+      className={`${superficie.cartao} ${espaco.entreBlocos} relative overflow-hidden`}
+    >
+      {enviando && <Carregamento modo="sobreposto" texto="Preparando e enviando a sua foto" />}
+      {/* Faixa baixa com a arte inteira (sem cortar): as laterais ficam na cor de fundo da própria capa */}
+      <img src={CAPA_VERDE} alt="" className="so-tema-claro h-24 w-full bg-[#91d429] object-contain sm:h-32" />
+      <img src={CAPA_AZUL} alt="" className="so-tema-escuro h-24 w-full bg-[#21225f] object-contain sm:h-32" />
+      <div className="flex flex-col items-center gap-3 px-5 pb-5 text-center sm:flex-row sm:items-end sm:gap-5 sm:text-left">
+        {/* A foto sobe sobre a faixa; o anel tem a cor do cartão (clara ou escura) */}
+        <span className="-mt-10 shrink-0 rounded-full bg-white p-1 shadow-md sm:-mt-12">
+          <Avatar foto={foto} nome={dados.nome} tamanho="lg" />
+        </span>
+        <div className="min-w-0 flex-1 sm:pb-1">
+          <h2 className="truncate text-lg font-semibold text-gray-900">{dados.nome || 'Sem nome'}</h2>
+          <p className={`mt-0.5 truncate ${texto.apoio}`}>{dados.acesso}</p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:mb-1">
+          {dados.papel && <span className={`${selo.base} ${selo.marca}`}>{NOME_DO_PAPEL[dados.papel]}</span>}
+          <EscolherFoto
+            variante="botao-compacto"
+            ocupado={enviando}
+            rotulo={foto ? 'Trocar foto' : 'Adicionar foto'}
+            aoEscolher={trocarFoto}
+          />
+        </div>
       </div>
-      {dados.papel && <span className={`${selo.base} ${selo.marca} sm:mb-1`}>{NOME_DO_PAPEL[dados.papel]}</span>}
-    </div>
-  </section>
-);
+      {mensagem && (
+        <div className="px-5 pb-5">
+          <Aviso mensagem={mensagem} className="" />
+        </div>
+      )}
+    </section>
+  );
+};
 
 // ============ 1. MEUS DADOS ============
 const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
@@ -260,8 +310,7 @@ const RedesCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
   const redes = REDES.filter((r) => r.chave !== 'emailContato' || dados.papel !== 'aluno');
-  // Só aluno (página da turma) e instrutor (equipe da página Sobre) aparecem no site
-  const saiNoSite = dados.papel === 'aluno' || dados.papel === 'professor';
+  const noSite = ondeApareceNoSite(dados.papel);
 
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -273,18 +322,16 @@ const RedesCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
     // Mostra como ficou gravado (endereço completo)
     const atualizado = await servicoPerfil.carregarMeusDados().catch(() => null);
     if (atualizado) setCampos(atualizado.redes);
-    setMensagem({ tipo: 'sucesso', texto: `Redes salvas.${saiNoSite ? ' O LinkedIn já aparece no site.' : ''}` });
+    setMensagem({ tipo: 'sucesso', texto: `Redes salvas.${noSite ? ` O LinkedIn aparece ${noSite}.` : ''}` });
   };
 
   return (
     <Cartao
       titulo="Redes e contato"
       descricao={
-        dados.papel === 'professor'
-          ? 'Seu LinkedIn aparece na equipe da página Sobre (sem ele aqui, vale o dos dados da bolsa). GitHub e Gmail ficam só no portal.'
-          : saiNoSite
-            ? 'Seu LinkedIn aparece na página da sua turma, no site. GitHub fica só no portal.'
-            : 'Seus contatos ficam só aqui no portal.'
+        noSite
+          ? `Seu LinkedIn aparece ${noSite}${dados.papel === 'professor' ? ' (sem ele aqui, vale o dos dados da bolsa)' : ''}. O resto fica só no portal.`
+          : 'Seus contatos ficam só aqui no portal.'
       }
       className="lg:col-span-2"
     >

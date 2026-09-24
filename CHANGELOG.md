@@ -27,6 +27,10 @@ Código no padrão das 10 regras de `docs/boas-praticas.md`.
 - Primeiro acesso por papel: todos definem a senha; o aluno também confirma nome completo, data de nascimento e Gmail, e o instrutor preenche os dados da bolsa. Parceiro vai direto para a Visão geral.
 - Redes no perfil (LinkedIn, GitHub e Gmail) com ícones; só o LinkedIn aparece no site (página da turma e equipe da página Sobre).
 - Capa do perfil verde no tema claro e azul no escuro.
+- Foto no "Meu perfil": qualquer pessoa adiciona ou troca a própria foto (no padrão do círculo verde). A do aluno substitui a da ficha e aparece na chamada e na página da turma; a da equipe aparece na página Sobre.
+- Vínculo (Mundiale, AOPA, Ânima ou outro) e cargo da equipe, preenchidos pelo gestor no convite do instrutor e na página Membros.
+- A página Sobre mostra a equipe da edição aberta com instrutores, coordenação, parceiros e a líder discente (esses três só com cargo), com cargo, vínculo e o nome curto.
+- Hall da Fama automático: ao encerrar a edição, a equipe dela entra no Hall da Fama como estava naquele dia. As edições 1 a 3 continuam do arquivo. Foto usada no Hall não sai do Storage.
 - Tela explicando o que falta quando uma página não abre (por exemplo, `.env.local` sem as chaves do Supabase), no lugar da tela branca.
 
 ### Corrigido

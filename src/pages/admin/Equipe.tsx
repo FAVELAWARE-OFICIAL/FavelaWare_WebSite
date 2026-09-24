@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Avatar from '../../components/admin/Avatar';
 import EscolherFoto from '../../components/admin/EscolherFoto';
+import CamposDeVinculo, { type VinculoECargo } from '../../components/admin/CamposDeVinculo';
 
 import { useCampos } from '../../hooks/useCampos';
 import { useDadosEmCache } from '../../hooks/useDadosEmCache';
@@ -73,6 +74,7 @@ const Equipe: React.FC = () => {
   const turmas = dados?.turmas ?? [];
   const professores = dados?.professores;
   const { campos, setCampos, aoAlterarCampo } = useCampos({ nome: '', email: '', turmas: [] as number[] });
+  const [vinculo, setVinculo] = useState<VinculoECargo>({ organizacao: '', cargo: '' });
   // Foto escolhida no cadastro: só sobe depois que o convite der certo (nada fica órfão)
   const [fotoNova, setFotoNova] = useState<File | null>(null);
   const previa = useMemo(() => (fotoNova ? URL.createObjectURL(fotoNova) : null), [fotoNova]);
@@ -150,20 +152,29 @@ const Equipe: React.FC = () => {
       setMensagem({ tipo: 'erro', texto: resultado.mensagem! });
       return;
     }
-    let avisoDaFoto = '';
+    // O convite já saiu: o que falhar daqui para a frente vira aviso, com o caminho para refazer
+    const avisos: string[] = [];
     if (fotoNova && contaId) {
       try {
         await servicoEquipe.trocarFoto(contaId, fotoNova, null);
       } catch (erro) {
-        avisoDaFoto = ` A foto não foi salva (${(erro as Error).message}): use "Trocar foto" na lista.`;
+        avisos.push(`A foto não foi salva (${(erro as Error).message}): use "Trocar foto" na lista.`);
       }
+    }
+    if (contaId && (vinculo.organizacao.trim() || vinculo.cargo.trim())) {
+      const falha = await servicoEquipe.salvarVinculoECargo(contaId, vinculo);
+      if (falha) avisos.push(`${falha} Preencha de novo na página Membros.`);
     }
     setEnviando(false);
     setMensagem({
-      tipo: avisoDaFoto ? 'erro' : 'sucesso',
-      texto: `Convite enviado para ${campos.email.trim()}. O instrutor define a senha pelo link do e-mail.${avisoDaFoto}`,
+      tipo: avisos.length ? 'erro' : 'sucesso',
+      texto: [
+        `Convite enviado para ${campos.email.trim()}. O instrutor define a senha pelo link do e-mail.`,
+        ...avisos,
+      ].join(' '),
     });
     setCampos({ nome: '', email: '', turmas: [] });
+    setVinculo({ organizacao: '', cargo: '' });
     setFotoNova(null);
     recarregar();
   };
@@ -264,6 +275,7 @@ const Equipe: React.FC = () => {
                 className={classeCampo}
               />
             </div>
+            <CamposDeVinculo id="convite" valor={vinculo} aoMudar={setVinculo} desabilitado={enviando} />
             <fieldset>
               <legend className="mb-2 text-xs font-medium text-gray-600">Turmas</legend>
               <SeletorDeTurmas
