@@ -159,8 +159,9 @@ const Membros: React.FC = () => {
               desabilitado={salvando}
             />
             <p className={texto.apoio}>
-              Saem no cartão da pessoa na página Sobre e, quando a edição encerra, no Hall da Fama. Coordenação e
-              parceiros só aparecem no site com cargo.
+              {editando.membro.papel === 'banca'
+                ? 'Quem é da banca não aparece no site: o vínculo e o cargo ficam só aqui.'
+                : 'Saem no cartão da pessoa na página Sobre e, quando a edição encerra, no Hall da Fama. Coordenação e parceiros só aparecem no site com cargo.'}
             </p>
             <Botao type="submit" variante="primario" disabled={salvando}>
               {salvando ? 'Salvando…' : 'Salvar'}

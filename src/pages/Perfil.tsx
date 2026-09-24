@@ -27,15 +27,19 @@ import { servicoSenha, type EtapaSenha } from '../lib/senha';
 import { StatusProcessamento } from '../types';
 import { hoje as hojeLocal } from '../utils/datas';
 import { emailValido } from '../utils/texto';
-import { NOME_DO_PAPEL, type Papel } from '../lib/sessao';
+import { NOME_DO_PAPEL } from '../lib/sessao';
 import EscolherFoto from '../components/admin/EscolherFoto';
 
-/** Onde a pessoa aparece no site (foto e LinkedIn), pelo papel; null = só no portal */
-const ondeApareceNoSite = (papel: Papel | null): string | null => {
-  if (papel === 'aluno') return 'na página da sua turma';
-  if (papel === 'professor') return 'na equipe da página Sobre';
-  if (papel === 'gestor' || papel === 'parceiro')
+/**
+ * Onde a pessoa aparece no site (foto e LinkedIn); null = só no portal. Resumo da
+ * regra do banco (private.equipe_da_edicao e as turmas do site), só para o texto.
+ */
+const ondeApareceNoSite = (dados: Pick<MeusDados, 'papel' | 'todasAsPersonas'>): string | null => {
+  if (dados.todasAsPersonas || dados.papel === 'gestor' || dados.papel === 'parceiro') {
     return 'na equipe da página Sobre, quando a coordenação preenche seu cargo';
+  }
+  if (dados.papel === 'aluno') return 'na página da sua turma';
+  if (dados.papel === 'professor') return 'na equipe da página Sobre, enquanto você tiver turma na edição aberta';
   return null;
 };
 
@@ -95,7 +99,7 @@ const Identidade: React.FC<{ dados: MeusDados }> = ({ dados }) => {
   const [foto, setFoto] = useState(dados.foto);
   const [enviando, setEnviando] = useState(false);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
-  const noSite = ondeApareceNoSite(dados.papel);
+  const noSite = ondeApareceNoSite(dados);
 
   const trocarFoto = async (arquivo: File) => {
     setEnviando(true);
@@ -310,7 +314,7 @@ const RedesCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
   const redes = REDES.filter((r) => r.chave !== 'emailContato' || dados.papel !== 'aluno');
-  const noSite = ondeApareceNoSite(dados.papel);
+  const noSite = ondeApareceNoSite(dados);
 
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();

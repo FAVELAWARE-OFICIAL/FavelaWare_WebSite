@@ -28,6 +28,8 @@ export interface MeusDados {
   acesso: string;
   /** Foto do perfil (aluno: a da ficha da turma); sem foto, o avatar padrão */
   foto: string | null;
+  /** Líder discente (todas as personas): a foto dela é sempre a do perfil */
+  todasAsPersonas: boolean;
   /** Redes e contato (qualquer papel). No site aparece só o LinkedIn */
   redes: RedesDoPerfil;
   /** Só aluno ligado a uma turma */
@@ -49,6 +51,7 @@ export class ServicoPerfil {
       nome: perfil.nome ?? '',
       acesso: servicoSessao.identificadorDoEmail(conta.email ?? ''),
       foto: perfil.foto,
+      todasAsPersonas: perfil.podeAlternarPapel,
       redes: { linkedin: '', github: '', emailContato: '' },
       aluno: null,
     };
@@ -73,7 +76,8 @@ export class ServicoPerfil {
         .single();
       if (error) throw error;
       dados.nome = data.nome;
-      dados.foto = dados.foto ?? data.foto;
+      // A mesma foto que a troca grava (atualizar_minha_foto): a da ficha, fora a líder vendo como aluno
+      if (!perfil.podeAlternarPapel) dados.foto = data.foto ?? dados.foto;
       dados.aluno = { dataNascimento: data.data_nascimento ?? '', email: data.email ?? '' };
     }
     return dados;

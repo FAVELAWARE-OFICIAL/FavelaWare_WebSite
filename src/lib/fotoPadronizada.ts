@@ -200,10 +200,12 @@ export class ServicoFotoPadronizada {
   /** Apaga do Storage uma foto que não é mais usada (só as do nosso bucket; as do site, em /imgs, ficam) */
   async apagar(url: string | null): Promise<void> {
     if (!PREFIXO_FOTOS_PUBLICAS || !url?.startsWith(PREFIXO_FOTOS_PUBLICAS)) return;
-    const { error } = await supabase.storage
+    const { data, error } = await supabase.storage
       .from(BUCKET_FOTOS_ALUNOS)
       .remove([url.slice(PREFIXO_FOTOS_PUBLICAS.length)]);
     if (error) console.error('[foto] ficou no Storage', error.message);
+    // Sem erro e sem arquivo apagado: a permissão não deixou (ex.: foto do hall)
+    else if (data && !data.length) console.info('[foto] ficou no Storage (sem permissão para apagar)');
   }
 
   /**

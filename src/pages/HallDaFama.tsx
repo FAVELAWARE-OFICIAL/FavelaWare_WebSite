@@ -98,9 +98,9 @@ const HallDaFama: React.FC = () => {
                   className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8"
                 >
                   {/* LinkedIn só aparece para quem tem o perfil cadastrado (arquivo ou "Meu perfil") */}
-                  {edicao.membros.map((pessoa) => (
+                  {edicao.membros.map((pessoa, indice) => (
                     <CartaoDePessoa
-                      key={`${edicao.id}-${pessoa.nome}`}
+                      key={`${edicao.id}-${indice}`}
                       nome={pessoa.nome}
                       foto={pessoa.foto}
                       cargo={pessoa.cargo}

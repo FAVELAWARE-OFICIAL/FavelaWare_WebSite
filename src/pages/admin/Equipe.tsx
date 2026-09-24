@@ -161,9 +161,13 @@ const Equipe: React.FC = () => {
         avisos.push(`A foto não foi salva (${(erro as Error).message}): use "Trocar foto" na lista.`);
       }
     }
-    if (contaId && (vinculo.organizacao.trim() || vinculo.cargo.trim())) {
+    const temVinculo = Boolean(vinculo.organizacao.trim() || vinculo.cargo.trim());
+    if (contaId && temVinculo) {
       const falha = await servicoEquipe.salvarVinculoECargo(contaId, vinculo);
       if (falha) avisos.push(`${falha} Preencha de novo na página Membros.`);
+    }
+    if (!contaId && (fotoNova || temVinculo)) {
+      avisos.push('A foto, o vínculo e o cargo não foram salvos: preencha pela lista e pela página Membros.');
     }
     setEnviando(false);
     setMensagem({

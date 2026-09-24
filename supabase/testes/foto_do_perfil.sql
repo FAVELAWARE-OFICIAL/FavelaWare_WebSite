@@ -1,4 +1,4 @@
--- Teste da foto trocada pela própria pessoa em "Meu perfil" (migration 20261001116000).
+-- Teste da foto trocada pela própria pessoa em "Meu perfil" (migrations 20261001116000 a 120000).
 -- Roda numa transação e termina com um erro proposital que carrega o relatório:
 -- o erro desfaz tudo, então nada fica gravado.
 --
@@ -10,6 +10,10 @@ declare
   v_prof uuid := gen_random_uuid();
   v_aluno uuid := gen_random_uuid();
   v_lider uuid := gen_random_uuid();
+  v_gestor uuid := gen_random_uuid();
+  v_foto_equipe text := 'equipe/66666666-6666-4666-8666-666666666666.webp';
+  v_foto_solta text := 'perfis/77777777-7777-4777-8777-777777777777.webp';
+  i int;
   v_turma bigint;
   v_edicao bigint;
   v_part bigint;
@@ -26,19 +30,23 @@ begin
   insert into auth.users (id, email, aud, role) values
     (v_prof, 'foto-prof@exemplo.invalid', 'authenticated', 'authenticated'),
     (v_aluno, 'foto-aluno@exemplo.invalid', 'authenticated', 'authenticated'),
-    (v_lider, 'foto-lider@exemplo.invalid', 'authenticated', 'authenticated');
+    (v_lider, 'foto-lider@exemplo.invalid', 'authenticated', 'authenticated'),
+    (v_gestor, 'foto-gestor@exemplo.invalid', 'authenticated', 'authenticated');
   select id, edicao_id into v_turma, v_edicao from public.turmas limit 1;
   insert into public.participantes (edicao_id, turma_id, funcao, nome, foto)
   values (v_edicao, v_turma, 'aluno', 'Aluno Foto Teste', 'https://antiga.invalid/a.webp') returning id into v_part;
   insert into public.participantes (edicao_id, turma_id, funcao, nome)
   values (v_edicao, v_turma, 'aluno', 'Aluno Demo Foto') returning id into v_part_lider;
-  update public.perfis set papel = 'professor' where id = v_prof;
+  -- A foto antiga do instrutor foi enviada pelo gestor (outra dona, pasta equipe)
+  update public.perfis set papel = 'professor', foto = v_base || v_foto_equipe where id = v_prof;
+  update public.perfis set papel = 'gestor' where id = v_gestor;
   update public.perfis set papel = 'aluno', participante_id = v_part where id = v_aluno;
   update public.perfis set papel = 'aluno', participante_id = v_part_lider, pode_alternar_papel = true where id = v_lider;
   insert into storage.objects (bucket_id, name, owner_id) values
     ('fotos-alunos', v_foto_prof, v_prof::text),
     ('fotos-alunos', v_foto_aluno, v_aluno::text),
-    ('fotos-alunos', v_foto_lider, v_lider::text);
+    ('fotos-alunos', v_foto_lider, v_lider::text),
+    ('fotos-alunos', v_foto_equipe, v_gestor::text);
 
   -- ===== Instrutor =====
   perform set_config('request.jwt.claims',
@@ -105,6 +113,99 @@ begin
   select count(*) into v_n from public.perfis where id = v_lider and foto = v_base || v_foto_lider;
   select count(*) + v_n * 10 into v_n from public.participantes where id = v_part_lider and foto is null;
   r := r || E'\n' || case when v_n = 11 then 'ok' else 'FALHOU' end || ' - líder vendo como aluno não mexe na ficha de demonstração';
+
+  -- ===== Storage: formato, dono e hall =====
+  -- A API do Storage liga esta marca para apagar; sem ela o próprio Storage recusa
+  perform set_config('storage.allow_delete_query', 'true', true);
+  insert into public.hall_da_fama (edicao_id, nome, foto) values (v_edicao, 'Hall Teste', v_base || v_foto_lider);
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_prof, 'role', 'authenticated', 'iss', 'https://teste.supabase.co/auth/v1')::text, true);
+  set local role authenticated;
+  begin
+    insert into storage.objects (bucket_id, name, owner_id) values ('fotos-alunos', 'perfis/qualquer.png', v_prof::text);
+    r := r || E'
+FALHOU - enviou arquivo fora do formato perfis/<uuid>.webp';
+  exception when insufficient_privilege then r := r || E'
+ok - só envia no formato perfis/<uuid>.webp';
+  end;
+  select count(*) into v_n from storage.objects where bucket_id = 'fotos-alunos' and name = v_foto_aluno;
+  r := r || E'
+' || case when v_n = 0 then 'ok' else 'FALHOU' end || ' - não vê a foto enviada por outra pessoa';
+  begin
+    delete from storage.objects where bucket_id = 'fotos-alunos' and name = v_foto_aluno;
+    get diagnostics v_n = row_count;
+    r := r || E'
+' || case when v_n = 0 then 'ok' else 'FALHOU' end || ' - não apaga a foto de outra pessoa';
+  exception when others then r := r || E'
+ok - não apaga a foto de outra pessoa (' || sqlstate || ')';
+  end;
+  delete from storage.objects where bucket_id = 'fotos-alunos' and name = v_foto_equipe;
+  get diagnostics v_n = row_count;
+  r := r || E'
+' || case when v_n = 1 then 'ok' else 'FALHOU' end || ' - a foto antiga (enviada pelo gestor) sai do Storage depois da troca';
+  reset role;
+
+  -- Anotação de foto trocada: só vale para a própria pessoa e só sem uso
+  insert into storage.objects (bucket_id, name, owner_id) values ('fotos-alunos', v_foto_solta, v_gestor::text);
+  insert into private.fotos_trocadas (perfil_id, nome) values (v_prof, v_foto_aluno), (v_prof, v_foto_solta);
+  perform set_config('request.jwt.claims', json_build_object('sub', v_prof, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  delete from storage.objects where bucket_id = 'fotos-alunos' and name = v_foto_aluno;
+  get diagnostics v_n = row_count;
+  r := r || E'
+' || case when v_n = 0 then 'ok' else 'FALHOU' end || ' - foto trocada que ainda está em uso (ficha de alguém) não sai';
+  reset role;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_aluno, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  delete from storage.objects where bucket_id = 'fotos-alunos' and name = v_foto_solta;
+  get diagnostics v_n = row_count;
+  r := r || E'
+' || case when v_n = 0 then 'ok' else 'FALHOU' end || ' - ninguém apaga a foto que outra pessoa trocou';
+  reset role;
+
+  -- Cota: com 20 fotos, a 21ª não entra
+  for i in 1..19 loop
+    insert into storage.objects (bucket_id, name, owner_id)
+    values ('fotos-alunos', 'perfis/' || gen_random_uuid() || '.webp', v_prof::text);
+  end loop;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_prof, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  begin
+    insert into storage.objects (bucket_id, name, owner_id)
+    values ('fotos-alunos', 'perfis/88888888-8888-4888-8888-888888888888.webp', v_prof::text);
+    r := r || E'
+FALHOU - passou da cota de 20 fotos';
+  exception when insufficient_privilege then r := r || E'
+ok - no máximo 20 fotos por conta';
+  end;
+  reset role;
+
+  perform set_config('request.jwt.claims', json_build_object('sub', v_gestor, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  delete from storage.objects where bucket_id = 'fotos-alunos' and name = v_foto_lider;
+  get diagnostics v_n = row_count;
+  r := r || E'
+' || case when v_n = 0 then 'ok' else 'FALHOU' end || ' - nem o gestor apaga a foto que está no hall';
+  update storage.objects set name = name where bucket_id = 'fotos-alunos' and name = v_foto_lider;
+  get diagnostics v_n = row_count;
+  r := r || E'
+' || case when v_n = 0 then 'ok' else 'FALHOU' end || ' - nem o gestor substitui a foto que está no hall';
+  reset role;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_lider, 'role', 'authenticated', 'iss', 'https://teste.supabase.co/auth/v1')::text, true);
+  set local role authenticated;
+  begin
+    delete from storage.objects where bucket_id = 'fotos-alunos' and name = v_foto_lider;
+    get diagnostics v_n = row_count;
+    r := r || E'
+' || case when v_n = 0 then 'ok' else 'FALHOU' end || ' - nem o dono apaga a foto que está no hall';
+  exception when others then r := r || E'
+ok - nem o dono apaga a foto que está no hall (' || sqlstate || ')';
+  end;
+  reset role;
+  select count(*) into v_n from storage.objects where bucket_id = 'fotos-alunos' and name = v_foto_lider;
+  r := r || E'
+' || case when v_n = 1 then 'ok' else 'FALHOU' end || ' - a foto do hall continua no Storage';
 
   -- ===== Visitante =====
   perform set_config('request.jwt.claims', '{"role":"anon"}', true);
