@@ -29,6 +29,8 @@ export interface Aluno {
   participanteId?: number;
   nome: string;
   foto?: string; // sem foto, a página mostra o avatar padrão
+  /** Vem do "Meu perfil" do aluno (lib/sitePublico.ts), não deste arquivo */
+  linkedin?: string;
 }
 
 export interface TurmaDoSite {

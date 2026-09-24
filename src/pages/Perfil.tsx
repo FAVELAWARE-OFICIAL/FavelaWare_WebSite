@@ -14,12 +14,13 @@ import { Link } from 'react-router-dom';
 
 import Carregamento, { aguardarCicloCompleto, useCarregamentoCompleto } from '../components/admin/Carregamento';
 import { Carregando } from '../components/admin/Moldura';
-import { Aviso, Botao, Cartao, classeCampo, classeRotulo, type Mensagem } from '../components/admin/Ui';
-import { espaco, foco, selo, superficie, texto } from '../components/admin/designSystem';
+import { Aviso, Botao, Cartao, classeCampo, classeRotulo, type Mensagem, classeDoBotao } from '../components/admin/Ui';
+import { espaco, selo, superficie, texto } from '../components/admin/designSystem';
 import Avatar from '../components/admin/Avatar';
 import { CAPA_AZUL, CAPA_VERDE } from '../data/imagens';
 import { useCampos } from '../hooks/useCampos';
-import { servicoPerfil, type MeusDados } from '../lib/perfil';
+import { servicoPerfil, type MeusDados, type RedesDoPerfil } from '../lib/perfil';
+import { IconeGithub, IconeGmail, IconeLinkedin } from '../components/RedesSociais';
 import CamposDeNovaSenha from '../components/CamposDeNovaSenha';
 import { servicoSenha, type EtapaSenha } from '../lib/senha';
 import { StatusProcessamento } from '../types';
@@ -56,16 +57,14 @@ const Perfil: React.FC = () => {
       <div className={`grid grid-cols-1 ${espaco.grade} lg:grid-cols-2`}>
         <MeusDadosCartao dados={dados} />
         <TrocarSenhaCartao />
+        <RedesCartao dados={dados} />
         {dados.papel === 'professor' && (
           <Cartao
             titulo="Dados para o RPA"
             descricao="CPF, identidade, INSS/PIS, endereço e os outros dados do recibo de pagamento."
             className="lg:col-span-2"
           >
-            <Link
-              to="/dados-do-instrutor"
-              className={`inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 ${foco} focus-visible:ring-offset-2`}
-            >
+            <Link to="/dados-do-instrutor" className={classeDoBotao()}>
               Ver e atualizar meus dados
             </Link>
           </Cartao>
@@ -83,9 +82,9 @@ const Perfil: React.FC = () => {
  */
 const Identidade: React.FC<{ dados: MeusDados }> = ({ dados }) => (
   <section aria-label="Quem está logado" className={`${superficie.cartao} ${espaco.entreBlocos} overflow-hidden`}>
-    {/* Proporção da arte (4:1): a capa aparece inteira em qualquer largura */}
-    <img src={CAPA_VERDE} alt="" className="so-tema-claro aspect-[4/1] w-full bg-favela-green-500 object-cover" />
-    <img src={CAPA_AZUL} alt="" className="so-tema-escuro aspect-[4/1] w-full bg-[#1f1d5c] object-cover" />
+    {/* Faixa baixa com a arte inteira (sem cortar): as laterais ficam na cor de fundo da própria capa */}
+    <img src={CAPA_VERDE} alt="" className="so-tema-claro h-24 w-full bg-[#91d429] object-contain sm:h-32" />
+    <img src={CAPA_AZUL} alt="" className="so-tema-escuro h-24 w-full bg-[#21225f] object-contain sm:h-32" />
     <div className="flex flex-col items-center gap-3 px-5 pb-5 text-center sm:flex-row sm:items-end sm:gap-5 sm:text-left">
       {/* A foto sobe sobre a faixa; o anel tem a cor do cartão (clara ou escura) */}
       <span className="-mt-10 shrink-0 rounded-full bg-white p-1 shadow-md sm:-mt-12">
@@ -224,6 +223,108 @@ const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
             </Botao>
           </div>
         )}
+      </form>
+    </Cartao>
+  );
+};
+
+// ============ 3. REDES E CONTATO ============
+/**
+ * LinkedIn, GitHub e Gmail (e-mail de contato), cada um com o ícone da marca.
+ * Colou o endereço inteiro ou só o usuário: o serviço completa e confere.
+ * No site (páginas Sobre e da turma) aparece SÓ o LinkedIn. O aluno já tem o
+ * e-mail de contato em "Meus dados", então aqui ficam só LinkedIn e GitHub.
+ */
+const REDES = [
+  {
+    chave: 'linkedin',
+    rotulo: 'LinkedIn',
+    Icone: IconeLinkedin,
+    cor: 'bg-[#0a66c2]',
+    tipo: 'text',
+    exemplo: 'linkedin.com/in/seu-nome',
+  },
+  { chave: 'github', rotulo: 'GitHub', Icone: IconeGithub, cor: 'bg-gray-900', tipo: 'text', exemplo: 'seu-usuario' },
+  {
+    chave: 'emailContato',
+    rotulo: 'Gmail',
+    Icone: IconeGmail,
+    cor: 'bg-[#ea4335]',
+    tipo: 'email',
+    exemplo: 'seu-nome@gmail.com',
+  },
+] as const;
+
+const RedesCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
+  const { campos, setCampos, aoAlterarCampo } = useCampos<RedesDoPerfil>(dados.redes);
+  const [salvando, setSalvando] = useState(false);
+  const [mensagem, setMensagem] = useState<Mensagem>(null);
+  const redes = REDES.filter((r) => r.chave !== 'emailContato' || dados.papel !== 'aluno');
+  // Só aluno (página da turma) e instrutor (equipe da página Sobre) aparecem no site
+  const saiNoSite = dados.papel === 'aluno' || dados.papel === 'professor';
+
+  const salvar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMensagem(null);
+    setSalvando(true);
+    const problema = await servicoPerfil.salvarRedes(campos);
+    setSalvando(false);
+    if (problema) return setMensagem({ tipo: 'erro', texto: problema });
+    // Mostra como ficou gravado (endereço completo)
+    const atualizado = await servicoPerfil.carregarMeusDados().catch(() => null);
+    if (atualizado) setCampos(atualizado.redes);
+    setMensagem({ tipo: 'sucesso', texto: `Redes salvas.${saiNoSite ? ' O LinkedIn já aparece no site.' : ''}` });
+  };
+
+  return (
+    <Cartao
+      titulo="Redes e contato"
+      descricao={
+        dados.papel === 'professor'
+          ? 'Seu LinkedIn aparece na equipe da página Sobre (sem ele aqui, vale o dos dados da bolsa). GitHub e Gmail ficam só no portal.'
+          : saiNoSite
+            ? 'Seu LinkedIn aparece na página da sua turma, no site. GitHub fica só no portal.'
+            : 'Seus contatos ficam só aqui no portal.'
+      }
+      className="lg:col-span-2"
+    >
+      <form onSubmit={salvar} className={espaco.formulario}>
+        <div className={`grid grid-cols-1 ${espaco.compacto} md:grid-cols-3`}>
+          {redes.map((r) => (
+            <div key={r.chave}>
+              <label htmlFor={`rede-${r.chave}`} className={classeRotulo}>
+                {r.rotulo}
+              </label>
+              <div className="flex items-stretch">
+                <span
+                  className={`flex w-10 shrink-0 items-center justify-center rounded-l-lg text-white ${r.cor}`}
+                  aria-hidden="true"
+                >
+                  <r.Icone className="h-5 w-5" />
+                </span>
+                <input
+                  id={`rede-${r.chave}`}
+                  name={r.chave}
+                  type={r.tipo}
+                  inputMode={r.tipo === 'email' ? 'email' : 'url'}
+                  autoComplete={r.tipo === 'email' ? 'email' : 'off'}
+                  maxLength={200}
+                  value={campos[r.chave]}
+                  onChange={aoAlterarCampo}
+                  disabled={salvando}
+                  className={`${classeCampo} rounded-l-none`}
+                  placeholder={r.exemplo}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <Aviso mensagem={mensagem} className="" />
+        <div>
+          <Botao type="submit" variante="primario" disabled={salvando}>
+            {salvando ? 'Salvando…' : 'Salvar redes'}
+          </Botao>
+        </div>
       </form>
     </Cartao>
   );

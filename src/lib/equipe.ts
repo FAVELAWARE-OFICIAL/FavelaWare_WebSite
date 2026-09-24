@@ -12,6 +12,7 @@
 import { sucesso, type ResultadoOperacao } from '../types';
 import { resultadoDaFuncao } from './banco';
 import { servicoFotoPadronizada } from './fotoPadronizada';
+import type { Papel } from './sessao';
 import { supabase } from './supabase';
 import { servicoTurmas, type TurmaComEdicao } from './turmas';
 
@@ -23,6 +24,20 @@ export interface ProfessorAtual {
   /** Foto no padrão do site (círculo verde); sem foto, o avatar padrão */
   foto: string | null;
 }
+
+/** Pessoa da equipe (qualquer conta que não é de aluno), na tela Equipe */
+export interface MembroDaEquipe {
+  id: string;
+  nome: string | null;
+  email: string | null;
+  foto: string | null;
+  papel: Papel;
+  /** A dona do portal: tem todas as personas ("Ver como"); a função dela só ela muda */
+  todasAsPersonas: boolean;
+}
+
+/** Funções que o gestor pode dar na tela Equipe (aluno tem acesso pela turma) */
+export const FUNCOES_DA_EQUIPE: Papel[] = ['gestor', 'professor', 'parceiro', 'banca'];
 
 export interface Professor extends ProfessorAtual {
   turmas: number[];
@@ -48,6 +63,34 @@ export class ServicoEquipe {
     return data;
   }
 
+  /** Gestor: todas as contas da equipe (sem alunos), por nome */
+  async listarMembros(): Promise<MembroDaEquipe[]> {
+    const { data, error } = await supabase
+      .from('perfis')
+      .select('id, nome, email, foto, papel, pode_alternar_papel')
+      .or('papel.neq.aluno,pode_alternar_papel.eq.true')
+      .order('nome');
+    if (error) throw error;
+    return data.map((p) => ({
+      id: p.id,
+      nome: p.nome,
+      email: p.email,
+      foto: p.foto,
+      papel: p.papel as Papel,
+      todasAsPersonas: p.pode_alternar_papel,
+    }));
+  }
+
+  /** Gestor: troca a função da pessoa (o banco não deixa mexer na dona nem dar todas as personas) */
+  async trocarFuncao(id: string, papel: Papel): Promise<string | null> {
+    const { data, error } = await supabase.from('perfis').update({ papel }).eq('id', id).select('id');
+    // Sem erro e sem linha: a RLS recusou (quem troca não é gestor)
+    if (!error && data.length) return null;
+    if (!error) return 'Só a coordenação troca a função das pessoas.';
+    console.error('[equipe] falha ao trocar a função', error.code);
+    return error.code === '42501' && error.message ? error.message : 'Não foi possível trocar a função.';
+  }
+
   private async carregarProfessores(): Promise<Professor[]> {
     const [perfis, vinculos] = await Promise.all([
       this.listarProfessores(),
@@ -60,16 +103,32 @@ export class ServicoEquipe {
     }));
   }
 
-  /** Cadastra o professor e manda o convite por e-mail. Devolve o id da conta criada. */
+  /**
+   * Convida por e-mail (a pessoa cria a senha pelo link). Devolve a conta.
+   * - "professor": cadastra o instrutor e vincula às turmas;
+   * - "banca": membro da banca avaliadora; se o e-mail já tem conta, só devolve
+   *   a conta existente (convidado = false), sem mudar o papel dela.
+   */
   async convidar(
     nome: string,
     email: string,
     turmas: number[],
-  ): Promise<{ resultado: ResultadoOperacao; professorId?: string }> {
+    papel: 'professor' | 'banca' = 'professor',
+  ): Promise<{ resultado: ResultadoOperacao; contaId?: string; convidado?: boolean }> {
     const { data, error } = await supabase.functions.invoke('convidar-professor', {
-      body: { nome, email, turmas, redirecionar_para: `${window.location.origin}/definir-senha` },
+      // A banca entra direto na avaliação pelo link do convite (sem criar senha)
+      body: {
+        nome,
+        email,
+        turmas,
+        papel,
+        redirecionar_para: `${window.location.origin}${papel === 'banca' ? '/banca' : '/definir-senha'}`,
+      },
     });
-    if (!error) return { resultado: sucesso(), professorId: (data as { id?: string } | null)?.id };
+    if (!error) {
+      const conta = data as { id?: string; convidado?: boolean } | null;
+      return { resultado: sucesso(), contaId: conta?.id, convidado: conta?.convidado ?? true };
+    }
     // A função devolve { erro: "mensagem em português" } nos erros esperados
     return {
       resultado: await resultadoDaFuncao(error, 'Não foi possível cadastrar agora. Tente de novo em instantes.'),

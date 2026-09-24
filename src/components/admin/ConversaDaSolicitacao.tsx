@@ -42,6 +42,7 @@ const PAPEL_NA_CONVERSA: Record<Papel, string> = {
   gestor: 'Coordenação',
   professor: 'Instrutor',
   parceiro: 'Parceiro',
+  banca: 'Banca avaliadora',
 };
 
 const INTERVALO_DE_ATUALIZACAO_MS = 30_000;

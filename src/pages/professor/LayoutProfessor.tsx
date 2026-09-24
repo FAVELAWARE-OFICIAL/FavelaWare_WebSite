@@ -17,7 +17,9 @@ import RotaProtegida from '../../components/RotaProtegida';
 import Moldura, { TransicaoDaArea } from '../../components/admin/Moldura';
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
 import type { ItemMenu } from '../../components/admin/MenuLateral';
-import { IconeChamada, IconeMaterial, IconePonto } from '../../components/admin/Icones';
+import { IconeAvaliacao, IconeChamada, IconeMaterial, IconePonto } from '../../components/admin/Icones';
+import { CHAVE_AVALIACOES_PENDENTES, EVENTO_AVALIACAO_SALVA, servicoAvaliacoes } from '../../lib/avaliacoes';
+import { ITEM_BANCA } from '../../components/admin/itensDeMenu';
 import { servicoCache } from '../../lib/cache';
 import { CHAVE_MATERIAL, servicoMaterial } from '../../lib/material';
 import { CHAVE_MEUS_PONTOS, servicoPonto } from '../../lib/ponto';
@@ -34,11 +36,37 @@ const ITENS_MENU_PROFESSOR: ItemMenu[] = [
   { caminho: '/professor/ponto', rotulo: 'Meu ponto', Icone: IconePonto },
   ...ITENS_COMUNS,
 ];
+// "Avaliação" só aparece quando a coordenação liberou e ainda falta avaliar
+const ITEM_AVALIACAO: ItemMenu = { caminho: '/professor/avaliacao', rotulo: 'Avaliação', Icone: IconeAvaliacao };
 
 const AreaDoProfessor: React.FC = () => {
   const pagina = useOutlet();
   const [pronta, setPronta] = useState(false);
   const [souProfessor, setSouProfessor] = useState(false);
+  const [temAvaliacao, setTemAvaliacao] = useState(false);
+  const [souDaBanca, setSouDaBanca] = useState(false);
+
+  // Instrutor posto na banca avaliadora: item para a avaliação da banca
+  useEffect(() => {
+    servicoAvaliacoes
+      .souDaBanca()
+      .then(setSouDaBanca)
+      .catch((e) => {
+        console.error('[menu] não conferiu a banca', e?.code ?? e?.message);
+        setSouDaBanca(false);
+      });
+  }, []);
+
+  // Salvou a avaliação da turma: o item "Avaliação" some quando não falta nada
+  useEffect(() => {
+    const aoSalvar = () =>
+      servicoAvaliacoes
+        .pendentesDoInstrutor()
+        .then((p) => setTemAvaliacao(p.length > 0))
+        .catch((e) => console.error('[menu] avaliações pendentes', e?.code ?? e?.message));
+    window.addEventListener(EVENTO_AVALIACAO_SALVA, aoSalvar);
+    return () => window.removeEventListener(EVENTO_AVALIACAO_SALVA, aoSalvar);
+  }, []);
   const mostrarCarregando = useCarregamentoCompleto(!pronta, 0);
 
   useEffect(() => {
@@ -46,19 +74,30 @@ const AreaDoProfessor: React.FC = () => {
     Promise.all([
       import('./FazerChamada'),
       import('./MeuPonto'),
+      import('./AvaliarTurma'),
       import('../equipe/TrilhasEquipe'),
       import('../Perfil'),
       servicoCache.buscar(CHAVE_MATERIAL, () => servicoMaterial.carregarTrilhas()),
       servicoCache
         .buscar(CHAVE_MEUS_PONTOS, () => servicoPonto.carregarMeus(), true)
         .then((m) => setSouProfessor(m.souProfessor)),
+      servicoCache
+        .buscar(CHAVE_AVALIACOES_PENDENTES, () => servicoAvaliacoes.pendentesDoInstrutor(), true)
+        .then((p) => setTemAvaliacao(p.length > 0)),
     ])
       .catch(() => undefined) // a página mostra o erro, se houver
       .finally(() => setPronta(true));
   }, []);
 
   return (
-    <Moldura itens={souProfessor ? ITENS_MENU_PROFESSOR : ITENS_MENU} subtitulo="Área do instrutor">
+    <Moldura
+      itens={[
+        ...(souProfessor ? ITENS_MENU_PROFESSOR : ITENS_MENU),
+        ...(temAvaliacao ? [ITEM_AVALIACAO] : []),
+        ...(souDaBanca ? [ITEM_BANCA] : []),
+      ]}
+      subtitulo="Área do instrutor"
+    >
       <TransicaoDaArea carregando={mostrarCarregando || !pronta} pronta texto="Abrindo a chamada" pagina={pagina} />
     </Moldura>
   );

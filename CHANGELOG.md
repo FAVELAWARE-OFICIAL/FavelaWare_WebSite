@@ -20,6 +20,13 @@ Código no padrão das 10 regras de `docs/boas-praticas.md`.
 - Site público mostra a edição nova direto do banco: turmas e alunos cadastrados em Turmas, e os instrutores da edição aberta em "Equipe" na página Sobre.
 - Perfil refeito: cartão com foto, nome, papel e acesso, e as áreas "Meus dados" e "Segurança" usando a tela toda, no tema claro e no escuro. O medidor de senha ficou com as cores do design system.
 - `public/.htaccess` para hospedar em Apache/LiteSpeed (Hostinger): endereços da SPA, cache dos arquivos e cabeçalhos básicos de segurança.
+- Avaliação final da edição: o instrutor dá nota de 0 a 5 em Participação em sala, Entrega das atividades e Comportamento (com soma e observação) para cada aluno, no período que o gestor define (de uma data até outra). O item do menu só aparece com o prazo aberto; depois de salvar não dá para editar e a avaliação some da tela do instrutor.
+- Banca avaliadora: o gestor cadastra o membro (nome, e-mail e organização) e marca o dia da banca. Membro externo recebe convite e entra direto na tela de avaliação, a única que ele vê, sem criar senha (volta pelo link de acesso no e-mail); quem já tem conta no portal só é vinculado. Notas de 0 a 5 em Inovação/Funcionalidade, Qualidade da apresentação e Aplicabilidade, só no dia marcado, e um membro não vê a nota do outro. O resultado (instrutor + banca) sai do maior para o menor.
+- Login por link no e-mail, sem senha, para conta que já existe.
+- Página Membros: lista toda a equipe, e o gestor troca a função das pessoas. O papel com todas as personas ("Líder discente") é um só, e só ele muda o próprio papel; o banco garante as duas regras.
+- Primeiro acesso por papel: todos definem a senha; o aluno também confirma nome completo, data de nascimento e Gmail, e o instrutor preenche os dados da bolsa. Parceiro vai direto para a Visão geral.
+- Redes no perfil (LinkedIn, GitHub e Gmail) com ícones; só o LinkedIn aparece no site (página da turma e equipe da página Sobre).
+- Capa do perfil verde no tema claro e azul no escuro.
 - Tela explicando o que falta quando uma página não abre (por exemplo, `.env.local` sem as chaves do Supabase), no lugar da tela branca.
 
 ### Corrigido
@@ -45,6 +52,7 @@ Código no padrão das 10 regras de `docs/boas-praticas.md`.
 - O site público recebe do banco só o nome curto dos alunos ("Maria Lima"), sem o id; antes o nome completo saía para qualquer visitante.
 - Avatar sem nome mostra "?" em vez de um círculo vazio.
 - Se o papel da conta não puder ser conferido, a área do gestor abre só com o mínimo (menu de parceiro) em vez do menu completo; o banco protege os dados de qualquer jeito.
+- Convite da banca nunca muda o papel de uma conta que já existe (antes, um membro da banca podia virar instrutor).
 - Edge Functions respondem 400 ("Pedido inválido") para corpo JSON que não é objeto, em vez de 500.
 
 ### Alterado
@@ -55,6 +63,8 @@ Código no padrão das 10 regras de `docs/boas-praticas.md`.
 - `src/utils/` (datas, texto, preferências), `src/hooks/`, `src/config.ts` e `src/data/` (galeria, parceiros, sobre) no lugar das cópias espalhadas.
 - Nomes de domínio em português (Parceiros, GaleriaInicial, campos dos formulários).
 - Edge Functions com CORS configurável (`ORIGEM_PERMITIDA`), tempo limite do Drive configurável e validado (`DRIVE_TEMPO_LIMITE_MS`) e código comum em `_shared`.
+- "Todas as personas" passou a se chamar "Líder discente".
+- Dados de teste da edição de demonstração (chamada, entregas, avaliações e banca) apagados; a edição, a turma, o aluno e as atividades continuam.
 - Parceiros com uma lista só (`src/data/parceiros.ts`): na página inicial, "Ecossistema Ânima" passou a "Ecossistema Ânima Educação"; na página Sobre, o texto alternativo das logos passou a "UNA Cristiano Machado" e "Rede Transformar".
 
 ### Removido

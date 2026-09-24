@@ -25,8 +25,10 @@ import type { ItemMenu } from '../../components/admin/MenuLateral';
 import AbasDeRota, { ABAS_ALUNOS_E_CHAMADAS, ABAS_PROFESSORES } from '../../components/admin/AbasDeRota';
 import {
   IconeAlunos,
+  IconeAvaliacao,
   IconeEquipe,
   IconeMaterial,
+  IconeMembros,
   IconeSolicitacoes,
   IconeVisaoGeral,
 } from '../../components/admin/Icones';
@@ -43,6 +45,8 @@ import { servicoCache } from '../../lib/cache';
 import { chaveTurmas, servicoTurmas } from '../../lib/turmas';
 import { CHAVE_SOLICITACOES, servicoSolicitacoes } from '../../lib/solicitacoes';
 import { servicoSessao } from '../../lib/sessao';
+import { servicoAvaliacoes } from '../../lib/avaliacoes';
+import { ITEM_BANCA } from '../../components/admin/itensDeMenu';
 import { CHAVE_EQUIPE, servicoEquipe } from '../../lib/equipe';
 import { CHAVE_MATERIAL, servicoMaterial } from '../../lib/material';
 import { CHAVE_ACESSOS, servicoAcessos } from '../../lib/acessos';
@@ -63,7 +67,9 @@ const ITENS_MENU: ItemMenu[] = [
     Icone: IconeEquipe,
     ativoEm: ['/dashboard/presenca-professores'], // abas da página
   },
+  { caminho: '/dashboard/membros', rotulo: 'Equipe', Icone: IconeMembros },
   { caminho: '/dashboard/solicitacoes', rotulo: 'Solicitações', Icone: IconeSolicitacoes },
+  { caminho: '/dashboard/avaliacoes', rotulo: 'Avaliações', Icone: IconeAvaliacao },
   // Materiais e atividades juntos, em abas dentro de cada trilha
   { caminho: '/dashboard/trilhas', rotulo: 'Trilhas', Icone: IconeMaterial },
 ];
@@ -99,6 +105,8 @@ const preCarregarPaginas = () =>
     import('./Equipe'),
     import('./Solicitacoes'),
     import('./PresencaProfessores'),
+    import('./Avaliacoes'),
+    import('./Membros'),
     import('../equipe/TrilhasEquipe'),
     import('../Perfil'),
   ]);
@@ -133,6 +141,18 @@ const LayoutAdmin: React.FC = () => (
 );
 
 const AreaDoGestor: React.FC = () => {
+  // Gestor ou parceiro posto na banca avaliadora: item para a avaliação da banca
+  const [souDaBanca, setSouDaBanca] = useState(false);
+  useEffect(() => {
+    servicoAvaliacoes
+      .souDaBanca()
+      .then(setSouDaBanca)
+      .catch((e) => {
+        console.error('[menu] não conferiu a banca', e?.code ?? e?.message);
+        setSouDaBanca(false);
+      });
+  }, []);
+
   // Parceiro? (o perfil já está em cache: a guarda da rota acabou de ler)
   const [somenteLeitura, setSomenteLeitura] = useState<boolean | null>(null);
   useEffect(() => {
@@ -258,7 +278,7 @@ const AreaDoGestor: React.FC = () => {
 
   return (
     <Moldura
-      itens={somenteLeitura === false ? ITENS_MENU : ITENS_MENU_PARCEIRO}
+      itens={[...(somenteLeitura === false ? ITENS_MENU : ITENS_MENU_PARCEIRO), ...(souDaBanca ? [ITEM_BANCA] : [])]}
       subtitulo={somenteLeitura === false ? 'Área do gestor' : somenteLeitura ? 'Área do parceiro' : ''}
       acoesTopo={seletorDeEdicao}
     >

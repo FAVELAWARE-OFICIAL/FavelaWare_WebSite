@@ -149,9 +149,10 @@ Regras de UI na skill `.claude/skills/favelaware-padrao-visual/`.
 
 | Área | Rota | Papel | O que tem |
 | --- | --- | --- | --- |
-| Gestor | `/dashboard` | `gestor` | visão geral, alunos, chamada, turmas, equipe, solicitações, ponto dos instrutores, trilhas |
+| Gestor | `/dashboard` | `gestor` | visão geral, alunos, chamada, turmas, equipe, membros, solicitações, avaliações, ponto dos instrutores, trilhas |
 | Parceiro | `/dashboard` | `parceiro` | só leitura: visão geral, alunos e chamada |
-| Instrutor | `/professor` | `professor` | chamada, ponto, trilhas |
+| Instrutor | `/professor` | `professor` | chamada, ponto, trilhas e, no prazo liberado, a avaliação final da turma |
+| Banca avaliadora | `/banca` | `banca` | só a avaliação do dia da banca (entra pelo link do e-mail, sem senha) |
 | Aluno | `/aluno` | `aluno` | trilhas, atividades e solicitações |
 | Todos | `/perfil` de cada área | qualquer | dados pessoais |
 
@@ -173,7 +174,7 @@ flowchart TD
 | Edge Function | Quem chama | Faz |
 | --- | --- | --- |
 | `acessos-alunos` | gestor | cria ou redefine o acesso dos alunos |
-| `convidar-professor` | gestor | convida o instrutor por e-mail e liga às turmas |
+| `convidar-professor` | gestor | convida o instrutor (e liga às turmas) ou o membro da banca por e-mail |
 | `entregas-drive` | aluno e instrutor | envia e lê entregas no Drive da ONG |
 
 ## Banco de dados
@@ -182,7 +183,8 @@ Todas as tabelas com RLS, testadas em `supabase/testes/`.
 
 | Tabelas | Guardam |
 | --- | --- |
-| `perfis` | identidade e papel |
+| `perfis` | identidade, papel e redes |
+| `avaliacoes_instrutor`, `membros_banca`, `notas_banca` | avaliação final da edição e banca avaliadora |
 | `edicoes`, `turmas`, `participantes`, `duplas` | edições, turmas e alunos |
 | `aulas`, `presencas`, `mudancas_horario` | cronograma e chamada (`mudancas_horario` é histórico de 2022, sem tela) |
 | `professores_turmas`, `pontos_professores`, `dados_instrutores` | instrutores, ponto e dados do RPA |

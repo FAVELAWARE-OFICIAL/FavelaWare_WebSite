@@ -16,10 +16,11 @@
  * CPF e PIS de novo (os dígitos verificadores).
  */
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 import Carregamento from '../components/admin/Carregamento';
+import TelaDeEtapas from '../components/TelaDeEtapas';
+import { classeCampoDeEtapa, classeRotuloDeEtapa } from '../components/estilosDeAcesso';
 import {
   CORES_RACAS,
   ESTADOS_CIVIS,
@@ -36,12 +37,6 @@ import {
 } from '../lib/dadosInstrutor';
 import { servicoSessao } from '../lib/sessao';
 import { hoje as hojeLocal } from '../utils/datas';
-import { FUNDO_DA_MARCA, LOGO } from '../data/imagens';
-
-// Campo compacto: a etapa inteira precisa caber na tela sem rolar
-const classeCampo =
-  'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-gray-900 transition-all focus:border-transparent focus:ring-2 focus:ring-favela-green-500 lg:py-3';
-const classeRotulo = 'mb-1 block text-sm font-medium text-gray-700 lg:mb-1.5';
 
 const VAZIO: DadosInstrutor = {
   nome_completo: '',
@@ -221,8 +216,6 @@ const DadosDoInstrutor: React.FC = () => {
   if (estado.tipo === 'sem-acesso') return <Navigate to="/login" replace />;
 
   const hoje = hojeLocal();
-  const ultima = etapa === ETAPAS.length - 1;
-  const atual = ETAPAS[etapa];
 
   const campo = (
     nome: keyof DadosInstrutor,
@@ -231,7 +224,7 @@ const DadosDoInstrutor: React.FC = () => {
     extras: React.InputHTMLAttributes<HTMLInputElement> = {},
   ) => (
     <div className={classe}>
-      <label htmlFor={nome} className={classeRotulo}>
+      <label htmlFor={nome} className={classeRotuloDeEtapa}>
         {rotulo}
       </label>
       <input
@@ -239,7 +232,7 @@ const DadosDoInstrutor: React.FC = () => {
         name={nome}
         value={campos[nome] ?? ''}
         onChange={aoAlterarCampo}
-        className={classeCampo}
+        className={classeCampoDeEtapa}
         {...extras}
       />
     </div>
@@ -252,7 +245,7 @@ const DadosDoInstrutor: React.FC = () => {
     extras: { autoComplete?: string } = {},
   ) => (
     <div className={classe}>
-      <label htmlFor={nome} className={classeRotulo}>
+      <label htmlFor={nome} className={classeRotuloDeEtapa}>
         {rotulo}
       </label>
       <select
@@ -261,7 +254,7 @@ const DadosDoInstrutor: React.FC = () => {
         value={campos[nome] ?? ''}
         onChange={aoAlterarCampo}
         required
-        className={classeCampo}
+        className={classeCampoDeEtapa}
         {...extras}
       >
         <option value="" disabled>
@@ -375,206 +368,38 @@ const DadosDoInstrutor: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-gray-50">
-      {/* ============================================
-          PAINEL DA MARCA (tela grande): etapas e aviso de privacidade
-          ============================================ */}
-      <aside
-        className="relative hidden w-[36%] max-w-xl flex-col justify-between overflow-hidden bg-[#8bc53f] p-10 lg:flex xl:p-12"
-        style={{
-          backgroundImage: `url('${FUNDO_DA_MARCA}')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        {/* Véu roxo: o texto branco precisa de contraste sobre a foto */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#2d2a5f]/90 via-[#2d2a5f]/70 to-[#2d2a5f]/85" />
-
-        <div className="relative z-10">
-          <img src={LOGO} alt="Logo FavelaWare" className="mb-8 w-44 object-contain drop-shadow-2xl" />
-          <h1 className="mb-3 text-3xl font-bold leading-tight text-white drop-shadow-lg xl:text-4xl">
-            {estado.jaTinha ? 'MEUS DADOS DA BOLSA' : 'DADOS DA BOLSA'}
-          </h1>
-          <p className="max-w-sm text-white/85">
-            {estado.jaTinha
-              ? 'Confira e atualize o que mudou.'
-              : 'Antes de entrar na área do instrutor, preencha os dados usados no RPA (recibo de pagamento de autônomo).'}
-          </p>
-        </div>
-
-        {/* Índice das etapas: dá para voltar a qualquer etapa já liberada */}
-        <nav aria-label="Etapas do formulário" className="relative z-10">
-          <ol className="space-y-2">
-            {ETAPAS.map((e, i) => {
-              // Concluída: já liberada, fora da etapa atual e com os campos certos
-              const concluida = i !== etapa && i <= liberadaAte && !validarDados(campos, hoje, e.campos);
-              const liberada = i <= liberadaAte;
-              return (
-                <li key={e.titulo}>
-                  <button
-                    type="button"
-                    disabled={!liberada || salvando}
-                    onClick={() => {
-                      setMensagem(null);
-                      irPara(i);
-                    }}
-                    aria-current={i === etapa ? 'step' : undefined}
-                    className={`flex w-full items-center gap-4 rounded-xl px-4 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
-                      i === etapa ? 'bg-white/15' : liberada ? 'hover:bg-white/10' : 'cursor-default opacity-60'
-                    }`}
-                  >
-                    <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                        i === etapa
-                          ? 'bg-[#8bc53f] text-[#2d2a5f]'
-                          : concluida
-                            ? 'bg-white text-[#2d2a5f]'
-                            : 'border-2 border-white/60 text-white'
-                      }`}
-                    >
-                      {concluida ? '✓' : i + 1}
-                    </span>
-                    <span>
-                      <span className="block font-semibold text-white">{e.titulo}</span>
-                      <span className="block text-sm text-white/75">{e.descricao}</span>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-        </nav>
-
-        <p className="relative z-10 flex items-start gap-2 text-sm text-white/85">
-          <span aria-hidden="true">🔒</span>
-          Estes dados servem só para emitir o seu RPA e cumprir as obrigações previdenciárias. Só você e a gestão do
-          projeto veem estas informações.
-        </p>
-      </aside>
-
-      {/* ============================================
-          FORMULÁRIO (uma etapa por vez)
-          ============================================ */}
-      <main className="flex min-w-0 flex-1 flex-col">
-        {/* Topo: progresso. No celular e no tablet (sem o painel da marca), também o
-            título e o aviso de privacidade, que ninguém pode deixar de ver */}
-        <header className="shrink-0 border-b border-gray-200 bg-white px-4 py-2.5 sm:px-8 lg:px-12 lg:py-5">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <img src={LOGO} alt="Logo FavelaWare" className="w-14 shrink-0 object-contain lg:hidden" />
-              <div className="min-w-0">
-                <h1 className="truncate text-base font-bold text-gray-900 lg:hidden">
-                  {estado.jaTinha ? 'Meus dados da bolsa' : 'Dados da bolsa'}
-                </h1>
-                <p className="truncate text-sm font-medium text-gray-500">
-                  Etapa {etapa + 1} de {ETAPAS.length}
-                  <span className="lg:hidden"> · {atual.titulo}</span>
-                </p>
-              </div>
-            </div>
-            {estado.jaTinha && (
-              <Link
-                to="/professor/perfil"
-                className="shrink-0 rounded text-sm font-medium text-gray-600 underline hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-favela-green-500"
-              >
-                Voltar sem salvar
-              </Link>
-            )}
-          </div>
-          <p className="mt-1.5 text-xs text-gray-600 lg:hidden">
-            <span aria-hidden="true">🔒 </span>
-            Usados só para emitir o seu RPA. Só você e a gestão do projeto veem estes dados.
-          </p>
-          <div className="mt-2.5 grid grid-cols-4 gap-2 lg:mt-3" aria-hidden="true">
-            {ETAPAS.map((e, i) => (
-              <span
-                key={e.titulo}
-                className={`h-1.5 rounded-full transition-colors duration-300 ${
-                  i <= etapa ? 'bg-gradient-to-r from-favela-green-500 to-favela-blue-500' : 'bg-gray-200'
-                }`}
-              />
-            ))}
-          </div>
-        </header>
-
-        <form ref={formulario} onSubmit={aoEnviar} noValidate className="flex min-h-0 flex-1 flex-col">
-          {/* Meio: a etapa ocupa o espaço que sobra, centralizada na altura */}
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-8 lg:px-12 lg:py-8">
-            <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col justify-center">
-              {erroCarregar && (
-                <div role="alert" className="mb-4 rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-800">
-                  Não foi possível carregar os dados já salvos. Recarregue a página antes de continuar.
-                </div>
-              )}
-              {mensagem && (
-                <motion.div
-                  role="alert"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-800"
-                >
-                  {mensagem}
-                </motion.div>
-              )}
-
-              {/* key: cada etapa monta de novo e entra deslizando. Sem esperar a saída da
-                  anterior, os campos já existem quando o foco é levado a eles */}
-              <motion.fieldset
-                key={etapa}
-                initial={{ opacity: 0, x: 24 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.25 }}
-              >
-                <legend className="mb-0.5 flex items-center gap-2 text-xl font-bold text-gray-900 lg:mb-1 lg:text-3xl">
-                  <span aria-hidden="true">{atual.icone}</span>
-                  {atual.titulo}
-                </legend>
-                <p className="mb-3 text-sm text-gray-600 lg:mb-8 lg:text-base">{atual.descricao}</p>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-3 lg:grid-cols-6 lg:gap-x-6 lg:gap-y-6">
-                  {camposDaEtapa[etapa]}
-                </div>
-              </motion.fieldset>
-            </div>
-          </div>
-
-          {/* Pé: navegação entre as etapas (sempre à vista) */}
-          <footer className="shrink-0 border-t border-gray-200 bg-white px-4 py-3 sm:px-8 lg:px-12 lg:py-4">
-            <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setMensagem(null);
-                  irPara(etapa - 1);
-                }}
-                disabled={etapa === 0 || salvando}
-                className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 font-semibold lg:py-3 text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-favela-green-500 disabled:invisible"
-              >
-                ‹ Voltar
-              </button>
-              <motion.button
-                type="submit"
-                disabled={salvando || erroCarregar}
-                whileHover={salvando || erroCarregar ? undefined : { scale: 1.02 }}
-                whileTap={salvando || erroCarregar ? undefined : { scale: 0.98 }}
-                className={`flex-1 rounded-lg px-6 py-2.5 font-bold lg:py-3 text-white shadow-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-favela-green-500 focus-visible:ring-offset-2 sm:flex-none sm:px-10 ${
-                  salvando || erroCarregar
-                    ? 'cursor-not-allowed bg-gray-400'
-                    : 'bg-gradient-to-r from-favela-green-600 to-favela-blue-600 hover:shadow-xl'
-                }`}
-              >
-                {salvando
-                  ? 'Salvando...'
-                  : !ultima
-                    ? 'Próximo ›'
-                    : estado.jaTinha
-                      ? 'SALVAR ALTERAÇÕES'
-                      : 'SALVAR E ENTRAR'}
-              </motion.button>
-            </div>
-          </footer>
-        </form>
-      </main>
-    </div>
+    <TelaDeEtapas
+      titulo={estado.jaTinha ? 'MEUS DADOS DA BOLSA' : 'DADOS DA BOLSA'}
+      tituloCurto={estado.jaTinha ? 'Meus dados da bolsa' : 'Dados da bolsa'}
+      descricao={
+        estado.jaTinha
+          ? 'Confira e atualize o que mudou.'
+          : 'Antes de entrar na área do instrutor, preencha os dados usados no RPA (recibo de pagamento de autônomo).'
+      }
+      privacidade="Estes dados servem só para emitir o seu RPA e cumprir as obrigações previdenciárias. Só você e a gestão do projeto veem estas informações."
+      privacidadeCurta="Usados só para emitir o seu RPA. Só você e a gestão do projeto veem estes dados."
+      etapas={ETAPAS}
+      etapa={etapa}
+      liberadaAte={liberadaAte}
+      concluida={(i) => !validarDados(campos, hoje, ETAPAS[i].campos)}
+      aoIrPara={(i) => {
+        setMensagem(null);
+        irPara(i);
+      }}
+      voltar={estado.jaTinha ? { para: '/professor/perfil', rotulo: 'Voltar sem salvar' } : undefined}
+      erro={
+        erroCarregar
+          ? 'Não foi possível carregar os dados já salvos. Recarregue a página antes de continuar.'
+          : mensagem
+      }
+      ocupado={salvando}
+      bloqueado={erroCarregar}
+      rotuloFinal={estado.jaTinha ? 'SALVAR ALTERAÇÕES' : 'SALVAR E ENTRAR'}
+      formulario={formulario}
+      aoEnviar={aoEnviar}
+    >
+      {camposDaEtapa[etapa]}
+    </TelaDeEtapas>
   );
 };
 

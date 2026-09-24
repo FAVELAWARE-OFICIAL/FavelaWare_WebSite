@@ -2,7 +2,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { dataDoBanco, deCampoDataHora, diasAtras, formatarData, hoje, paraCampoDataHora } from './datas';
 import { tamanhoLegivel } from './arquivos';
-import { emailValido, iniciaisDoNome, linkValido, perfilLinkedinValido, vazioViraNulo } from './texto';
+import {
+  emailValido,
+  iniciaisDoNome,
+  linkValido,
+  normalizarGithub,
+  normalizarLinkedin,
+  perfilLinkedinValido,
+  vazioViraNulo,
+} from './texto';
 
 describe('datas', () => {
   afterEach(() => {
@@ -62,5 +70,24 @@ describe('ajudantes compartilhados', () => {
     expect(perfilLinkedinValido('https://br.linkedin.com/in/maria/')).toBe(true);
     expect(perfilLinkedinValido('https://linkedin.com/company/x')).toBe(false);
     expect(perfilLinkedinValido('https://outro.site/in/maria')).toBe(false);
+  });
+});
+
+describe('redes do perfil', () => {
+  it('LinkedIn: completa o que a pessoa cola e recusa o que não é perfil', () => {
+    expect(normalizarLinkedin('linkedin.com/in/maria-silva')).toBe('https://linkedin.com/in/maria-silva');
+    expect(normalizarLinkedin('HTTPS://www.LinkedIn.com/in/maria?utm=x')).toBe('https://www.linkedin.com/in/maria');
+    expect(normalizarLinkedin('  ')).toBeNull();
+    expect(normalizarLinkedin('linkedin.com/company/x')).toBeUndefined();
+  });
+
+  it('GitHub: aceita só o usuário ou o endereço', () => {
+    expect(normalizarGithub('maria-dev')).toBe('https://github.com/maria-dev');
+    expect(normalizarGithub('@maria-dev')).toBe('https://github.com/maria-dev');
+    expect(normalizarGithub('github.com/maria-dev')).toBe('https://github.com/maria-dev');
+    expect(normalizarGithub('https://www.github.com/maria-dev')).toBe('https://github.com/maria-dev');
+    expect(normalizarGithub('')).toBeNull();
+    expect(normalizarGithub('maria dev')).toBeUndefined();
+    expect(normalizarGithub('https://github.com/maria/repo')).toBeUndefined();
   });
 });

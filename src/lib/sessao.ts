@@ -10,11 +10,15 @@
 import type { User } from '@supabase/supabase-js';
 
 import { excecaoDeNegocio, excecaoDeSistema, sucesso, type ResultadoOperacao } from '../types';
+import { emailValido } from '../utils/texto';
 import { servicoCache } from './cache';
 import { definirLembrarDeMim, supabase } from './supabase';
 
-/** parceiro: empresas e instituições que acompanham o curso, só leitura na área do gestor */
-export type Papel = 'aluno' | 'professor' | 'gestor' | 'parceiro';
+/**
+ * parceiro: empresas e instituições que acompanham o curso, só leitura na área do gestor;
+ * banca: membro externo da banca avaliadora, só vê a avaliação dele e a lista final.
+ */
+export type Papel = 'aluno' | 'professor' | 'gestor' | 'parceiro' | 'banca';
 
 export interface MeuPerfil {
   papel: Papel | null;
@@ -54,7 +58,11 @@ export const NOME_DO_PAPEL: Record<Papel, string> = {
   professor: 'Instrutor',
   aluno: 'Aluno',
   parceiro: 'Parceiro',
+  banca: 'Banca avaliadora',
 };
+
+/** Papéis do "Ver como" (a banca não entra: é uma conta de fora, convidada) */
+export const PAPEIS_DO_VER_COMO: Papel[] = ['gestor', 'professor', 'aluno', 'parceiro'];
 
 /** Área de cada papel */
 const AREA_DO_PAPEL: Record<Papel, string> = {
@@ -63,6 +71,7 @@ const AREA_DO_PAPEL: Record<Papel, string> = {
   aluno: '/aluno',
   // O parceiro usa a área do gestor, só para ver (ver somenteLeitura)
   parceiro: '/dashboard',
+  banca: '/banca',
 };
 
 /**
@@ -178,7 +187,12 @@ export class ServicoSessao {
    * (ou /primeiro-acesso, se ainda não trocou a senha padrão).
    */
   destinoDoPerfil(perfil: MeuPerfil): string | null {
-    if (perfil.papel === 'gestor' || perfil.papel === 'professor' || perfil.papel === 'parceiro') {
+    if (
+      perfil.papel === 'gestor' ||
+      perfil.papel === 'professor' ||
+      perfil.papel === 'parceiro' ||
+      perfil.papel === 'banca'
+    ) {
       return AREA_DO_PAPEL[perfil.papel];
     }
     if (perfil.papel === 'aluno' && this.alunoTemArea(perfil)) {
@@ -216,6 +230,27 @@ export class ServicoSessao {
     });
     if (error) return { resultado: traduzirErroDeLogin(error.code), destino: null };
     return { resultado: sucesso(), destino: this.destinoDoPerfil(await this.carregarPerfil(data.user.id)) };
+  }
+
+  /**
+   * Manda por e-mail um link que entra sem senha (a banca avaliadora usa: ela é
+   * convidada e não cria senha). Só para conta que já existe: nunca cria conta.
+   * Mesma resposta exista ou não a conta, para ninguém descobrir e-mails.
+   */
+  async enviarLinkDeAcesso(email: string): Promise<ResultadoOperacao> {
+    const limpo = email.trim().toLowerCase();
+    if (!emailValido(limpo)) return excecaoDeNegocio('Digite o seu e-mail para receber o link.');
+    const { error } = await supabase.auth.signInWithOtp({
+      email: limpo,
+      options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/login` },
+    });
+    if (error && (error.code === 'over_email_send_rate_limit' || error.code === 'over_request_rate_limit')) {
+      return traduzirErroDeLogin(error.code);
+    }
+    // Conta que não existe responde como sucesso, para ninguém descobrir e-mails
+    if (!error || error.code === 'otp_disabled' || error.code === 'user_not_found') return sucesso();
+    console.error('[sessão] link de acesso', error.code);
+    return excecaoDeSistema('Não foi possível enviar o link agora. Tente de novo em instantes.');
   }
 
   async sair(): Promise<void> {

@@ -12,6 +12,7 @@
  * papel): os dados passam pelas funções atualizar_meu_perfil e
  * atualizar_meus_dados_de_aluno, que só alteram a coluna certa.
  */
+import { emailValido, normalizarGithub, normalizarLinkedin } from '../utils/texto';
 import { CODIGO_REGRA_DO_BANCO, codigoDoErro } from './banco';
 import { servicoSessao, type Papel } from './sessao';
 import { supabase } from './supabase';
@@ -26,8 +27,17 @@ export interface MeusDados {
   acesso: string;
   /** Foto do perfil (aluno: a da ficha da turma); sem foto, o avatar padrão */
   foto: string | null;
+  /** Redes e contato (qualquer papel). No site aparece só o LinkedIn */
+  redes: RedesDoPerfil;
   /** Só aluno ligado a uma turma */
   aluno: { dataNascimento: string; email: string } | null;
+}
+
+export interface RedesDoPerfil {
+  linkedin: string;
+  github: string;
+  /** Gmail ou outro e-mail de contato (o aluno usa o e-mail de contato da ficha) */
+  emailContato: string;
 }
 
 export class ServicoPerfil {
@@ -38,7 +48,20 @@ export class ServicoPerfil {
       nome: perfil.nome ?? '',
       acesso: servicoSessao.identificadorDoEmail(conta.email ?? ''),
       foto: perfil.foto,
+      redes: { linkedin: '', github: '', emailContato: '' },
       aluno: null,
+    };
+
+    const { data: redes, error: erroRedes } = await supabase
+      .from('perfis')
+      .select('linkedin, github, email_contato')
+      .eq('id', conta.id)
+      .single();
+    if (erroRedes) throw erroRedes;
+    dados.redes = {
+      linkedin: redes.linkedin ?? '',
+      github: redes.github ?? '',
+      emailContato: redes.email_contato ?? '',
     };
 
     if (perfil.papel === 'aluno' && perfil.participanteId) {
@@ -70,6 +93,26 @@ export class ServicoPerfil {
     });
     if (error) throw error;
     this.avisarQueMudou();
+  }
+
+  /**
+   * Redes e contato: confere e completa o que a pessoa colou antes de gravar.
+   * Devolve o problema (texto para a tela) ou null.
+   */
+  async salvarRedes(redes: RedesDoPerfil): Promise<string | null> {
+    const linkedin = normalizarLinkedin(redes.linkedin);
+    if (linkedin === undefined) return 'O LinkedIn precisa ser um perfil: linkedin.com/in/seu-nome.';
+    const github = normalizarGithub(redes.github);
+    if (github === undefined) return 'O GitHub precisa ser um usuário: github.com/seu-usuario.';
+    if (redes.emailContato.trim() && !emailValido(redes.emailContato)) return 'Confira o e-mail de contato.';
+    const { error } = await supabase.rpc('atualizar_minhas_redes', {
+      p_linkedin: linkedin ?? '',
+      p_github: github ?? '',
+      p_email_contato: redes.emailContato,
+    });
+    if (!error) return null;
+    console.error('[perfil] falha ao salvar as redes', codigoDoErro(error));
+    return 'Não foi possível salvar as redes. Tente de novo.';
   }
 
   /** Texto para o usuário a partir do erro do banco ao salvar os dados */

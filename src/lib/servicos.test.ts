@@ -4,6 +4,7 @@ vi.mock('./supabase', () => import('../testes/supabaseFalso'));
 
 import { consultaFalha, removerDoStorage } from '../testes/supabaseFalso';
 import { servicoAtestados } from './atestados';
+import { notasCompletas, servicoAvaliacoes, somaDasNotas } from './avaliacoes';
 import { servicoEdicoes } from './edicoes';
 import { servicoFotoPadronizada } from './fotoPadronizada';
 import { servicoMaterial } from './material';
@@ -290,9 +291,14 @@ describe('site público', () => {
     },
   ];
 
-  it('foto atual do dashboard por cima da do arquivo', () => {
-    const [turma] = servicoSitePublico.juntarTurmas(doArquivo, new Map([[7, null]]), []);
+  it('foto atual do dashboard e LinkedIn do perfil por cima do arquivo', () => {
+    const [turma] = servicoSitePublico.juntarTurmas(
+      doArquivo,
+      new Map([[7, { foto: null, linkedin: 'https://www.linkedin.com/in/ana' }]]),
+      [],
+    );
     expect(turma.alunos[0].foto).toBeUndefined();
+    expect(turma.alunos[0].linkedin).toBe('https://www.linkedin.com/in/ana');
   });
 
   it('com edição nova em andamento no banco, a do arquivo deixa de ser a atual', () => {
@@ -309,5 +315,22 @@ describe('site público', () => {
       ['4ª Edição', true],
       ['3ª Edição', false],
     ]);
+  });
+});
+
+describe('avaliações do fim da edição', () => {
+  const chaves = ['participacao', 'entrega', 'comportamento'];
+
+  it('soma só as notas dadas e sabe quando os três critérios estão preenchidos', () => {
+    const parcial = { participacao: 4, entrega: null, comportamento: 5, observacao: '' };
+    expect(somaDasNotas(parcial, chaves)).toBe(9);
+    expect(notasCompletas(parcial, chaves)).toBe(false);
+    expect(notasCompletas({ ...parcial, entrega: 0 }, chaves)).toBe(true);
+  });
+
+  it('não manda ao banco turma com aluno sem as três notas', async () => {
+    const notas = new Map([[1, { participacao: 4, entrega: null, comportamento: 5, observacao: '' }]]);
+    const resultado = await servicoAvaliacoes.salvarDaTurma(10, notas);
+    expect(resultado.mensagem).toBe('Dê as três notas a todos os alunos antes de salvar.');
   });
 });

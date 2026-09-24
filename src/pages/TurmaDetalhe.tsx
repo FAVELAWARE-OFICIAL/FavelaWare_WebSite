@@ -78,7 +78,12 @@ const TurmaDetalhe: React.FC = () => {
           className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8"
         >
           {turma.alunos.map((aluno, i) => (
-            <CartaoDePessoa key={aluno.participanteId ?? `${aluno.nome}-${i}`} nome={aluno.nome} foto={aluno.foto} />
+            <CartaoDePessoa
+              key={aluno.participanteId ?? `${aluno.nome}-${i}`}
+              nome={aluno.nome}
+              foto={aluno.foto}
+              linkedin={aluno.linkedin}
+            />
           ))}
         </motion.div>
 

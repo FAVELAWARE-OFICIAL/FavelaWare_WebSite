@@ -11,7 +11,7 @@
  * cache do navegador. Quem garante que só o dono e o gestor leem é o RLS da
  * tabela dados_instrutores.
  */
-import { emailValido, perfilLinkedinValido } from '../utils/texto';
+import { emailValido, normalizarLinkedin } from '../utils/texto';
 import { codigoDoErro } from './banco';
 import { supabase } from './supabase';
 
@@ -147,20 +147,6 @@ function pisValido(pis: string): boolean {
   const soma = pesos.reduce((total, peso, i) => total + Number(d[i]) * peso, 0);
   const dv = 11 - (soma % 11);
   return (dv >= 10 ? 0 : dv) === Number(d[10]);
-}
-
-/**
- * LinkedIn como o banco aceita: https://(www.)linkedin.com/in/<perfil>.
- * Completa o que a pessoa costuma colar ("linkedin.com/in/maria", sem https).
- * Devolve null se vazio, ou undefined se não for um perfil do LinkedIn.
- */
-function normalizarLinkedin(valor: string | null): string | null | undefined {
-  const texto = (valor ?? '').trim();
-  if (!texto) return null;
-  const completo = /^https?:\/\//i.test(texto) ? texto.replace(/^https?:/i, 'https:') : `https://${texto}`;
-  // Esquema e domínio em minúsculas ("HTTPS://www.LinkedIn.com/in/..." também vale)
-  const semBusca = completo.split(/[?#]/)[0].replace(/^https:\/\/[^/]+/i, (inicio) => inicio.toLowerCase());
-  return perfilLinkedinValido(semBusca) ? semBusca : undefined;
 }
 
 /** Data mais recente aceita no nascimento (14 anos atrás), no formato aaaa-mm-dd */

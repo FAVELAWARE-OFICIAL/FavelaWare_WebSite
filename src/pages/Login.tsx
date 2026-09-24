@@ -18,7 +18,7 @@
  */
 
 // Importa o hook de estado do React
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // Importa ferramentas de animação do Framer Motion
 import { motion } from 'framer-motion';
@@ -61,6 +61,7 @@ const Login: React.FC = () => {
 
   // Fica true enquanto o "login" está sendo processado (trava o botão)
   const [carregando, setCarregando] = useState(false);
+  const [enviandoLink, setEnviandoLink] = useState(false);
 
   // Mensagem de retorno mostrada acima do formulário
   const [mensagem, setMensagem] = useState<{
@@ -85,6 +86,33 @@ const Login: React.FC = () => {
       [name]: type === 'checkbox' ? checked : value,
     }));
   };
+
+  /** Link de acesso por e-mail (sem senha): a banca avaliadora entra assim */
+  const enviarLink = async () => {
+    setMensagem(null);
+    setEnviandoLink(true);
+    const resultado = await servicoSessao.enviarLinkDeAcesso(campos.email);
+    setEnviandoLink(false);
+    setMensagem(
+      resultado.status === StatusProcessamento.Sucesso
+        ? { tipo: 'sucesso', texto: 'Se houver uma conta com esse e-mail, o link de acesso chega em instantes.' }
+        : { tipo: 'erro', texto: resultado.mensagem ?? 'Não foi possível enviar o link.' },
+    );
+  };
+
+  // Voltou pelo link do e-mail (ou já estava logado): vai direto para a própria área
+  useEffect(() => {
+    const irParaArea = () =>
+      servicoSessao
+        .contaLogada()
+        .then((l) => {
+          const destino = l ? servicoSessao.destinoDoPerfil(l.perfil) : null;
+          if (destino) navigate(destino, { replace: true });
+        })
+        .catch((e) => console.error('[login] sessão do link', e?.message));
+    irParaArea();
+    return servicoSessao.aoIniciar(irParaArea);
+  }, [navigate]);
 
   /**
    * Envia o formulário.
@@ -339,6 +367,18 @@ const Login: React.FC = () => {
               )}
             </motion.button>
           </form>
+
+          {/* Banca avaliadora (e quem preferir): entra por um link no e-mail, sem senha */}
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              disabled={enviandoLink}
+              onClick={enviarLink}
+              className="rounded text-sm font-medium text-gray-600 underline-offset-2 hover:text-gray-900 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-favela-green-500 disabled:opacity-60"
+            >
+              {enviandoLink ? 'Enviando o link…' : 'Receber um link de acesso no e-mail (sem senha)'}
+            </button>
+          </div>
 
           {/* Caminho de volta no celular (no desktop ele fica no painel verde) */}
           <div className="lg:hidden text-center mt-8">

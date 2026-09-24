@@ -6,8 +6,8 @@
  * O site público (sem login) lê do banco só o que mostra, por funções que
  * devolvem nome e foto e nada mais:
  * - fotos_das_turmas: a foto que o gestor põe no dashboard substitui a do
- *   arquivo nas páginas de turmas (cada aluno de src/data/turmas.ts tem o
- *   participanteId, o id dele no banco);
+ *   arquivo nas páginas de turmas, e o LinkedIn do "Meu perfil" do aluno
+ *   aparece junto (cada aluno de src/data/turmas.ts tem o participanteId);
  * - turmas_do_site: as turmas e os alunos das edições novas (a 4ª em diante),
  *   que não estão escritas à mão em src/data/turmas.ts;
  * - equipe_da_edicao_atual: os instrutores da edição atual, na página Sobre.
@@ -40,7 +40,18 @@ interface AlunoDoBanco {
   /** Já no formato curto do site ("Maria Lima"), montado pelo banco */
   alunoNome: string | null;
   foto: string | null;
+  linkedin: string | null;
 }
+
+/** O que o banco diz de um aluno do arquivo: foto atual e LinkedIn do perfil */
+export interface AlunoAtualizado {
+  foto: string | null;
+  linkedin: string | null;
+}
+
+/** Só aceita LinkedIn no formato de perfil (valor estranho no banco nunca vira link) */
+const linkedinConfiavel = (valor: unknown): string | null =>
+  typeof valor === 'string' && perfilLinkedinValido(valor) ? valor : null;
 
 /** Linha de equipe_da_edicao_atual */
 export interface InstrutorDaEdicao {
@@ -61,11 +72,11 @@ export class ServicoSitePublico {
   /** Cada consulta é buscada uma vez por visita e reaproveitada entre as páginas */
   private buscas = new Map<string, Promise<unknown[]>>();
 
-  /** { id do aluno: foto atual (null = sem foto) }; vazio se o banco não responder */
-  async fotosDosAlunos(): Promise<Map<number, string | null>> {
-    const linhas = await this.chamar<{ id: number; foto: unknown }>('fotos_das_turmas');
+  /** { id do aluno: foto atual e LinkedIn }; vazio se o banco não responder */
+  async fotosDosAlunos(): Promise<Map<number, AlunoAtualizado>> {
+    const linhas = await this.chamar<{ id: number; foto: unknown; linkedin: unknown }>('fotos_das_turmas');
     // Foto estranha (fora do site e do bucket) vira "sem foto", nunca imagem de outro endereço
-    return new Map(linhas.map((l) => [l.id, fotoConfiavel(l.foto)]));
+    return new Map(linhas.map((l) => [l.id, { foto: fotoConfiavel(l.foto), linkedin: linkedinConfiavel(l.linkedin) }]));
   }
 
   /** Turmas das edições novas, no formato do site (turma sem aluno também aparece) */
@@ -80,25 +91,25 @@ export class ServicoSitePublico {
         turmaNome: String(l.turma_nome ?? ''),
         alunoNome: typeof l.aluno_nome === 'string' ? l.aluno_nome : null,
         foto: fotoConfiavel(l.foto),
+        linkedin: linkedinConfiavel(l.linkedin),
       })),
     );
   }
 
   /**
    * Lista da página Turmas: as novas (do banco) e as do arquivo com a foto atual
-   * do dashboard por cima. Com uma edição nova em andamento, a do arquivo deixa
-   * de ser a "atual".
+   * do dashboard e o LinkedIn do perfil por cima. Com uma edição nova em
+   * andamento, a do arquivo deixa de ser a "atual".
    */
-  juntarTurmas(doArquivo: TurmaDoSite[], fotos: Map<number, string | null>, novas: TurmaDoSite[]): TurmaDoSite[] {
+  juntarTurmas(doArquivo: TurmaDoSite[], fotos: Map<number, AlunoAtualizado>, novas: TurmaDoSite[]): TurmaDoSite[] {
     const comFotos = !fotos.size
       ? doArquivo
       : doArquivo.map((turma) => ({
           ...turma,
-          alunos: turma.alunos.map((aluno) =>
-            !aluno.participanteId || !fotos.has(aluno.participanteId)
-              ? aluno
-              : { ...aluno, foto: fotos.get(aluno.participanteId) ?? undefined },
-          ),
+          alunos: turma.alunos.map((aluno) => {
+            const atual = aluno.participanteId ? fotos.get(aluno.participanteId) : undefined;
+            return !atual ? aluno : { ...aluno, foto: atual.foto ?? undefined, linkedin: atual.linkedin ?? undefined };
+          }),
         }));
     const temAtualNoBanco = novas.some((t) => t.atual);
     return [...novas, ...(temAtualNoBanco ? comFotos.map((t) => ({ ...t, atual: false })) : comFotos)];
@@ -112,7 +123,7 @@ export class ServicoSitePublico {
       edicaoNome: String(l.edicao_nome ?? ''),
       nome: String(l.nome ?? 'Instrutor'),
       foto: fotoConfiavel(l.foto),
-      linkedin: typeof l.linkedin === 'string' && perfilLinkedinValido(l.linkedin) ? l.linkedin : null,
+      linkedin: linkedinConfiavel(l.linkedin),
     }));
     if (!instrutores.length) return null;
     // O título segue o das edições anteriores: "EQUIPE — EDIÇÃO IV"
@@ -136,7 +147,9 @@ export class ServicoSitePublico {
         };
         porTurma.set(l.turmaId, turma);
       }
-      if (l.alunoNome) turma.alunos.push({ nome: l.alunoNome, foto: l.foto ?? undefined });
+      if (l.alunoNome) {
+        turma.alunos.push({ nome: l.alunoNome, foto: l.foto ?? undefined, linkedin: l.linkedin ?? undefined });
+      }
     }
     return [...porTurma.values()];
   }

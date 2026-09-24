@@ -16,7 +16,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import MenuLateral, { itemEstaAtivo, type ItemMenu } from './MenuLateral';
 import { IconeMenu } from './Icones';
-import { NOME_DO_PAPEL, servicoSessao, type Papel } from '../../lib/sessao';
+import { NOME_DO_PAPEL, PAPEIS_DO_VER_COMO, servicoSessao, type Papel } from '../../lib/sessao';
 import { EVENTO_PERFIL_ALTERADO } from '../../lib/perfil';
 import { StatusProcessamento } from '../../types';
 import { gravarPreferencia, lerPreferencia } from '../../utils/preferencias';
@@ -153,9 +153,9 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
                 onChange={(e) => verComo(e.target.value as Papel)}
                 className="w-full rounded-lg border border-white/15 bg-white/5 py-2 pl-3 pr-8 text-sm font-medium text-white focus:border-transparent focus:ring-2 focus:ring-favela-green-500 disabled:opacity-50 [&>option]:text-gray-900"
               >
-                {Object.entries(NOME_DO_PAPEL).map(([papel, nome]) => (
+                {PAPEIS_DO_VER_COMO.map((papel) => (
                   <option key={papel} value={papel}>
-                    {nome}
+                    {NOME_DO_PAPEL[papel]}
                   </option>
                 ))}
               </select>

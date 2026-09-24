@@ -144,20 +144,16 @@ const Equipe: React.FC = () => {
       return;
     }
     setEnviando(true);
-    const { resultado, professorId } = await servicoEquipe.convidar(
-      campos.nome.trim(),
-      campos.email.trim(),
-      campos.turmas,
-    );
+    const { resultado, contaId } = await servicoEquipe.convidar(campos.nome.trim(), campos.email.trim(), campos.turmas);
     if (resultado.status !== StatusProcessamento.Sucesso) {
       setEnviando(false);
       setMensagem({ tipo: 'erro', texto: resultado.mensagem! });
       return;
     }
     let avisoDaFoto = '';
-    if (fotoNova && professorId) {
+    if (fotoNova && contaId) {
       try {
-        await servicoEquipe.trocarFoto(professorId, fotoNova, null);
+        await servicoEquipe.trocarFoto(contaId, fotoNova, null);
       } catch (erro) {
         avisoDaFoto = ` A foto não foi salva (${(erro as Error).message}): use "Trocar foto" na lista.`;
       }

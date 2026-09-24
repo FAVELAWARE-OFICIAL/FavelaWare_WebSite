@@ -60,8 +60,13 @@ const AdminTurmas = lazy(() => import('./pages/admin/Turmas'));
 const AdminEquipe = lazy(() => import('./pages/admin/Equipe'));
 const AdminSolicitacoes = lazy(() => import('./pages/admin/Solicitacoes'));
 const AdminPresencaProfessores = lazy(() => import('./pages/admin/PresencaProfessores'));
+const AdminMembros = lazy(() => import('./pages/admin/Membros')); // Equipe: todos os membros e a função de cada um
+const AdminAvaliacoes = lazy(() => import('./pages/admin/Avaliacoes')); // Avaliação final: instrutores, banca e resultado
 
 // Material: a mesma página de cadastro serve ao gestor e ao professor
+// Área da banca avaliadora (/banca): membro convidado só vê a avaliação
+const LayoutBanca = lazy(() => import('./pages/banca/LayoutBanca'));
+const AvaliacaoDaBanca = lazy(() => import('./pages/banca/AvaliacaoDaBanca'));
 const TrilhasEquipe = lazy(() => import('./pages/equipe/TrilhasEquipe')); // Materiais e atividades, por trilha
 
 // Área do aluno (/aluno)
@@ -73,6 +78,7 @@ const SolicitacoesAluno = lazy(() => import('./pages/aluno/SolicitacoesAluno'));
 const LayoutProfessor = lazy(() => import('./pages/professor/LayoutProfessor'));
 const FazerChamada = lazy(() => import('./pages/professor/FazerChamada'));
 const MeuPonto = lazy(() => import('./pages/professor/MeuPonto'));
+const AvaliarTurma = lazy(() => import('./pages/professor/AvaliarTurma')); // Avaliação final dos alunos
 
 // Enquanto uma página pública baixa: espaço do tamanho da tela (não faz o rodapé "pular").
 // As páginas públicas são baixadas em segundo plano logo depois da primeira visita
@@ -193,6 +199,8 @@ const App: React.FC = () => {
                 <Route path="equipe" element={<AdminEquipe />} />
                 <Route path="solicitacoes" element={<AdminSolicitacoes />} />
                 <Route path="presenca-professores" element={<AdminPresencaProfessores />} />
+                <Route path="avaliacoes" element={<AdminAvaliacoes />} />
+                <Route path="membros" element={<AdminMembros />} />
                 <Route path="trilhas" element={<TrilhasEquipe />} />
                 {/* Endereços antigos: material e atividades agora ficam nas trilhas */}
                 <Route path="material" element={<Navigate to="/dashboard/trilhas" replace />} />
@@ -212,6 +220,7 @@ const App: React.FC = () => {
               >
                 <Route index element={<FazerChamada />} />
                 <Route path="ponto" element={<MeuPonto />} />
+                <Route path="avaliacao" element={<AvaliarTurma />} />
                 <Route path="trilhas" element={<TrilhasEquipe />} />
                 {/* Endereços antigos: material e atividades agora ficam nas trilhas */}
                 <Route path="atividades" element={<Navigate to="/professor/trilhas" replace />} />
@@ -238,6 +247,19 @@ const App: React.FC = () => {
               {/* Primeiro acesso do aluno: troca a senha padrão e completa os dados */}
               <Route path="/primeiro-acesso" element={<PrimeiroAcesso />} />
               <Route path="/dados-do-instrutor" element={<DadosDoInstrutor />} />
+
+              {/* Área da banca avaliadora (/banca): a avaliação e o perfil, nada mais */}
+              <Route
+                path="/banca"
+                element={
+                  <Suspense fallback={carregandoArea}>
+                    <LayoutBanca />
+                  </Suspense>
+                }
+              >
+                <Route index element={<AvaliacaoDaBanca />} />
+                <Route path="perfil" element={<Perfil />} />
+              </Route>
 
               {/* Link do convite do professor: ele cria a senha aqui */}
               <Route path="/definir-senha" element={<DefinirSenha />} />

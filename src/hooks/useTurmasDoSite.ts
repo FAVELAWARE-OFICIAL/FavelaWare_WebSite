@@ -6,10 +6,10 @@
 import { useEffect, useState } from 'react';
 
 import { turmas as turmasDoArquivo, type TurmaDoSite } from '../data/turmas';
-import { servicoSitePublico } from '../lib/sitePublico';
+import { servicoSitePublico, type AlunoAtualizado } from '../lib/sitePublico';
 
 export function useTurmasDoSite(): { turmas: TurmaDoSite[]; carregandoDoBanco: boolean } {
-  const [fotos, setFotos] = useState<Map<number, string | null>>(new Map());
+  const [fotos, setFotos] = useState<Map<number, AlunoAtualizado>>(new Map());
   const [novas, setNovas] = useState<TurmaDoSite[] | null>(null);
 
   useEffect(() => {

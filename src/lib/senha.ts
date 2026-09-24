@@ -9,6 +9,7 @@
  * - convite do instrutor (link do e-mail).
  */
 import { excecaoDeNegocio, excecaoDeSistema, sucesso, type ResultadoOperacao } from '../types';
+import { CODIGO_REGRA_DO_BANCO } from './banco';
 import { servicoSessao } from './sessao';
 import { supabase } from './supabase';
 
@@ -95,7 +96,10 @@ export class ServicoSenha {
   }
 
   /** Primeiro acesso do aluno: troca a senha padrão e grava nascimento e e-mail (libera a conta) */
-  async concluirPrimeiroAcesso(senha: string, dataNascimento: string, email: string): Promise<ResultadoOperacao> {
+  async concluirPrimeiroAcesso(
+    senha: string,
+    dados: { nome: string; dataNascimento: string; email: string },
+  ): Promise<ResultadoOperacao> {
     const troca = await supabase.auth.updateUser({ password: senha });
     if (troca.error) {
       console.error('[senha] primeiro acesso: falha ao trocar a senha', troca.error.code);
@@ -107,11 +111,13 @@ export class ServicoSenha {
     }
 
     const { error } = await supabase.rpc('concluir_primeiro_acesso', {
-      p_data_nascimento: dataNascimento,
-      p_email: email.trim(),
+      p_nome: dados.nome,
+      p_data_nascimento: dados.dataNascimento,
+      p_email: dados.email.trim(),
     });
     if (error) {
       console.error('[senha] primeiro acesso: falha ao salvar os dados', error.code);
+      if (error.code === CODIGO_REGRA_DO_BANCO && error.message) return excecaoDeNegocio(error.message);
       return excecaoDeSistema('A senha foi trocada, mas não foi possível salvar seus dados. Tente de novo.');
     }
     servicoSessao.esquecerPerfil(); // o perfil mudou (não precisa mais trocar a senha)
