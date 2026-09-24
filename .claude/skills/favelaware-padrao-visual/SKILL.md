@@ -12,9 +12,9 @@ abra o arquivo de referência da tabela abaixo e copie o que já existe.
 | Vai fazer                     | Copie de                                                                    |
 | ----------------------------- | --------------------------------------------------------------------------- |
 | Página interna nova           | `src/pages/Contato.tsx` (a mais enxuta)                                     |
-| Página interna com lista      | `src/pages/Aulas.tsx` (os dados moram em `src/data/aulas.ts`, não no JSX)   |
+| Página interna com lista      | `src/pages/ComoFazemos.tsx` (os dados moram em `src/data/trilhas.ts`, não no JSX) |
 | Formulário                    | `src/pages/Login.tsx` (form completo com envio)                             |
-| Grade de cards clicáveis      | `src/pages/Material.tsx` / `src/pages/Turmas.tsx`                           |
+| Grade de cards clicáveis      | `src/pages/Turmas.tsx`                                                      |
 | Foto ampliada                 | `src/components/Lightbox.tsx` (Esc, foco preso e devolvido, scroll travado) |
 | Link com animação             | `src/components/MotionLink.tsx` (hover trava se o pai re-renderizar durante ele — ver cabeçalho) |
 | Ícone de marca / rede social  | `src/components/RedesSociais.tsx` (`<LinksRedesSociais fundo="roxo" \| "claro">`) |
@@ -47,7 +47,7 @@ adicione o tom à config.
 
 ## Banner e logo da marca
 
-`public/imgs/backgrounds/fundo.png` é o **banner oficial** — foto da comunidade com
+`public/imgs/backgrounds/fundo.webp` é o **banner oficial** — foto da comunidade com
 código binário sobreposto, o mesmo do site https://favelaware.animahub.com.br.
 
 **Use como fundo de verdade, nunca como textura escondida:**
@@ -56,7 +56,7 @@ código binário sobreposto, o mesmo do site https://favelaware.animahub.com.br.
 <div
   className="relative bg-[#8bc53f]"        {/* só cor de reserva */}
   style={{
-    backgroundImage: "url('/imgs/backgrounds/fundo.png')",
+    backgroundImage: "url('/imgs/backgrounds/fundo.webp')",
     backgroundSize: 'cover',
     backgroundPosition: 'center',
   }}
@@ -215,6 +215,43 @@ Seção: `<motion.section {...fadeInUp}>`. Lista: container com `variants={stagg
 - **Comentário didático em PT-BR** é o estilo da casa (o site é material de ensino):
   cabeçalho `/** ==== NOME ==== */` no topo do arquivo e comentário curto explicando o
   porquê de cada bloco. Mantenha esse tom — densidade parecida com a dos arquivos vizinhos.
+
+## Áreas restritas (gestor e professor) — design system próprio
+
+`/dashboard` e `/professor` **não** seguem a anatomia do site acima: são área de trabalho,
+sem Navbar/Footer, fundo cinza, cartões brancos, sem animação de entrada.
+
+**Fonte única:** `src/components/admin/designSystem.ts` (tokens) e
+`src/components/admin/Ui.tsx` (peças). Não escreva classe solta de fonte, espaçamento,
+borda ou foco nessas telas: use o token ou a peça.
+
+| Precisa de                  | Use                                                            |
+| --------------------------- | -------------------------------------------------------------- |
+| Moldura (menu + topo)       | `Moldura` (menu lateral recolhível, gaveta no celular)         |
+| Páginas relacionadas        | Subitens no menu lateral (`filhos` em `ItemMenu`); nada de abas no topo da página |
+| Cartão / seção              | `Cartao` (`titulo`, `descricao`, `acoes`)                       |
+| Número em destaque          | `Indicador`                                                    |
+| Botão                       | `Botao` (`variante`: primario/secundario/perigo; `tamanho`: normal/pequeno) |
+| Filtros, ordem e ação da lista | `BarraDeFiltros` (`extras` para "Ordenar por", `acoes` para "+ Novo…") — tudo na mesma caixa, sem linha solta no topo |
+| Formulário em janela        | `Janela` + `classeCampo` / `classeRotulo`                      |
+| Sucesso / erro              | `Aviso`                                                        |
+| Lista vazia                 | `Vazio`                                                        |
+| Esperando dados ou gravação | `Carregamento` (pincel pintando a logo; `modo="sobreposto"` por cima de janela) + `useCarregamentoCompleto` / `aguardarCicloCompleto`: a pintura sempre termina antes de mostrar o conteúdo |
+| Foto de aluno               | `Avatar` (sem foto → `sem-foto.webp`)                          |
+
+Escala (tokens em `designSystem.ts`):
+
+- **Texto:** `tituloPagina` (lg) só na barra superior; `titulo` (sm semibold) em cartão e
+  janela; `corpo` (sm); `destaque` (sm medium) para nomes; `apoio` (xs cinza) para datas,
+  logins e contagens; `rotulo` (xs) em campo; `numero` (3xl) em indicador.
+- **Espaço:** blocos da página `mb-6`/`gap-6`; dentro do cartão `p-5`; campos e botões
+  `gap-3`; formulário `space-y-4`; lista de cartões `space-y-3`.
+- **Forma:** tudo `rounded-lg`; só selo e avatar são `rounded-full`.
+- **Cor:** cinza para estrutura; verde da marca para ação principal e item ativo;
+  vermelho para erro/perigo; âmbar para atenção; roxo da marca em gráficos e iniciais.
+- **Foco:** token `foco` em todo clicável.
+- **Celular:** tabela larga vira lista de cartões (`md:hidden` / `hidden md:block`);
+  grade de chamada rola para o lado dentro do cartão; janela sobe do pé da tela.
 
 ## Ao terminar
 

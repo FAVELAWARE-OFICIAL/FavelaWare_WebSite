@@ -27,7 +27,7 @@ const Hero = () => {
       style={{
         // Banner oficial do FavelaWare (foto da comunidade + código binário).
         // Sem blend com gradiente: o blend "overlay" lavava a imagem e sumia com a textura.
-        backgroundImage: "url('/imgs/backgrounds/fundo.png')",
+        backgroundImage: "url('/imgs/backgrounds/fundo.webp')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
