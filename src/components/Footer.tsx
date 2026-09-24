@@ -30,8 +30,7 @@ import { LinksRedesSociais } from './RedesSociais';
 // Links rápidos: nome exibido e rota da página (mesmas rotas da Navbar)
 const linksRapidos = [
   { nome: 'Sobre', rota: '/sobre' },
-  { nome: 'Aulas', rota: '/aulas' },
-  { nome: 'Material', rota: '/material' },
+  { nome: 'Como fazemos', rota: '/como-fazemos' },
   { nome: 'Galeria', rota: '/galeria' },
   { nome: 'Contato', rota: '/contato' },
 ];

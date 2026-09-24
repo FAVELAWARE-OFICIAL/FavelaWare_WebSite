@@ -31,14 +31,14 @@ const Gallery: React.FC = () => {
       title: 'Abertura do Projeto 2022',
       description: 'Abertura do projeto com a professora Samara, Rafaela, Tatiana e Iracema, os parceiros da Mundiale, das Obras Pavonianas e alunos',
       category: 'Evento',
-      image: '/imgs/gallery/AberturaDoProjeto2022.jpg',
+      image: '/imgs/gallery/AberturaDoProjeto2022.webp',
     },
     {
       id: 2,
       title: 'Formatura 2022',
       description: 'Formatura do projeto FavelaWare na Mundiale - 2022',
       category: 'Formatura',
-      image: '/imgs/gallery/Formatura2022.jpg',
+      image: '/imgs/gallery/Formatura2022.webp',
     },
   ];
 

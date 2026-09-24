@@ -156,13 +156,22 @@ pagamento) vira aviso acumulado, mostrado num ponto único.
 Domínio em português: classes, métodos, funções, variáveis, constantes,
 enums, mensagens, logs, regras e nomes de serviço.
 
-Inglês só no padrão da linguagem/framework/protocolo (`__init__`, `getenv`,
-`request`, `middleware`, `useState`, `className`) e em **nome de tabela e
-coluna do banco**, valor de enum do banco, chave de jsonb gravado e API
-externa. Não traduza conceito técnico padronizado (`payload`, `token`,
-`hash`).
+**O banco também é em português**: tabela, coluna, view, função, tipo, valor
+de enum, índice, constraint, política e chave de jsonb. Grafia `snake_case`,
+só ASCII, sem acento nem cedilha (`cobrancas`, `data_vencimento`), porque
+identificador com acento obriga aspas em toda consulta.
 
-**Se o nome viaja pela rede ou está gravado em disco, preserve.**
+Inglês só no padrão da linguagem/framework/protocolo (`__init__`, `getenv`,
+`request`, `middleware`, `useState`, `className`), no que a plataforma
+gerencia (os esquemas `auth` e `storage` do Supabase, por exemplo) e em API
+externa. Não traduza conceito técnico padronizado (`id`, `url`, `email`,
+`payload`, `token`, `hash`).
+
+**Nome gravado só muda junto com a migration que o renomeia.** Enquanto o
+banco devolver `due_date`, o código lê `due_date`: traduzir no código um nome
+que ainda viaja pela rede ou está gravado em disco quebra o contrato. Banco
+legado em inglês se traduz por migração planejada, não por renomeação no
+código.
 
 Ao renomear em massa: substitua **do mais específico para o mais genérico**,
 senão a regra curta corrompe a longa. E não renomeie acesso a propriedade,

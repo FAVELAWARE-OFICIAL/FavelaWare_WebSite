@@ -4,13 +4,13 @@
  * ============================================
  *
  * Reúne todas as pessoas que já formaram a equipe do FavelaWare,
- * agrupadas pelo ano em que participaram.
+ * agrupadas pela edição em que participaram.
  *
  * Os dados vêm de src/data/hallDaFama.ts.
  *
  * Conceitos importantes:
- * - useState: guarda qual ano está selecionado nos botões de filtro
- * - Filtro: mostra só as pessoas do ano escolhido (ou todas)
+ * - useState: guarda qual edição está selecionada nos botões de filtro
+ * - Filtro: mostra só as pessoas da edição escolhida (ou todas)
  */
 
 import { useState } from 'react';
@@ -18,14 +18,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { anos, membros, membrosDoAno } from '../data/hallDaFama';
+import { edicoes, membrosDaEdicao, totalDePessoas } from '../data/hallDaFama';
+import { LinkLinkedin } from '../components/RedesSociais';
 
 const HallDaFama: React.FC = () => {
-  // 'todos' mostra a linha do tempo inteira; um ano filtra só aquela edição
-  const [anoSelecionado, setAnoSelecionado] = useState<string>('todos');
+  // 'todos' mostra a linha do tempo inteira; uma edição filtra só ela
+  const [edicaoSelecionada, setEdicaoSelecionada] = useState<string>('todos');
 
-  // Quais anos desenhar: todos, ou só o escolhido
-  const anosVisiveis = anoSelecionado === 'todos' ? anos : [anoSelecionado];
+  // Quais edições desenhar: todas, ou só a escolhida
+  const edicoesVisiveis = edicaoSelecionada === 'todos' ? edicoes : edicoes.filter((e) => e.id === edicaoSelecionada);
 
   const fadeInUp = {
     initial: { opacity: 0, y: 20 },
@@ -52,7 +53,7 @@ const HallDaFama: React.FC = () => {
           >
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">HALL DA FAMA</h1>
             <p className="text-xl text-white/80 max-w-3xl mx-auto">
-              {membros.length} pessoas que construíram o FavelaWare ao longo das edições
+              {totalDePessoas} pessoas que construíram o FavelaWare ao longo das edições
             </p>
           </motion.div>
         </div>
@@ -61,13 +62,13 @@ const HallDaFama: React.FC = () => {
       {/* Conteúdo */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
 
-        {/* Filtro por ano */}
+        {/* Filtro por edição */}
         <div className="flex flex-wrap justify-center gap-3 mb-16">
           <button
-            onClick={() => setAnoSelecionado('todos')}
-            aria-pressed={anoSelecionado === 'todos'}
+            onClick={() => setEdicaoSelecionada('todos')}
+            aria-pressed={edicaoSelecionada === 'todos'}
             className={`min-h-[44px] px-6 rounded-xl font-bold transition-all ${
-              anoSelecionado === 'todos'
+              edicaoSelecionada === 'todos'
                 ? 'bg-[#2d2a5f] text-white shadow-lg'
                 : 'bg-white text-gray-600 border-2 border-gray-200 hover:border-favela-green-500'
             }`}
@@ -75,31 +76,33 @@ const HallDaFama: React.FC = () => {
             Todos
           </button>
 
-          {anos.map((ano) => (
+          {edicoes.map((edicao) => (
             <button
-              key={ano}
-              onClick={() => setAnoSelecionado(ano)}
-              aria-pressed={anoSelecionado === ano}
+              key={edicao.id}
+              onClick={() => setEdicaoSelecionada(edicao.id)}
+              aria-pressed={edicaoSelecionada === edicao.id}
               className={`min-h-[44px] px-6 rounded-xl font-bold transition-all ${
-                anoSelecionado === ano
+                edicaoSelecionada === edicao.id
                   ? 'bg-[#2d2a5f] text-white shadow-lg'
                   : 'bg-white text-gray-600 border-2 border-gray-200 hover:border-favela-green-500'
               }`}
             >
-              {ano}
+              {edicao.nome}
             </button>
           ))}
         </div>
 
-        {/* Um bloco por ano */}
+        {/* Um bloco por edição */}
         <AnimatePresence mode="wait">
-          <motion.div key={anoSelecionado} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            {anosVisiveis.map((ano) => (
-              <motion.section key={ano} {...fadeInUp} className="mb-16">
-                <div className="flex items-center gap-4 mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900">Em {ano}</h2>
+          <motion.div key={edicaoSelecionada} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {edicoesVisiveis.map((edicao) => (
+              <motion.section key={edicao.id} {...fadeInUp} className="mb-16">
+                <div className="flex flex-wrap items-center gap-4 mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900">
+                    {edicao.nome} <span className="text-xl font-semibold text-gray-500">({edicao.periodo})</span>
+                  </h2>
                   <span className="px-3 py-1 bg-favela-green-100 text-favela-green-700 text-sm font-bold rounded-full">
-                    {membrosDoAno(ano).length} pessoas
+                    {membrosDaEdicao(edicao).length} pessoas
                   </span>
                   <div className="flex-1 h-1 bg-gradient-to-r from-favela-green-500 to-transparent rounded-full" />
                 </div>
@@ -111,9 +114,9 @@ const HallDaFama: React.FC = () => {
                   viewport={{ once: true }}
                   className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8"
                 >
-                  {membrosDoAno(ano).map((pessoa) => (
+                  {membrosDaEdicao(edicao).map((pessoa) => (
                     <motion.div
-                      key={`${ano}-${pessoa.nome}`}
+                      key={`${edicao.id}-${pessoa.nome}`}
                       variants={fadeInUp}
                       whileHover={{ y: -8 }}
                       className="flex flex-col items-center text-center"
@@ -134,6 +137,8 @@ const HallDaFama: React.FC = () => {
                       {pessoa.organizacao && (
                         <p className="text-sm text-pink-500 font-semibold">{pessoa.organizacao}</p>
                       )}
+                      {/* LinkedIn só aparece para quem tem o perfil cadastrado em data/hallDaFama.ts */}
+                      {pessoa.linkedin && <LinkLinkedin nome={pessoa.nome} url={pessoa.linkedin} />}
                     </motion.div>
                   ))}
                 </motion.div>

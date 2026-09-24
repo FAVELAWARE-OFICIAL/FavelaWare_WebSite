@@ -21,6 +21,8 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { MotionLink } from '../components/MotionLink';
+import { equipeEdicaoIII } from '../data/hallDaFama';
+import { LinkLinkedin } from '../components/RedesSociais';
 
 const Sobre = () => {
   // Ordem cronológica, da esquerda para a direita, como no cronograma do site
@@ -37,31 +39,15 @@ const Sobre = () => {
   ];
 
   const idealizadores = [
-    { nome: 'Gustavo Pena', cargo: 'Idealizador', organizacao: 'Mundiale', foto: '/imgs/team/gustavo.png' },
-    { nome: 'Cristiane de Ávila', cargo: 'Idealizadora', organizacao: 'Mundiale', foto: '/imgs/team/cristiane.png' },
-    { nome: 'Diomar', cargo: 'Idealizador', organizacao: 'AOPA', foto: '/imgs/team/diomar.png' },
-    { nome: 'Rafaela Moreira', cargo: 'Idealizadora e Orientadora', organizacao: 'Ânima', foto: '/imgs/team/rafaela.png' },
-    { nome: 'Samara Leal', cargo: 'Idealizadora', organizacao: 'Ânima', foto: '/imgs/team/samara.png' }
-  ];
+    { nome: 'Gustavo Pena', cargo: 'Idealizador', organizacao: 'Mundiale', foto: '/imgs/team/gustavo.webp' },
+    { nome: 'Cristiane de Ávila', cargo: 'Idealizadora', organizacao: 'Mundiale', foto: '/imgs/team/cristiane.webp' },
+    { nome: 'Diomar', cargo: 'Idealizador', organizacao: 'AOPA', foto: '/imgs/team/diomar.webp' },
+    { nome: 'Rafaela Moreira', cargo: 'Idealizadora e Orientadora', organizacao: 'Ânima', foto: '/imgs/team/rafaela.webp', linkedin: 'https://www.linkedin.com/in/rafaelapcmoreira/' },
+    { nome: 'Samara Leal', cargo: 'Idealizadora', organizacao: 'Ânima', foto: '/imgs/team/samara.webp' }
+  ].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')); // sempre em ordem alfabética
 
-  // Equipe da 3ª edição — nomes, cargos e organizações conforme a página SOBRE
-  // do site oficial. As fotos estão em public/imgs/team (ver o README de lá).
-  const equipeEdicaoAtual = [
-    { nome: 'Joyce', cargo: 'Coordenadora', organizacao: 'Mundiale', foto: '/imgs/team/joyce.png' },
-    { nome: 'Nathalia Mazziero', cargo: 'Comunicação', organizacao: 'Mundiale', foto: '/imgs/team/nathalia.png' },
-    { nome: 'Ivan Santos', cargo: 'Coordenador', organizacao: 'AOPA', foto: '/imgs/team/ivan.png' },
-    { nome: 'Alinne Viegas', cargo: 'Psicóloga', organizacao: 'AOPA', foto: '/imgs/team/alinne.png' },
-    { nome: 'Letícia Sales', cargo: 'Assistente', organizacao: 'AOPA', foto: '/imgs/team/leticia.png' },
-    { nome: 'Raquel de Matos', cargo: 'Curadoria de Material', organizacao: 'Ânima', foto: '/imgs/team/raquel.png' },
-    { nome: 'Gabriel Evaristo', cargo: 'Curadoria de Material', organizacao: 'Ânima', foto: '/imgs/team/gabriel.png' },
-    { nome: 'Gabrielle Soares', cargo: 'Editora de Conteúdo', organizacao: 'Ânima', foto: '/imgs/team/gabrielle.png' },
-    { nome: 'Lorraine Fernandes', cargo: 'Designer gráfico', organizacao: 'Ânima', foto: '/imgs/team/lorraine.png' },
-    { nome: 'Lucelho Silva', cargo: 'Líder Discente', organizacao: 'Ânima', foto: '/imgs/team/lucelho.png' },
-    { nome: 'Diego Manini', cargo: 'Instrutor Discente', organizacao: 'Ânima', foto: '/imgs/team/diego.png' },
-    { nome: 'Pedro Soares', cargo: 'Instrutor Discente', organizacao: 'Ânima', foto: '/imgs/team/pedro.png' },
-    { nome: 'Miguel Alchaar', cargo: 'Instrutor Discente', organizacao: 'Ânima', foto: '/imgs/team/miguel.png' },
-    { nome: 'Leandro Cavalcante', cargo: 'Instrutor Discente', organizacao: 'Ânima', foto: '/imgs/team/leandro.png' },
-  ];
+  // A equipe da 3ª edição (equipeEdicaoIII) mora em src/data/hallDaFama.ts:
+  // a mesma lista abastece esta página e a 3ª edição do hall.
 
   const propositos = [
     {
@@ -86,33 +72,40 @@ const Sobre = () => {
     {
       nome: 'Mundiale',
       descricao: 'Com a união de pessoas, tecnologia e uma metodologia própria, a Mundiale revoluciona a relação entre marcas e consumidores por meio de canais digitais, proporcionando interações mais humanas, assertivas e fluidas.',
-      logo: '/imgs/partners/Mundiale.png',
+      logo: '/imgs/partners/Mundiale.webp',
       link: 'https://mundiale.com.br'
     },
     {
       nome: 'AOPA',
       descricao: 'A AOPA é uma instituição social católica dos Religiosos Pavonianos, que, pela experiência de seu fundador, São Ludovico Pavoni, dedica-se ao atendimento integral de crianças e adolescentes.',
-      logo: '/imgs/partners/AOPA.png',
+      logo: '/imgs/partners/AOPA.webp',
       link: 'https://www.pavonianos.org.br/unidade/aopabh'
     },
     {
       nome: 'Ecossistema Ânima Educação',
       descricao: 'O Ecossistema Ânima Educação é uma das maiores organizações educacionais privadas de ensino superior do Brasil, com cerca de 330 mil estudantes e 18 mil educadores e educadoras.',
-      logo: '/imgs/partners/ecossistema ânima.png',
+      logo: '/imgs/partners/ecossistema ânima.webp',
       link: 'https://animaeducacao.com.br'
     },
     {
       nome: 'Una Cristiano Machado',
       descricao: 'A Una Cristiano Machado é uma das instituições da Ânima com compromisso de oferecer educação de qualidade, focada na formação acadêmica sólida e inovadora.',
-      logo: '/imgs/partners/Una Cristiano Machado.png',
+      logo: '/imgs/partners/Una Cristiano Machado.webp',
       link: 'https://una.br'
+    },
+    {
+      // O site oficial não traz descrição do Ânima Lab (só o rodapé "Site criado
+      // pela equipe Ânima Hub"): texto provisório, a confirmar com a coordenação
+      nome: 'Ânima Lab',
+      descricao: 'O Ânima Lab faz parte do Ecossistema Ânima Educação. A equipe Ânima Hub criou o site oficial do FavelaWare.',
+      logo: '/imgs/partners/ânima.webp'
     },
     {
       nome: 'REDE TRANSFORMAR',
       descricao: 'A REDE TRANSFORMAR é uma organização sem fins lucrativos que desenvolve programas, projetos e ações de assessoramento, defesa e garantia de direitos sociais.',
-      logo: '/imgs/partners/Rede Transformar.jpg'
+      logo: '/imgs/partners/Rede Transformar.webp'
     }
-  ];
+  ].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })); // sempre em ordem alfabética
 
   return (
     <div className="min-h-screen bg-white">
@@ -300,6 +293,7 @@ const Sobre = () => {
                 <p className="text-sm font-bold text-[#8bc53f] mb-1">{pessoa.cargo}</p>
                 <p className="text-base font-bold text-[#2d2a5f]">{pessoa.nome}</p>
                 <p className="text-sm text-pink-500 font-semibold">{pessoa.organizacao}</p>
+                {pessoa.linkedin && <LinkLinkedin nome={pessoa.nome} url={pessoa.linkedin} />}
               </motion.div>
             ))}
           </div>
@@ -319,7 +313,7 @@ const Sobre = () => {
           </motion.h2>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
-            {equipeEdicaoAtual.map((pessoa, index) => (
+            {equipeEdicaoIII.map((pessoa, index) => (
               <motion.div
                 key={pessoa.nome}
                 className="flex flex-col items-center text-center"
@@ -340,6 +334,7 @@ const Sobre = () => {
                 <p className="text-sm font-bold text-[#8bc53f] mb-1">{pessoa.cargo}</p>
                 <p className="text-base font-bold text-[#2d2a5f]">{pessoa.nome}</p>
                 <p className="text-sm text-pink-500 font-semibold">{pessoa.organizacao}</p>
+                {pessoa.linkedin && <LinkLinkedin nome={pessoa.nome} url={pessoa.linkedin} />}
               </motion.div>
             ))}
           </div>

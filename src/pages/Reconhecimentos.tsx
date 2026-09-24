@@ -68,9 +68,9 @@ const Reconhecimentos: React.FC = () => {
       ano: '2023',
       link: 'https://www.abrhbrasil.org.br/psh/',
       imagens: [
-        '/imgs/gallery/premiacao-01.jpg',
-        '/imgs/gallery/premiacao-02.jpg',
-        '/imgs/gallery/premiacao-03.jpg',
+        '/imgs/gallery/premiacao-01.webp',
+        '/imgs/gallery/premiacao-02.webp',
+        '/imgs/gallery/premiacao-03.webp',
       ],
       icone: '🏆',
     },

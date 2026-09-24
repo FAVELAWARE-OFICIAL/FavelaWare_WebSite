@@ -1,624 +1,228 @@
 /**
  * ============================================
- * PÁGINA COMO FAZEMOS (TRILHAS DE ENSINO)
+ * PÁGINA COMO FAZEMOS (TRILHAS E CRONOGRAMA)
  * ============================================
  *
- * Esta página detalha o conteúdo programático do projeto.
- * Mostra todas as trilhas de ensino e edições anteriores.
+ * Mostra as trilhas de ensino da edição atual e, dentro de cada módulo, o
+ * que se aprende e as aulas (data, tema e instrutores). Antes isso ficava em
+ * duas páginas (Como Fazemos e Aulas) que repetiam o mesmo conteúdo; agora é
+ * uma só, compacta: todo módulo começa fechado e abre com um clique.
  *
- * Conteúdo:
- * - Trilhas de ensino (Cultura, Desenvolvimento Web, Forge, etc)
- * - Módulos de cada trilha com duração e tópicos
- * - Trilhas das edições anteriores (cada botão abre/fecha as trilhas daquela edição)
+ * Os dados ficam em src/data/trilhas.ts: para mudar uma aula, edite só lá.
+ *
+ * Conceitos importantes:
+ * - useState com Set: guarda quais módulos estão abertos
+ * - aria-expanded / aria-controls: o leitor de tela sabe que o botão abre
+ *   o painel logo abaixo
  */
 
-// Importa ferramenta para criar estados
 import { useState } from 'react';
-
-// Importa ferramentas de animação
 import { motion } from 'framer-motion';
-
-// Importa componentes reutilizáveis
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { edicoesAnteriores, trilhasAtuais, type Modulo, type Trilha } from '../data/trilhas';
 
-// Formato de uma trilha: título, carga horária total e módulos com seus tópicos
-interface Trilha {
-  id: number;
-  titulo: string;
-  horas: string;
-  modulos: { nome: string; duracao: string; topicos: string[] }[];
-}
+/** Seta que gira quando o módulo abre (decorativa) */
+const Seta: React.FC<{ aberta: boolean }> = ({ aberta }) => (
+  <svg
+    className={`h-5 w-5 shrink-0 text-[#2d2a5f] transition-transform duration-200 ${aberta ? 'rotate-180' : ''}`}
+    viewBox="0 0 20 20"
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+  </svg>
+);
+
+/** Conteúdo de um módulo aberto: o que se aprende e as aulas */
+const DetalheDoModulo: React.FC<{ modulo: Modulo }> = ({ modulo }) => {
+  const temTopicos = modulo.topicos.length > 0;
+  const temAulas = (modulo.aulas?.length ?? 0) > 0;
+  return (
+    <div className={`grid grid-cols-1 gap-6 px-4 pb-5 pt-1 md:px-6 ${temTopicos && temAulas ? 'lg:grid-cols-2' : ''}`}>
+      {temTopicos && (
+        <div>
+          <p className="mb-2 text-sm font-bold uppercase tracking-wide text-[#8bc53f]">O que se aprende</p>
+          <ul className="ml-5 space-y-1.5">
+            {modulo.topicos.map((topico) => (
+              <li
+                key={topico}
+                className="relative text-[#2d2a5f] before:absolute before:left-[-16px] before:top-[9px] before:h-2 before:w-2 before:rounded-full before:bg-[#8bc53f] before:content-['']"
+              >
+                {topico}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {temAulas && (
+        <div>
+          <p className="mb-2 text-sm font-bold uppercase tracking-wide text-pink-500">Aulas</p>
+          <ol className="space-y-2">
+            {/* Há aulas iguais (ex.: "2026 - Intervenção..."): o índice é a chave estável */}
+            {modulo.aulas!.map((aula, i) => (
+              <li key={i} className="rounded-lg bg-gray-50 px-3 py-2">
+                <p className="font-semibold text-[#2d2a5f]">
+                  <span className="mr-2 whitespace-nowrap text-sm font-bold text-pink-500">{aula.data}</span>
+                  {aula.titulo}
+                </p>
+                {aula.detalhes.map((detalhe) => (
+                  <p key={detalhe} className="text-sm text-gray-600">{detalhe}</p>
+                ))}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+      {modulo.nota && <p className="text-sm italic text-gray-600">{modulo.nota}</p>}
+      {!temTopicos && !temAulas && !modulo.nota && <p className="text-sm text-gray-600">Sem detalhes cadastrados.</p>}
+    </div>
+  );
+};
 
 const ComoFazemos = () => {
+  // Módulos abertos ("trilha:modulo"); começa tudo fechado, para a página ficar compacta
+  const [abertos, setAbertos] = useState<Set<string>>(() => new Set());
   // Qual edição anterior está aberta no acordeão (null = nenhuma)
   const [edicaoAberta, setEdicaoAberta] = useState<string | null>(null);
 
-  // Tópicos de JavaScript: iguais na trilha atual e na Edição II
-  const topicosJavaScript = [
-    'Variáveis, concatenação',
-    'Operadores (aritméticos, relacionais, lógico, ternário)',
-    'Estrutura Condicional (if-else)',
-    'Estrutura Condicional (switch-case)',
-    'Array',
-    'Estrutura de repetição (while)',
-    'Estrutura de repetição (do-while)',
-    'Estrutura de repetição (for)',
-    'Funções',
-    'Classes e objetos',
-    'Desenvolvimento do Projeto'
-  ];
+  const alternar = (chave: string) =>
+    setAbertos((atual) => {
+      const novo = new Set(atual);
+      if (novo.has(chave)) novo.delete(chave);
+      else novo.add(chave);
+      return novo;
+    });
 
-  const trilhas: Trilha[] = [
-    {
-      id: 1,
-      titulo: '1ª TRILHA: CULTURA E ENCANTAMENTO',
-      horas: '60 HORAS',
-      modulos: [
-        {
-          nome: 'Inclusão: Mundo Digital',
-          duracao: '18 horas',
-          topicos: [
-            'Acessar computador',
-            'Onde buscar os recursos',
-            'Conceitos de hardware e software',
-            'Uso de e-mail e Ferramentas Google'
-          ]
-        },
-        {
-          nome: 'Pensamento Lógico',
-          duracao: '33 horas',
-          topicos: [
-            'Introdução ao pensamento lógico',
-            'Resolução de problemas de modo geral',
-            'Ferramentas que possibilitem o desenvolvimento lógico',
-            'Lógica de programação e algoritmos',
-            'Correlacionando com Fluxograma',
-            'Git e GitHub'
-          ]
-        }
-      ]
-    },
-    {
-      id: 2,
-      titulo: '2ª TRILHA: DESENVOLVIMENTO WEB',
-      horas: '152 HORAS',
-      modulos: [
-        {
-          nome: 'HTML',
-          duracao: '33 horas',
-          topicos: [
-            'O que é HTML',
-            'Cabeçalhos, parágrafos, formatação',
-            'Lista ordenada e não ordenada, imagens',
-            'Links, formulários',
-            'Desenvolvimento do desafio HTML',
-            'Exercícios Práticos'
-          ]
-        },
-        {
-          nome: 'Introdução Forge Chatbot e IA I',
-          duracao: '18 horas',
-          topicos: [
-            'Introdução ao desenvolvimento de IA em ChatBot',
-            'Chatbot Analytics',
-            'Introdução a automação e web-crawlers, RPA, Diferença entre automação e automatização',
-            'Forge'
-          ]
-        },
-        {
-          nome: 'CSS',
-          duracao: '36 horas',
-          topicos: [
-            'Introdução',
-            'Seletores, classes, ids, tags',
-            'Formatação, posicionamentos',
-            'Fontes, bordas, cores',
-            'Projeto - Definição e Esboço'
-          ]
-        },
-        {
-          nome: 'LÓGICA DE PROGRAMAÇÃO',
-          duracao: '25 horas',
-          topicos: [
-            'Lógica de programação e algoritmos',
-            'Correlacionando com Fluxograma (Moqups e Draw.io)',
-            'Desenvolvimento do Projeto'
-          ]
-        },
-        {
-          nome: 'JAVASCRIPT',
-          duracao: '63 horas',
-          topicos: topicosJavaScript
-        },
-        {
-          nome: 'JAVASCRIPT PARA WEB',
-          duracao: '36 horas',
-          topicos: [
-            'O que é a DOM e Ferramentas de desenvolvedor',
-            'Acessando elementos da página',
-            'Manipulando valores de input',
-            'Trabalhando com estilos via JavaScript',
-            'Desenvolvimento do Projeto'
-          ]
-        },
-        {
-          nome: 'Trabalhando com APIs',
-          duracao: '46 horas',
-          topicos: [
-            'O que é API',
-            'O que é JSON',
-            'Como funciona requisições HTTP',
-            'Consumindo uma API (GET)',
-            'Conhecendo outros métodos',
-            'Inserindo dados via API',
-            'Banco de Dados',
-            'Desenvolvimento do Projeto'
-          ]
-        }
-      ]
-    },
-    {
-      id: 3,
-      titulo: '3ª TRILHA: FORGE',
-      horas: '36 HORAS',
-      modulos: [
-        {
-          nome: 'Introdução',
-          duracao: '4 horas',
-          topicos: [
-            'Introdução a automação e web-crawlers',
-            'RPA',
-            'Diferença entre automação e automatização'
-          ]
-        },
-        {
-          nome: 'Tutorial Básico de Forge',
-          duracao: '6 horas',
-          topicos: [
-            'Editar blocos de entrada e saída',
-            'Blocos de ações básicas'
-          ]
-        },
-        {
-          nome: 'Prática',
-          duracao: '14 horas',
-          topicos: [
-            'Desenvolvimento de bot',
-            'Desafio Bot Individual'
-          ]
-        }
-      ]
-    },
-    {
-      id: 4,
-      titulo: 'INTERVENÇÃO PSICOLÓGICA',
-      horas: '15 HORAS',
-      modulos: [
-        {
-          nome: 'Intervenção Psicológica em grupo',
-          duracao: '15 horas',
-          topicos: []
-        }
-      ]
-    },
-    {
-      id: 5,
-      titulo: 'OFICINAS',
-      horas: '15 HORAS',
-      modulos: [
-        {
-          nome: 'Oficina de Currículo e LinkedIn',
-          duracao: '3 horas',
-          topicos: []
-        },
-        {
-          nome: 'Oficina Softskills: Mentalidade de Crescimento e Autogestão',
-          duracao: '3 horas',
-          topicos: []
-        },
-        {
-          nome: 'Oficina Softskills',
-          duracao: '3 horas',
-          topicos: []
-        },
-        {
-          nome: 'Oficina Softskills: Comportamento em Entrevistas e Networking',
-          duracao: '3 horas',
-          topicos: []
-        },
-        {
-          nome: 'Pitch de Projeto: Como Apresentar Suas Ideias',
-          duracao: '3 horas',
-          topicos: []
-        }
-      ]
-    }
-  ];
-
-  // Trilhas das edições anteriores, conforme o site oficial.
-  // As horas da Edição I estão como no original (a soma dos módulos não bate com o total).
-  const edicoesAnteriores: { id: string; nome: string; trilhas: Trilha[] }[] = [
-    {
-      id: 'edicao-1',
-      nome: 'TRILHAS - EDIÇÃO I',
-      trilhas: [
-        {
-          id: 1,
-          titulo: '1ª TRILHA: CULTURA E ENCANTAMENTO',
-          horas: '90 HORAS',
-          modulos: [
-            {
-              nome: 'Carreira Tech',
-              duracao: '3 horas',
-              topicos: [
-                'A carreira em TI (Ânima Transformação Digital e parceiros)',
-                'Como montar um currículo; Trabalho em equipe; Entrevistas de emprego e oratória'
-              ]
-            },
-            {
-              nome: 'Mídias Digitais',
-              duracao: '3 horas',
-              topicos: ['Ferramentas essenciais para o trabalho']
-            },
-            {
-              nome: 'Inclusão: Mundo Digital',
-              duracao: '6 horas',
-              topicos: ['Acessar computador; Conceitos de hardware e software']
-            },
-            {
-              nome: 'Pensamento Lógico',
-              duracao: '6 horas',
-              topicos: ['Uso de ferramentas e jogos para desenvolver o raciocínio lógico']
-            },
-            {
-              nome: 'Low Code',
-              duracao: '9 horas',
-              topicos: ['Criação de histórias, jogos e animações usando ferramentas lúdicas (Scratch/Construct 3)']
-            },
-            {
-              nome: 'Lógica de programação básica',
-              duracao: '48 horas',
-              topicos: ['Fluxograma, algoritmos, operadores, estrutura de decisão, estrutura de repetição, estrutura de dados simples - Portugol/Python']
-            },
-            {
-              nome: 'App Inventor/Bubble.io',
-              duracao: '9 horas',
-              topicos: ['Ferramentas de programação baseadas em blocos para construir aplicativos funcionais para dispositivos móveis']
-            },
-            {
-              nome: 'Desenvolvimento de Projeto',
-              duracao: '6 horas',
-              topicos: ['Aplicação do conhecimento adquirido na trilha']
-            }
-          ]
-        },
-        {
-          id: 2,
-          titulo: '2ª TRILHA: DESENVOLVIMENTO WEB (INICIAL)',
-          horas: '80 HORAS',
-          modulos: [
-            {
-              nome: 'Front-end',
-              duracao: '40 horas',
-              topicos: ['Criação de páginas de site usando Html; CSS; Java Script']
-            },
-            {
-              nome: 'Back end',
-              duracao: '40 horas',
-              topicos: [
-                'Banco de dados relacional',
-                'Ambiente de execução Node JS'
-              ]
-            },
-            {
-              nome: 'WitForce',
-              duracao: '12 horas',
-              topicos: []
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: 'edicao-2',
-      nome: 'TRILHAS - EDIÇÃO II',
-      trilhas: [
-        {
-          id: 1,
-          titulo: '1ª TRILHA: CULTURA E ENCANTAMENTO',
-          horas: '60 HORAS',
-          modulos: [
-            {
-              nome: 'Carreira Tech',
-              duracao: '4 horas',
-              topicos: [
-                'Carreira em TI',
-                'Como montar um currículo, trabalho em equipe, entrevistas de emprego e oratória',
-                'Oficina de LinkedIn, uso de e-mail'
-              ]
-            },
-            {
-              nome: 'Inclusão: Mundo Digital',
-              duracao: '6 horas',
-              topicos: [
-                'Acessar computador',
-                'Onde buscar os recursos',
-                'Conceitos de hardware e software'
-              ]
-            },
-            {
-              nome: 'Pensamento Lógico',
-              duracao: '47 horas',
-              topicos: [
-                'Introdução ao pensamento lógico',
-                'Resolução de problemas de modo geral',
-                'Ferramentas que possibilitem o desenvolvimento lógico',
-                'Lógica de programação e algoritmos',
-                'Correlacionando com Fluxograma'
-              ]
-            },
-            {
-              nome: 'Git e GitHub',
-              duracao: '3 horas',
-              topicos: ['Controle de versão com Git e GitHub']
-            },
-            {
-              nome: 'Projeto',
-              duracao: '2 horas',
-              topicos: ['Definição do tema e esboço']
-            },
-            {
-              nome: 'SoftSkills',
-              duracao: '3 horas',
-              topicos: ['Oficinas']
-            }
-          ]
-        },
-        {
-          id: 2,
-          titulo: '2ª TRILHA: DESENVOLVIMENTO WEB',
-          horas: '152 HORAS',
-          modulos: [
-            {
-              nome: 'HTML',
-              duracao: '22 horas',
-              topicos: [
-                'O que é HTML',
-                'Cabeçalhos, parágrafos, formatação',
-                'Lista ordenada e não ordenada, imagens',
-                'Links, formulários',
-                'Desenvolvimento do Projeto'
-              ]
-            },
-            {
-              nome: 'CSS',
-              duracao: '21 horas',
-              topicos: [
-                'Introdução',
-                'Seletores, classes, ids, tags',
-                'Fontes, bordas, cores',
-                'Formatação, posicionamentos',
-                'Desenvolvimento do Projeto'
-              ]
-            },
-            {
-              nome: 'JAVASCRIPT',
-              duracao: '52 horas',
-              topicos: topicosJavaScript
-            },
-            {
-              nome: 'JAVASCRIPT PARA WEB',
-              duracao: '26 horas',
-              topicos: [
-                'O que é a DOM',
-                'Ferramentas de desenvolvedor',
-                'Acessando elementos da página',
-                'Manipulando valores de input',
-                'Trabalhando com estilos via JavaScript',
-                'Desenvolvimento do Projeto'
-              ]
-            },
-            {
-              nome: 'SoftSkills',
-              duracao: '2 horas',
-              topicos: ['Oficinas']
-            },
-            {
-              nome: 'Trabalhando com APIs',
-              duracao: '29 horas',
-              topicos: [
-                'O que é API',
-                'O que é JSON',
-                'Como funciona requisições HTTP',
-                'Consumindo uma API (GET)',
-                'Conhecendo outros métodos',
-                'Inserindo dados via API',
-                'Desenvolvimento do Projeto'
-              ]
-            }
-          ]
-        },
-        {
-          id: 3,
-          titulo: '3ª TRILHA: FORGE',
-          horas: '24 HORAS',
-          modulos: [
-            {
-              nome: 'Introdução',
-              duracao: '4 horas',
-              topicos: [
-                'Introdução a automação e web-crawlers',
-                'RPA',
-                'Diferença entre automação e automatização'
-              ]
-            },
-            {
-              nome: 'Tutorial Básico de Forge',
-              duracao: '6 horas',
-              topicos: [
-                'Editar blocos de entrada e saída',
-                'Blocos de ações básicas'
-              ]
-            },
-            {
-              nome: 'Prática',
-              duracao: '14 horas',
-              topicos: [
-                'Desenvolvimento de bot',
-                'Desafio Bot Individual'
-              ]
-            }
-          ]
-        },
-        {
-          id: 4,
-          titulo: 'INTERVENÇÃO PSICOLÓGICA',
-          horas: '40 HORAS',
-          modulos: [
-            {
-              nome: 'Intervenção Psicológica em grupo',
-              duracao: '20 horas',
-              topicos: []
-            },
-            {
-              nome: 'Plantão Psicológico',
-              duracao: '20 horas',
-              topicos: []
-            }
-          ]
-        }
-      ]
-    }
-  ];
-
-  // Cartão de uma trilha: faixa verde com o título e, abaixo, os módulos.
-  // O mesmo cartão é usado nas trilhas atuais e nas das edições anteriores.
-  // NivelTitulo: h2 nas trilhas atuais; h3 dentro de "Edições Anteriores",
-  // que já é um h2. NivelModulo fica sempre um nível abaixo (h3 ou h4).
-  // (Maiúsculos para o JSX usar o valor como tag.)
-  const renderTrilha = (
-    trilha: Trilha,
-    NivelTitulo: 'h2' | 'h3' = 'h2',
-    NivelModulo: 'h3' | 'h4' = NivelTitulo === 'h2' ? 'h3' : 'h4',
-  ) => (
+  // Cartão de uma trilha: faixa verde com o título e, abaixo, um botão por módulo.
+  // NivelTitulo: h2 nas trilhas atuais; h3 dentro de "Edições Anteriores" (que já é h2).
+  // NivelModulo: o botão de cada módulo fica dentro de um título (padrão de acordeão),
+  // para o leitor de tela navegar pelos módulos com a tecla H.
+  const renderTrilha = (trilha: Trilha, prefixo: string, NivelTitulo: 'h2' | 'h3' = 'h2') => {
+    const NivelModulo = NivelTitulo === 'h2' ? 'h3' : 'h4';
+    return (
     <>
-      {/* Header da Trilha. px-4 no celular: com px-8 o título mais longo
-          ("DESENVOLVIMENTO WEB (INICIAL)") não cabia a 375px */}
-      <div className="bg-gradient-to-r from-[#8bc53f] to-[#7ab52f] py-6 px-4 md:px-8 rounded-t-2xl">
-        <NivelTitulo className="text-2xl md:text-3xl font-black text-[#2d2a5f] text-center">
-          {trilha.titulo} - {trilha.horas}
+      {/* px-4 no celular: com px-8 o título mais longo não cabia a 375px */}
+      <div className="rounded-t-2xl bg-gradient-to-r from-[#8bc53f] to-[#7ab52f] px-4 py-5 md:px-8">
+        <NivelTitulo className="text-center text-xl font-black text-[#2d2a5f] md:text-2xl">
+          {trilha.titulo}{trilha.horas ? ` - ${trilha.horas}` : ''}
         </NivelTitulo>
       </div>
 
-      {/* Conteúdo da Trilha */}
-      <div className="bg-white border-2 border-gray-200 rounded-b-2xl p-8">
-        {trilha.modulos.map((modulo, mIndex) => (
-          <div key={mIndex} className="mb-6 last:mb-0">
-            <NivelModulo className="text-lg font-bold text-[#2d2a5f] mb-3">
-              {modulo.nome} - <span className="text-[#8bc53f]">{modulo.duracao}</span>
-            </NivelModulo>
-
-            {modulo.topicos.length > 0 && (
-              <ul className="ml-8 space-y-2">
-                {modulo.topicos.map((topico, tIndex) => (
-                  <li
-                    key={tIndex}
-                    className="text-[#2d2a5f] relative before:content-[''] before:absolute before:left-[-20px] before:top-[10px] before:w-2 before:h-2 before:bg-[#8bc53f] before:rounded-full"
-                  >
-                    {topico}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
-      </div>
+      <ul className="divide-y divide-gray-200 rounded-b-2xl border-2 border-t-0 border-gray-200 bg-white">
+        {trilha.modulos.map((modulo) => {
+          const chave = `${prefixo}:${trilha.id}:${modulo.nome}`;
+          const aberto = abertos.has(chave);
+          const idPainel = `painel-${chave.replace(/[^a-zA-Z0-9]+/g, '-')}`;
+          const totalAulas = modulo.aulas?.length ?? 0;
+          return (
+            <li key={chave}>
+              <NivelModulo>
+              <button
+                type="button"
+                onClick={() => alternar(chave)}
+                aria-expanded={aberto}
+                aria-controls={idPainel}
+                className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-favela-green-500 md:px-6"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-base font-bold text-[#2d2a5f] md:text-lg">{modulo.nome}</span>
+                  <span className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-gray-600">
+                    {modulo.duracao && <span className="font-semibold text-[#6aa520]">{modulo.duracao}</span>}
+                    {totalAulas > 0 && <span>{totalAulas} {totalAulas === 1 ? 'aula' : 'aulas'}</span>}
+                  </span>
+                </span>
+                <Seta aberta={aberto} />
+              </button>
+              </NivelModulo>
+              {/* Fica no HTML mesmo fechado (hidden) para o aria-controls sempre apontar para ele */}
+              <div id={idPainel} hidden={!aberto}>
+                {aberto && <DetalheDoModulo modulo={modulo} />}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <section id="como-fazemos" className="min-h-screen bg-white">
-      {/* Header - integrado com navbar */}
-      <motion.div
-        className="bg-[#2d2a5f] text-white pt-32 pb-16 mb-12"
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-center">
-            TRILHA
-          </h1>
-        </div>
-      </motion.div>
+      <section id="como-fazemos" className="min-h-screen bg-white pb-16">
+        {/* Header - integrado com navbar */}
+        <motion.div
+          className="mb-12 bg-[#2d2a5f] pb-16 pt-32 text-white"
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+            <h1 className="mb-4 text-4xl font-bold md:text-5xl">COMO FAZEMOS</h1>
+            <p className="mx-auto max-w-3xl text-xl text-white/80">
+              As trilhas da 3ª Edição e o cronograma das aulas. Clique num módulo para ver o conteúdo e as aulas.
+            </p>
+          </div>
+        </motion.div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        {/* Trilhas */}
-        {trilhas.map((trilha, index) => (
+        <div className="mx-auto max-w-5xl space-y-8 px-4 sm:px-6 lg:px-8">
+          {trilhasAtuais.map((trilha, index) => (
+            <motion.div
+              key={trilha.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: Math.min(index, 3) * 0.1 }}
+            >
+              {renderTrilha(trilha, 'atual')}
+            </motion.div>
+          ))}
+
+          {/* Edições Anteriores */}
           <motion.div
-            key={trilha.id}
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
+            transition={{ duration: 0.5 }}
+            className="mt-16"
           >
-            {renderTrilha(trilha)}
-          </motion.div>
-        ))}
+            <div className="rounded-t-2xl bg-gradient-to-r from-[#8bc53f] to-[#7ab52f] px-8 py-6">
+              <h2 className="text-center text-2xl font-black text-[#2d2a5f] md:text-3xl">EDIÇÕES ANTERIORES</h2>
+            </div>
 
-        {/* Edições Anteriores */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mt-16"
-        >
-          <div className="bg-gradient-to-r from-[#8bc53f] to-[#7ab52f] py-6 px-8 rounded-t-2xl">
-            <h2 className="text-2xl md:text-3xl font-black text-[#2d2a5f] text-center">
-              EDIÇÕES ANTERIORES
-            </h2>
-          </div>
+            <div className="space-y-4 rounded-b-2xl border-2 border-gray-200 bg-white p-4 md:p-8">
+              {edicoesAnteriores.map((edicao) => {
+                const aberta = edicaoAberta === edicao.id;
+                const idPainel = `painel-${edicao.id}`;
 
-          <div className="space-y-4 p-4 md:p-8 bg-white border-2 border-gray-200 rounded-b-2xl">
-            {edicoesAnteriores.map((edicao) => {
-              const aberta = edicaoAberta === edicao.id;
-              const idPainel = `painel-${edicao.id}`;
+                return (
+                  <div key={edicao.id}>
+                    <motion.button
+                      type="button"
+                      className="w-full rounded-xl bg-[#8bc53f] px-8 py-4 font-bold text-[#2d2a5f] shadow-md transition-all duration-300 hover:bg-[#7ab52f] hover:shadow-xl"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setEdicaoAberta(aberta ? null : edicao.id)}
+                      aria-expanded={aberta}
+                      aria-controls={idPainel}
+                    >
+                      {edicao.nome}
+                    </motion.button>
 
-              return (
-                <div key={edicao.id}>
-                  {/* aria-expanded e aria-controls avisam ao leitor de tela
-                      que o botão abre/fecha o painel logo abaixo */}
-                  <motion.button
-                    type="button"
-                    className="w-full bg-[#8bc53f] hover:bg-[#7ab52f] text-[#2d2a5f] font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-md hover:shadow-xl"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setEdicaoAberta(aberta ? null : edicao.id)}
-                    aria-expanded={aberta}
-                    aria-controls={idPainel}
-                  >
-                    {edicao.nome}
-                  </motion.button>
-
-                  {/* Painel com as trilhas da edição. Fica no HTML mesmo fechado
-                      (com hidden) para o aria-controls sempre apontar para ele. */}
-                  <div id={idPainel} hidden={!aberta} className="mt-6 space-y-8">
-                    {edicao.trilhas.map((trilha) => (
-                      <div key={trilha.id}>{renderTrilha(trilha, 'h3')}</div>
-                    ))}
+                    <div id={idPainel} hidden={!aberta} className="mt-6 space-y-8">
+                      {edicao.trilhas.map((trilha) => (
+                        <div key={trilha.id}>{renderTrilha(trilha, edicao.id, 'h3')}</div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
-      </div>
-    </section>
-    <Footer />
+                );
+              })}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+      <Footer />
     </div>
   );
 };

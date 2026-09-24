@@ -103,9 +103,10 @@ npm run lint     # Verifica problemas no código
 - Rodapé com informações de contato
 
 ### Como Fazemos (/como-fazemos)
-- Detalhamento das trilhas de ensino
-- Conteúdo programático completo
+- Trilhas de ensino da edição atual, com cada módulo fechado (abre com um clique)
+- Dentro do módulo: o conteúdo programático e o cronograma das aulas (data, tema e instrutores)
 - Edições anteriores do projeto
+- Os dados ficam em `src/data/trilhas.ts` (o antigo `/aulas` redireciona para cá)
 
 ### Sobre (/sobre)
 - Informações sobre o projeto
@@ -115,7 +116,7 @@ npm run lint     # Verifica problemas no código
 - Detalhes sobre cada parceiro
 
 ### Hall da Fama (/hall-da-fama)
-- Equipes de todas as edições (2022, 2023, 2024)
+- Equipes de todas as edições, organizadas por edição (1ª, 2ª e 3ª)
 - Membros e suas funções
 
 ## Personalização de Cores
