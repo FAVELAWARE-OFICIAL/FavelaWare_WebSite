@@ -17,11 +17,18 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { acharTurma, turmas } from '../data/turmas';
+import { useAlunosComFotoAtual } from '../lib/fotosDoSite';
+
+// Avatar genérico (silhueta branca sobre o verde) para aluno sem foto —
+// o mesmo que o site oficial usa para quem não tem retrato
+const FOTO_PADRAO = '/imgs/turmas/sem-foto.webp';
 
 const TurmaDetalhe: React.FC = () => {
   // Pega o slug da URL e procura a turma correspondente
   const { slug } = useParams<{ slug: string }>();
-  const turma = acharTurma(slug);
+  const turmaDoArquivo = acharTurma(slug);
+  // Fotos atuais do dashboard por cima das do arquivo
+  const [turma] = useAlunosComFotoAtual(turmaDoArquivo ? [turmaDoArquivo] : []);
 
   // Slug inválido (link antigo, erro de digitação): volta para a lista
   if (!turma) return <Navigate to="/turmas" replace />;
@@ -107,10 +114,11 @@ const TurmaDetalhe: React.FC = () => {
               className="flex flex-col items-center text-center"
             >
               {/* O verde do container aparece nas bordas do recorte circular,
-                  combinando com o fundo verde das próprias fotos */}
+                  combinando com o fundo verde das próprias fotos. Aluno sem
+                  foto ganha o avatar padrão */}
               <div className="w-28 h-28 md:w-32 md:h-32 bg-[#8bc53f] rounded-full overflow-hidden mb-4 shadow-lg ring-4 ring-white">
                 <img
-                  src={aluno.foto}
+                  src={aluno.foto ?? FOTO_PADRAO}
                   alt={`Foto de ${aluno.nome}`}
                   loading="lazy"
                   className="w-full h-full object-cover"

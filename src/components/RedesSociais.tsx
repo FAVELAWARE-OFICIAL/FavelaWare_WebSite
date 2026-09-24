@@ -52,6 +52,26 @@ const redesSociais: RedeSocial[] = [
   },
 ];
 
+/** Ícone do LinkedIn ("in" dentro do quadrado), desenhado aqui mesmo (sem biblioteca) */
+export const IconeLinkedin: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M4 2h16a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm1.5 7.5V19h3V9.5h-3ZM7 4.75a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5ZM10.5 9.5V19h3v-5c0-1.4.9-2.1 1.9-2.1s1.6.7 1.6 2.1v5h3v-5.6c0-2.9-1.6-4.1-3.6-4.1-1.5 0-2.5.7-2.9 1.4V9.5h-3Z" />
+  </svg>
+);
+
+/** Ícone clicável que abre o LinkedIn da pessoa em nova aba (cartões de equipe) */
+export const LinkLinkedin: React.FC<{ nome: string; url: string }> = ({ nome, url }) => (
+  <a
+    href={url}
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label={`LinkedIn de ${nome} (abre em nova aba)`}
+    className="mt-2 inline-flex rounded text-[#0a66c2] transition-colors hover:text-[#2d2a5f] focus:outline-none focus-visible:ring-2 focus-visible:ring-favela-green-500 focus-visible:ring-offset-2"
+  >
+    <IconeLinkedin className="h-6 w-6" />
+  </a>
+);
+
 // Cores de cada variação. O ring-offset usa a cor do fundo para o anel de
 // foco ficar "descolado" do botão sem aparecer uma borda branca.
 const estilosPorFundo = {

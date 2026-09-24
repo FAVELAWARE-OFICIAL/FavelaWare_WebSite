@@ -29,3 +29,15 @@ dist-ssr
 # Variáveis de ambiente (segredos nunca vão para o repositório)
 .env*
 !.env.example
+
+# Listas de presença: têm e-mail, login e observações dos alunos
+*.xlsx
+
+# Estado local do Supabase CLI (link com o projeto)
+supabase/.temp
+
+# Segredo do Apps Script das entregas (copiar para as Propriedades do script e apagar)
+google-apps-script/.segredo
+
+# Documentos com dados pessoais (RPA etc.) nunca vão para o git
+DADOS PARA RPA*.pdf

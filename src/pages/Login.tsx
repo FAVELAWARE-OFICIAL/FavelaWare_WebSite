@@ -9,10 +9,7 @@
  * - Lado esquerdo (só em telas grandes): painel verde da marca com logo e boas-vindas
  * - Lado direito: formulário de email e senha
  *
- * IMPORTANTE: por enquanto isto é SÓ O FRONT-END.
- * O envio do formulário não conversa com servidor nenhum — ele apenas simula
- * uma espera e mostra uma mensagem. A autenticação de verdade será feita com
- * Supabase depois (ver o comentário "TODO: Supabase" em handleSubmit).
+ * O login usa o Supabase Auth (email + senha), pelo cliente em src/lib/supabase.ts.
  *
  * Conceitos importantes:
  * - useState: guarda informações que mudam na tela (o que foi digitado, se está carregando)
@@ -27,16 +24,41 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 // Importa o Link para voltar ao site sem recarregar a página
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 // E-mail oficial (fonte única em src/data/contato.ts)
 import { email } from '../data/contato';
+
+// Cliente do Supabase (autenticação)
+import { supabase, definirLembrarDeMim, carregarPerfil, destinoDoPerfil, emailDoIdentificador } from '../lib/supabase';
+
+/**
+ * Converte o código de erro do Supabase numa mensagem em português.
+ * Credencial errada e e-mail inexistente dão a MESMA mensagem de propósito:
+ * assim ninguém descobre quais e-mails têm conta.
+ */
+function traduzirErroDeLogin(codigo?: string): string {
+  switch (codigo) {
+    case 'invalid_credentials':
+      return 'E-mail (ou login) ou senha incorretos.';
+    case 'email_not_confirmed':
+      return 'Confirme seu email antes de entrar (veja sua caixa de entrada).';
+    case 'over_request_rate_limit':
+    case 'over_email_send_rate_limit':
+      return 'Muitas tentativas seguidas. Espere um pouco e tente de novo.';
+    default:
+      return 'Não foi possível entrar agora. Tente novamente em instantes.';
+  }
+}
 
 /**
  * COMPONENTE LOGIN
  * Exibe o formulário de acesso do usuário
  */
 const Login: React.FC = () => {
+  // Leva para a área certa depois do login
+  const navigate = useNavigate();
+
   // ============================================
   // ESTADOS DA TELA
   // ============================================
@@ -88,7 +110,7 @@ const Login: React.FC = () => {
 
     // Validação simples antes de "enviar"
     if (!formData.email.trim() || !formData.senha.trim()) {
-      setMensagem({ tipo: 'erro', texto: 'Preencha o email e a senha para continuar.' });
+      setMensagem({ tipo: 'erro', texto: 'Preencha o e-mail (ou login) e a senha para continuar.' });
       return;
     }
 
@@ -99,17 +121,33 @@ const Login: React.FC = () => {
 
     setCarregando(true);
 
-    // TODO: Supabase — substituir esta simulação por:
-    // const { error } = await supabase.auth.signInWithPassword({
-    //   email: formData.email,
-    //   password: formData.senha,
-    // });
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Precisa vir antes do login: é na hora do login que a sessão é gravada
+    definirLembrarDeMim(formData.lembrarDeMim);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      // Aluno digita o login (nome.sobrenome); vira o e-mail interno da conta
+      email: emailDoIdentificador(formData.email),
+      password: formData.senha,
+    });
+
+    if (error) {
+      setCarregando(false);
+      setMensagem({ tipo: 'erro', texto: traduzirErroDeLogin(error.code) });
+      return;
+    }
+
+    // Cada papel tem sua área (gestor, professor, aluno — ou o primeiro acesso do aluno)
+    const area = destinoDoPerfil(await carregarPerfil(data.user.id));
+
+    if (area) {
+      navigate(area, { replace: true });
+      return;
+    }
 
     setCarregando(false);
     setMensagem({
       tipo: 'sucesso',
-      texto: '✅ Login simulado com sucesso! (a conexão com o Supabase ainda será feita)',
+      texto: 'Login feito, mas esta conta ainda não está ligada a uma turma. Fale com a coordenação.',
     });
   };
 
@@ -140,7 +178,7 @@ const Login: React.FC = () => {
         style={{
           // Banner oficial do FavelaWare: foto da comunidade com código binário.
           // É o mesmo fundo do Hero da home, usado aqui em opacidade cheia.
-          backgroundImage: "url('/imgs/backgrounds/fundo.png')",
+          backgroundImage: "url('/imgs/backgrounds/fundo.webp')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
@@ -228,21 +266,23 @@ const Login: React.FC = () => {
           {/* Formulário */}
           <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* Campo: Email */}
+            {/* Campo: e-mail (gestor e professor) ou login da turma (aluno: nome.sobrenome) */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email *
+                E-mail ou login *
               </label>
               <input
-                type="email"
+                type="text"
                 id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                autoComplete="email"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-favela-green-500 focus:border-transparent transition-all"
-                placeholder="Ex: maria.silva@email.com"
+                placeholder="Ex: maria.silva ou maria@email.com"
               />
             </div>
 

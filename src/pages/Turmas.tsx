@@ -19,9 +19,38 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { turmas, type Turma } from '../data/turmas';
+import { turmas as turmasDoArquivo, type Aluno, type Turma } from '../data/turmas';
+import { useAlunosComFotoAtual } from '../lib/fotosDoSite';
+
+/** Prévia do card: até 5 fotos sobrepostas e o "+N" de quem ficou de fora. */
+const PreviaAlunos: React.FC<{ alunos: Aluno[] }> = ({ alunos }) => {
+  // Só quem tem foto entra na miniatura: círculo vazio não mostra ninguém
+  const comFoto = alunos.filter((aluno) => aluno.foto).slice(0, 5);
+  const restantes = alunos.length - comFoto.length;
+
+  return (
+    <div className="flex items-center mb-6">
+      {comFoto.map((aluno, i) => (
+        <img
+          key={aluno.nome}
+          src={aluno.foto}
+          alt=""
+          loading="lazy"
+          className="w-12 h-12 rounded-full object-cover bg-[#8bc53f] border-2 border-white"
+          style={{ marginLeft: i === 0 ? 0 : '-14px' }}
+        />
+      ))}
+      {restantes > 0 && (
+        <span className="ml-3 text-sm font-bold text-gray-500">+{restantes}</span>
+      )}
+    </div>
+  );
+};
 
 const Turmas: React.FC = () => {
+  // Fotos atuais do dashboard por cima das do arquivo
+  const turmas = useAlunosComFotoAtual(turmasDoArquivo);
+
   // ============================================
   // AGRUPAMENTO POR EDIÇÃO
   // ============================================
@@ -124,24 +153,7 @@ const Turmas: React.FC = () => {
                       <h3 className="text-2xl font-bold text-[#2d2a5f] mb-1">{turma.nome}</h3>
                       <p className="text-gray-600 mb-6">{turma.periodo}</p>
 
-                      {/* Prévia: as 5 primeiras fotos, sobrepostas */}
-                      <div className="flex items-center mb-6">
-                        {turma.alunos.slice(0, 5).map((aluno, i) => (
-                          <img
-                            key={aluno.nome}
-                            src={aluno.foto}
-                            alt=""
-                            loading="lazy"
-                            className="w-12 h-12 rounded-full object-cover bg-[#8bc53f] border-2 border-white"
-                            style={{ marginLeft: i === 0 ? 0 : '-14px' }}
-                          />
-                        ))}
-                        {turma.alunos.length > 5 && (
-                          <span className="ml-3 text-sm font-bold text-gray-500">
-                            +{turma.alunos.length - 5}
-                          </span>
-                        )}
-                      </div>
+                      <PreviaAlunos alunos={turma.alunos} />
 
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-bold text-gray-500">

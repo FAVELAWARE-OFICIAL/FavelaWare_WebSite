@@ -163,19 +163,6 @@ export interface Estatistica {
 }
 
 /**
- * TIPO: Material/Recurso Educacional
- * Define materiais disponíveis para download (Google Drive, Gitbook, etc)
- */
-export interface Material {
-  id: number;              // ID único
-  titulo: string;          // Título do material
-  descricao: string;       // Descrição breve
-  plataforma: 'drive' | 'gitbook'; // Plataforma onde está hospedado
-  link: string;            // URL do material
-  icone: string;           // Emoji ou ícone
-}
-
-/**
  * TIPO: Artigo Científico
  * Define artigos publicados sobre o projeto
  */

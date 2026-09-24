@@ -24,13 +24,13 @@ import type { Partner } from '../types';
 const Partners: React.FC = () => {
   // Logos dos parceiros - array tipado com interface Partner
   const partners: Partner[] = [
-    { name: 'Mundiale', logo: '🌍', image: '/imgs/partners/Mundiale.png' },
-    { name: 'Ânima Lab', logo: '🎨', image: '/imgs/partners/ânima.png' },
-    { name: 'AOPA', logo: '👥', image: '/imgs/partners/AOPA.png' },
-    { name: 'Rede Transformar', logo: '🔄', image: '/imgs/partners/Rede Transformar.jpg' },
-    { name: 'Ecossistema Ânima', logo: '🌱', image: '/imgs/partners/ecossistema ânima.png' },
-    { name: 'UNA Cristiano Machado', logo: '🎓', image: '/imgs/partners/Una Cristiano Machado.png' },
-  ];
+    { name: 'Mundiale', logo: '🌍', image: '/imgs/partners/Mundiale.webp' },
+    { name: 'Ânima Lab', logo: '🎨', image: '/imgs/partners/ânima.webp' },
+    { name: 'AOPA', logo: '👥', image: '/imgs/partners/AOPA.webp' },
+    { name: 'Rede Transformar', logo: '🔄', image: '/imgs/partners/Rede Transformar.webp' },
+    { name: 'Ecossistema Ânima', logo: '🌱', image: '/imgs/partners/ecossistema ânima.webp' },
+    { name: 'UNA Cristiano Machado', logo: '🎓', image: '/imgs/partners/Una Cristiano Machado.webp' },
+  ].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })); // sempre em ordem alfabética
 
   const containerVariants = {
     hidden: { opacity: 0 },

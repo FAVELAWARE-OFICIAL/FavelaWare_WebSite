@@ -62,8 +62,6 @@ const Navbar = () => {
     { name: 'HOME', href: '/', type: 'route' },
     { name: 'COMO FAZEMOS', href: '/como-fazemos', type: 'route' },
     { name: 'SOBRE', href: '/sobre', type: 'route' },
-    { name: 'AULAS', href: '/aulas', type: 'route' },
-    { name: 'MATERIAL', href: '/material', type: 'route' },
     { name: 'TURMAS', href: '/turmas', type: 'route' },
     { name: 'GALERIA', href: '/galeria', type: 'route' },
     { name: 'RECONHECIMENTOS', href: '/reconhecimentos', type: 'route' },
