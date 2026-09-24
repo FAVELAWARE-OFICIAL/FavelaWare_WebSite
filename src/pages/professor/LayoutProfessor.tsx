@@ -61,7 +61,12 @@ const AreaDoProfessor: React.FC = () => {
     <Moldura itens={souProfessor ? ITENS_MENU_PROFESSOR : ITENS_MENU} subtitulo="Área do instrutor">
       <AnimatePresence mode="wait" initial={false}>
         {mostrarCarregando || !pronta ? (
-          <motion.div key="carregando" className="flex flex-1 flex-col" exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+          <motion.div
+            key="carregando"
+            className="flex flex-1 flex-col"
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
             <Carregando texto="Abrindo a chamada" />
           </motion.div>
         ) : (

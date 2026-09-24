@@ -28,16 +28,26 @@ type Tema = 'claro' | 'escuro';
 function temaInicial(): Tema {
   const salvo = lerPreferencia('restrita:tema');
   if (salvo === 'claro' || salvo === 'escuro') return salvo;
-  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'escuro' : 'claro';
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches
+    ? 'escuro'
+    : 'claro';
 }
 
 // Preferências deste navegador. localStorage pode falhar (aba anônima,
 // bloqueio): nesse caso só não lembra.
 export const lerPreferencia = (chave: string) => {
-  try { return localStorage.getItem(chave); } catch { return null; }
+  try {
+    return localStorage.getItem(chave);
+  } catch {
+    return null;
+  }
 };
 export const gravarPreferencia = (chave: string, valor: string) => {
-  try { localStorage.setItem(chave, valor); } catch { /* sem memória, sem problema */ }
+  try {
+    localStorage.setItem(chave, valor);
+  } catch {
+    /* sem memória, sem problema */
+  }
 };
 
 interface Props {
@@ -132,7 +142,9 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
   };
 
   return (
-    <div className={`min-h-screen ${tema === 'escuro' ? 'tema-escuro bg-[#0b1220] text-[#e5e9f2]' : 'bg-gray-100 text-gray-900'}`}>
+    <div
+      className={`min-h-screen ${tema === 'escuro' ? 'tema-escuro bg-[#0b1220] text-[#e5e9f2]' : 'bg-gray-100 text-gray-900'}`}
+    >
       <MenuLateral
         itens={itens}
         subtitulo={subtitulo}
@@ -144,7 +156,10 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
         rodape={
           usuario?.podeAlternarPapel && usuario.papel ? (
             <div className="px-1">
-              <label htmlFor="ver-como" className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-white/60">
+              <label
+                htmlFor="ver-como"
+                className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-white/60"
+              >
                 Ver como
               </label>
               <select
@@ -158,14 +173,20 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
                 <option value="professor">Instrutor</option>
                 <option value="aluno">Aluno</option>
               </select>
-              {erroTroca && <p role="alert" className="mt-1 text-xs text-red-300">{erroTroca}</p>}
+              {erroTroca && (
+                <p role="alert" className="mt-1 text-xs text-red-300">
+                  {erroTroca}
+                </p>
+              )}
             </div>
           ) : undefined
         }
       />
 
       {/* O conteúdo abre espaço para o menu fixo (largura muda quando recolhe) */}
-      <div className={`flex min-h-screen flex-col transition-[padding] duration-200 ${recolhido ? 'lg:pl-[4.5rem]' : 'lg:pl-64'}`}>
+      <div
+        className={`flex min-h-screen flex-col transition-[padding] duration-200 ${recolhido ? 'lg:pl-[4.5rem]' : 'lg:pl-64'}`}
+      >
         <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-gray-200 bg-white px-4 sm:px-6">
           {/* Só no celular: abre a gaveta (no computador o botão fica no topo do menu) */}
           <button
@@ -194,8 +215,12 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
               {tema === 'escuro' ? <IconeSol /> : <IconeLua />}
             </button>
             {usuario && (
-              <Link to={caminhoPerfil} aria-label="Meu perfil" title="Meu perfil"
-                className={`rounded-full ${foco} focus-visible:ring-offset-2`}>
+              <Link
+                to={caminhoPerfil}
+                aria-label="Meu perfil"
+                title="Meu perfil"
+                className={`rounded-full ${foco} focus-visible:ring-offset-2`}
+              >
                 <FotoDoUsuario nome={usuario.nome} foto={usuario.foto} />
               </Link>
             )}
@@ -233,15 +258,28 @@ const FotoDoUsuario: React.FC<{ nome: string; foto: string | null }> = ({ nome, 
   if (foto && !falhou) {
     return (
       <span className="block h-10 w-10 shrink-0 overflow-hidden rounded-full bg-favela-green-500" title={nome}>
-        <img src={foto} alt={nome} onError={() => setFalhou(true)}
-          className="h-full w-full origin-[50%_30%] scale-[1.35] object-cover" />
+        <img
+          src={foto}
+          alt={nome}
+          onError={() => setFalhou(true)}
+          className="h-full w-full origin-[50%_30%] scale-[1.35] object-cover"
+        />
       </span>
     );
   }
-  const iniciais = nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]!.toUpperCase()).join('');
+  const iniciais = nome
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]!.toUpperCase())
+    .join('');
   return (
-    <span aria-label={nome} role="img"
-      title={nome} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2d2a5f] text-xs font-bold text-white">
+    <span
+      aria-label={nome}
+      role="img"
+      title={nome}
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2d2a5f] text-xs font-bold text-white"
+    >
       {iniciais}
     </span>
   );
@@ -249,13 +287,30 @@ const FotoDoUsuario: React.FC<{ nome: string; foto: string | null }> = ({ nome, 
 
 /** Ícones do botão de tema (SVG no traço dos outros ícones) */
 const IconeSol: React.FC = () => (
-  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" aria-hidden="true">
+  <svg
+    className="h-5 w-5"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
     <circle cx="12" cy="12" r="4" />
     <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
   </svg>
 );
 const IconeLua: React.FC = () => (
-  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    className="h-5 w-5"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
   </svg>
 );

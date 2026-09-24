@@ -35,19 +35,19 @@ import Home from './pages/Home';
 
 // As demais páginas são baixadas só quando alguém abre a rota (lazy).
 // Assim a primeira visita baixa bem menos JavaScript e a Home abre mais rápido.
-const ComoFazemos = lazy(() => import('./pages/ComoFazemos'));   // Trilhas de ensino
-const Sobre = lazy(() => import('./pages/Sobre'));               // Sobre o projeto
-const HallDaFama = lazy(() => import('./pages/HallDaFama'));     // Equipes anteriores
+const ComoFazemos = lazy(() => import('./pages/ComoFazemos')); // Trilhas de ensino
+const Sobre = lazy(() => import('./pages/Sobre')); // Sobre o projeto
+const HallDaFama = lazy(() => import('./pages/HallDaFama')); // Equipes anteriores
 const Reconhecimentos = lazy(() => import('./pages/Reconhecimentos')); // Prêmios
-const Contato = lazy(() => import('./pages/Contato'));           // Contato
-const Login = lazy(() => import('./pages/Login'));               // Login (traz o Supabase)
-const Turmas = lazy(() => import('./pages/Turmas'));             // Lista de turmas
+const Contato = lazy(() => import('./pages/Contato')); // Contato
+const Login = lazy(() => import('./pages/Login')); // Login (traz o Supabase)
+const Turmas = lazy(() => import('./pages/Turmas')); // Lista de turmas
 const TurmaDetalhe = lazy(() => import('./pages/TurmaDetalhe')); // Alunos de uma turma (/turmas/:slug)
-const Galeria = lazy(() => import('./pages/Galeria'));           // Galeria de fotos
+const Galeria = lazy(() => import('./pages/Galeria')); // Galeria de fotos
 const DefinirSenha = lazy(() => import('./pages/DefinirSenha')); // Destino do convite do professor
 const PrimeiroAcesso = lazy(() => import('./pages/PrimeiroAcesso')); // Aluno troca a senha padrão
 const DadosDoInstrutor = lazy(() => import('./pages/DadosDoInstrutor')); // Dados do RPA, logo após o login
-const Perfil = lazy(() => import('./pages/Perfil'));             // Meu perfil (foto na barra superior)
+const Perfil = lazy(() => import('./pages/Perfil')); // Meu perfil (foto na barra superior)
 
 // Área administrativa (/dashboard): carregada sob demanda, porque traz a biblioteca
 // de gráficos e só interessa a quem faz login como gestor
@@ -89,11 +89,17 @@ const carregandoArea = (
 // no site fica instantâneo (sem espera nem tela em branco)
 const preCarregarSitePublico = () => {
   for (const pagina of [
-    () => import('./pages/ComoFazemos'), () => import('./pages/Sobre'), () => import('./pages/HallDaFama'),
-    () => import('./pages/Reconhecimentos'), () => import('./pages/Contato'),
-    () => import('./pages/Turmas'), () => import('./pages/TurmaDetalhe'), () => import('./pages/Galeria'),
+    () => import('./pages/ComoFazemos'),
+    () => import('./pages/Sobre'),
+    () => import('./pages/HallDaFama'),
+    () => import('./pages/Reconhecimentos'),
+    () => import('./pages/Contato'),
+    () => import('./pages/Turmas'),
+    () => import('./pages/TurmaDetalhe'),
+    () => import('./pages/Galeria'),
     () => import('./pages/Login'),
-  ]) pagina();
+  ])
+    pagina();
 };
 
 /**
@@ -121,116 +127,116 @@ const App: React.FC = () => {
 
         {/* Suspense: mostra a tela vazia enquanto a página (lazy) é baixada */}
         <Suspense fallback={carregandoPagina}>
-        {/* Routes: container de todas as rotas */}
-        <Routes>
-          {/*
+          {/* Routes: container de todas as rotas */}
+          <Routes>
+            {/*
             Cada Route define:
             - path: URL da página (ex: "/" é a página inicial)
             - element: qual componente será exibido nessa URL
           */}
 
-          {/* Rota da página inicial (/) */}
-          <Route path="/" element={<Home />} />
+            {/* Rota da página inicial (/) */}
+            <Route path="/" element={<Home />} />
 
-          {/* Rota da página Como Fazemos (/como-fazemos) */}
-          <Route path="/como-fazemos" element={<ComoFazemos />} />
+            {/* Rota da página Como Fazemos (/como-fazemos) */}
+            <Route path="/como-fazemos" element={<ComoFazemos />} />
 
-          {/* Rota da página Sobre (/sobre) */}
-          <Route path="/sobre" element={<Sobre />} />
+            {/* Rota da página Sobre (/sobre) */}
+            <Route path="/sobre" element={<Sobre />} />
 
-          {/* Rota da página Hall da Fama (/hall-da-fama) */}
-          <Route path="/hall-da-fama" element={<HallDaFama />} />
+            {/* Rota da página Hall da Fama (/hall-da-fama) */}
+            <Route path="/hall-da-fama" element={<HallDaFama />} />
 
-          {/* Material saiu do site: agora é acessado pelo dashboard (depois do login) */}
-          <Route path="/material" element={<Navigate to="/login" replace />} />
+            {/* Material saiu do site: agora é acessado pelo dashboard (depois do login) */}
+            <Route path="/material" element={<Navigate to="/login" replace />} />
 
-          {/* Rota da página Reconhecimentos (/reconhecimentos) */}
-          <Route path="/reconhecimentos" element={<Reconhecimentos />} />
+            {/* Rota da página Reconhecimentos (/reconhecimentos) */}
+            <Route path="/reconhecimentos" element={<Reconhecimentos />} />
 
-          {/* Rota da página Contato (/contato) */}
-          <Route path="/contato" element={<Contato />} />
+            {/* Rota da página Contato (/contato) */}
+            <Route path="/contato" element={<Contato />} />
 
-          {/* Rota da página Login (/login) - tela sem navbar e sem rodapé */}
-          <Route path="/login" element={<Login />} />
+            {/* Rota da página Login (/login) - tela sem navbar e sem rodapé */}
+            <Route path="/login" element={<Login />} />
 
-          {/* Rota da lista de turmas (/turmas) */}
-          <Route path="/turmas" element={<Turmas />} />
+            {/* Rota da lista de turmas (/turmas) */}
+            <Route path="/turmas" element={<Turmas />} />
 
-          {/* Rota de uma turma específica (/turmas/turma-2025, por exemplo).
+            {/* Rota de uma turma específica (/turmas/turma-2025, por exemplo).
               O ":slug" é a parte que muda: TurmaDetalhe lê esse valor da URL. */}
-          <Route path="/turmas/:slug" element={<TurmaDetalhe />} />
+            <Route path="/turmas/:slug" element={<TurmaDetalhe />} />
 
-          {/* Rota da galeria de fotos (/galeria) */}
-          <Route path="/galeria" element={<Galeria />} />
+            {/* Rota da galeria de fotos (/galeria) */}
+            <Route path="/galeria" element={<Galeria />} />
 
-          {/* O cronograma das aulas agora fica dentro de Como Fazemos (endereço antigo) */}
-          <Route path="/aulas" element={<Navigate to="/como-fazemos" replace />} />
+            {/* O cronograma das aulas agora fica dentro de Como Fazemos (endereço antigo) */}
+            <Route path="/aulas" element={<Navigate to="/como-fazemos" replace />} />
 
-          {/* Área administrativa (/dashboard) - só gestor. O LayoutAdmin desenha o menu
+            {/* Área administrativa (/dashboard) - só gestor. O LayoutAdmin desenha o menu
               lateral e cada rota filha aparece dentro dele, no lugar do <Outlet>. */}
-          <Route
-            path="/dashboard"
-            element={
-              <Suspense fallback={carregandoArea}>
-                <LayoutAdmin />
-              </Suspense>
-            }
-          >
-            <Route index element={<VisaoGeral />} />
-            <Route path="alunos" element={<AdminAlunos />} />
-            <Route path="chamada" element={<AdminChamada />} />
-            <Route path="turmas" element={<AdminTurmas />} />
-            <Route path="equipe" element={<AdminEquipe />} />
-            <Route path="solicitacoes" element={<AdminSolicitacoes />} />
-            <Route path="presenca-professores" element={<AdminPresencaProfessores />} />
-            <Route path="trilhas" element={<TrilhasEquipe />} />
-            {/* Endereços antigos: material e atividades agora ficam nas trilhas */}
-            <Route path="material" element={<Navigate to="/dashboard/trilhas" replace />} />
-            <Route path="atividades" element={<Navigate to="/dashboard/trilhas" replace />} />
-            <Route path="perfil" element={<Perfil />} />
-          </Route>
+            <Route
+              path="/dashboard"
+              element={
+                <Suspense fallback={carregandoArea}>
+                  <LayoutAdmin />
+                </Suspense>
+              }
+            >
+              <Route index element={<VisaoGeral />} />
+              <Route path="alunos" element={<AdminAlunos />} />
+              <Route path="chamada" element={<AdminChamada />} />
+              <Route path="turmas" element={<AdminTurmas />} />
+              <Route path="equipe" element={<AdminEquipe />} />
+              <Route path="solicitacoes" element={<AdminSolicitacoes />} />
+              <Route path="presenca-professores" element={<AdminPresencaProfessores />} />
+              <Route path="trilhas" element={<TrilhasEquipe />} />
+              {/* Endereços antigos: material e atividades agora ficam nas trilhas */}
+              <Route path="material" element={<Navigate to="/dashboard/trilhas" replace />} />
+              <Route path="atividades" element={<Navigate to="/dashboard/trilhas" replace />} />
+              <Route path="perfil" element={<Perfil />} />
+            </Route>
 
-          {/* Área do professor (/professor) - professor faz a chamada das turmas dele.
+            {/* Área do professor (/professor) - professor faz a chamada das turmas dele.
               O gestor também entra, para cobrir um professor se precisar. */}
-          <Route
-            path="/professor"
-            element={
-              <Suspense fallback={carregandoArea}>
-                <LayoutProfessor />
-              </Suspense>
-            }
-          >
-            <Route index element={<FazerChamada />} />
-            <Route path="ponto" element={<MeuPonto />} />
-            <Route path="trilhas" element={<TrilhasEquipe />} />
-            {/* Endereços antigos: material e atividades agora ficam nas trilhas */}
-            <Route path="atividades" element={<Navigate to="/professor/trilhas" replace />} />
-            <Route path="material" element={<Navigate to="/professor/trilhas" replace />} />
-            <Route path="perfil" element={<Perfil />} />
-          </Route>
+            <Route
+              path="/professor"
+              element={
+                <Suspense fallback={carregandoArea}>
+                  <LayoutProfessor />
+                </Suspense>
+              }
+            >
+              <Route index element={<FazerChamada />} />
+              <Route path="ponto" element={<MeuPonto />} />
+              <Route path="trilhas" element={<TrilhasEquipe />} />
+              {/* Endereços antigos: material e atividades agora ficam nas trilhas */}
+              <Route path="atividades" element={<Navigate to="/professor/trilhas" replace />} />
+              <Route path="material" element={<Navigate to="/professor/trilhas" replace />} />
+              <Route path="perfil" element={<Perfil />} />
+            </Route>
 
-          {/* Área do aluno (/aluno) - material das aulas, por trilha */}
-          <Route
-            path="/aluno"
-            element={
-              <Suspense fallback={carregandoArea}>
-                <LayoutAluno />
-              </Suspense>
-            }
-          >
-            <Route index element={<TrilhasAluno />} />
-            {/* Endereço antigo: as atividades agora ficam nas trilhas */}
-            <Route path="atividades" element={<Navigate to="/aluno" replace />} />
-            <Route path="perfil" element={<Perfil />} />
-          </Route>
+            {/* Área do aluno (/aluno) - material das aulas, por trilha */}
+            <Route
+              path="/aluno"
+              element={
+                <Suspense fallback={carregandoArea}>
+                  <LayoutAluno />
+                </Suspense>
+              }
+            >
+              <Route index element={<TrilhasAluno />} />
+              {/* Endereço antigo: as atividades agora ficam nas trilhas */}
+              <Route path="atividades" element={<Navigate to="/aluno" replace />} />
+              <Route path="perfil" element={<Perfil />} />
+            </Route>
 
-          {/* Primeiro acesso do aluno: troca a senha padrão e completa os dados */}
-          <Route path="/primeiro-acesso" element={<PrimeiroAcesso />} />
-          <Route path="/dados-do-instrutor" element={<DadosDoInstrutor />} />
+            {/* Primeiro acesso do aluno: troca a senha padrão e completa os dados */}
+            <Route path="/primeiro-acesso" element={<PrimeiroAcesso />} />
+            <Route path="/dados-do-instrutor" element={<DadosDoInstrutor />} />
 
-          {/* Link do convite do professor: ele cria a senha aqui */}
-          <Route path="/definir-senha" element={<DefinirSenha />} />
-        </Routes>
+            {/* Link do convite do professor: ele cria a senha aqui */}
+            <Route path="/definir-senha" element={<DefinirSenha />} />
+          </Routes>
         </Suspense>
       </Router>
     </MotionConfig>

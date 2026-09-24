@@ -18,12 +18,16 @@ import { useDadosEmCache } from '../../lib/cache';
 import { hoje } from '../../lib/chamada';
 import { formatarData } from '../../lib/dashboard';
 import {
-  carregarMeusPontos, CHAVE_MEUS_PONTOS, mensagemDoErroDePonto, OPCOES_PONTO, opcaoDoPonto, registrarPonto,
+  carregarMeusPontos,
+  CHAVE_MEUS_PONTOS,
+  mensagemDoErroDePonto,
+  OPCOES_PONTO,
+  opcaoDoPonto,
+  registrarPonto,
   type SituacaoPonto,
 } from '../../lib/ponto';
 
-const diaDaSemana = (data: string) =>
-  new Date(`${data}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long' });
+const diaDaSemana = (data: string) => new Date(`${data}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long' });
 
 const MeuPonto: React.FC = () => {
   const { dados, erro, recarregar } = useDadosEmCache(CHAVE_MEUS_PONTOS, carregarMeusPontos);
@@ -62,10 +66,20 @@ const MeuPonto: React.FC = () => {
     }
   };
 
-  if (erro && pontos === undefined) return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar seus pontos.' }} />;
-  if (mostrarCarregando || dados === undefined || pontos === undefined) return <Carregando texto="Carregando seu ponto" />;
+  if (erro && pontos === undefined)
+    return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar seus pontos.' }} />;
+  if (mostrarCarregando || dados === undefined || pontos === undefined)
+    return <Carregando texto="Carregando seu ponto" />;
   if (!dados.souProfessor) {
-    return <Aviso mensagem={{ tipo: 'erro', texto: 'Só instrutores batem ponto. Para lançar o ponto de alguém, use Instrutores › Presença dos instrutores.' }} />;
+    return (
+      <Aviso
+        mensagem={{
+          tipo: 'erro',
+          texto:
+            'Só instrutores batem ponto. Para lançar o ponto de alguém, use Instrutores › Presença dos instrutores.',
+        }}
+      />
+    );
   }
 
   return (
@@ -74,14 +88,21 @@ const MeuPonto: React.FC = () => {
       <Cartao titulo="Bater ponto" descricao="Marque como foi o seu dia de aula." className="lg:col-span-3">
         <div className={espaco.formulario}>
           <div className="sm:max-w-xs">
-            <label htmlFor="dia-ponto" className={classeRotulo}>Dia</label>
+            <label htmlFor="dia-ponto" className={classeRotulo}>
+              Dia
+            </label>
             <input
               id="dia-ponto"
               type="date"
               value={dia}
               max={hoje()}
               disabled={salvando !== null}
-              onChange={(e) => { if (e.target.value) { setDia(e.target.value); setMensagem(null); } }}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setDia(e.target.value);
+                  setMensagem(null);
+                }
+              }}
               className={classeCampo}
             />
             <p className={`mt-1 capitalize ${texto.apoio}`}>{diaDaSemana(dia)}</p>
@@ -123,12 +144,16 @@ const MeuPonto: React.FC = () => {
           <ul className="-my-2 divide-y divide-gray-100">
             {pontos.slice(0, 20).map((p) => {
               const op = opcaoDoPonto(p.situacao);
-              const estiloSelo = p.situacao === 'presente' ? selo.sucesso : p.situacao === 'ausente' ? selo.erro : selo.atencao;
+              const estiloSelo =
+                p.situacao === 'presente' ? selo.sucesso : p.situacao === 'ausente' ? selo.erro : selo.atencao;
               return (
                 <li key={p.data}>
                   <button
                     type="button"
-                    onClick={() => { setDia(p.data); setMensagem(null); }}
+                    onClick={() => {
+                      setDia(p.data);
+                      setMensagem(null);
+                    }}
                     disabled={salvando !== null}
                     className={`-mx-2 flex w-full items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-gray-50 ${foco}`}
                   >
@@ -136,7 +161,9 @@ const MeuPonto: React.FC = () => {
                       <span className={`block ${texto.destaque}`}>{formatarData(p.data)}</span>
                       <span className={`block capitalize ${texto.apoio}`}>{diaDaSemana(p.data)}</span>
                     </span>
-                    <span className={`${selo.base} ${estiloSelo}`}>{op.letra} · {op.rotulo}</span>
+                    <span className={`${selo.base} ${estiloSelo}`}>
+                      {op.letra} · {op.rotulo}
+                    </span>
                   </button>
                 </li>
               );

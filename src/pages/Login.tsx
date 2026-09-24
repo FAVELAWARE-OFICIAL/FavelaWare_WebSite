@@ -167,7 +167,6 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
-
       {/* ============================================
           LADO ESQUERDO: PAINEL DA MARCA
           Escondido no celular (hidden) para sobrar espaço ao formulário
@@ -183,23 +182,14 @@ const Login: React.FC = () => {
           backgroundPosition: 'center',
         }}
       >
-
         {/* Véu escuro suave: escurece a base da imagem para o texto branco
             ter contraste suficiente por cima da foto (WCAG) */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#2d2a5f]/70 via-[#2d2a5f]/20 to-transparent" />
 
         {/* Conteúdo do painel (z-10 deixa por cima da textura) */}
         <div className="relative z-10 flex flex-col justify-center items-start p-12 xl:p-16 w-full">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <img
-              src="/imgs/logo/logo.png"
-              alt="Logo FavelaWare"
-              className="w-64 object-contain mb-8 drop-shadow-2xl"
-            />
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
+            <img src="/imgs/logo/logo.png" alt="Logo FavelaWare" className="w-64 object-contain mb-8 drop-shadow-2xl" />
 
             {/* Texto branco com sombra: o painel agora é uma foto, então a sombra
                 garante contraste independente do trecho da imagem que ficar atrás */}
@@ -226,18 +216,10 @@ const Login: React.FC = () => {
           LADO DIREITO: FORMULÁRIO
           ============================================ */}
       <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4 sm:px-6 py-12">
-        <motion.div
-          {...fadeInUp}
-          className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 md:p-10"
-        >
-
+        <motion.div {...fadeInUp} className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 md:p-10">
           {/* Logo pequeno: aparece só no celular, já que o painel verde está escondido */}
           <div className="lg:hidden text-center mb-6">
-            <img
-              src="/imgs/logo/logo.png"
-              alt="Logo FavelaWare"
-              className="w-40 object-contain mx-auto"
-            />
+            <img src="/imgs/logo/logo.png" alt="Logo FavelaWare" className="w-40 object-contain mx-auto" />
           </div>
 
           {/* Título do card */}
@@ -265,7 +247,6 @@ const Login: React.FC = () => {
 
           {/* Formulário */}
           <form onSubmit={handleSubmit} className="space-y-6">
-
             {/* Campo: e-mail (gestor e professor) ou login da turma (aluno: nome.sobrenome) */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -353,9 +334,25 @@ const Login: React.FC = () => {
               {carregando ? (
                 <span className="flex items-center justify-center">
                   {/* Spinner: círculo girando enquanto processa */}
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Entrando...
                 </span>

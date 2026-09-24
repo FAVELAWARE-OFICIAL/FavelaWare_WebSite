@@ -15,11 +15,11 @@
  */
 
 // Importa todos os componentes que formam a página inicial
-import Navbar from '../components/Navbar';   // Barra de navegação
-import Hero from '../components/Hero';       // Seção principal/banner
+import Navbar from '../components/Navbar'; // Barra de navegação
+import Hero from '../components/Hero'; // Seção principal/banner
 import Gallery from '../components/Gallery'; // Galeria de imagens
 import Partners from '../components/Partners'; // Parceiros do projeto
-import Footer from '../components/Footer';   // Rodapé
+import Footer from '../components/Footer'; // Rodapé
 
 /**
  * COMPONENTE HOME (TypeScript)

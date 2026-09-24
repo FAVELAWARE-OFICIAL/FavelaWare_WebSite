@@ -17,7 +17,9 @@ import { jaPreencheuDados } from '../lib/dadosInstrutor';
 import Carregamento from './admin/Carregamento';
 
 const RotaProtegida: React.FC<{ papeis: Papel[]; children: React.ReactNode }> = ({ papeis, children }) => {
-  const [estado, setEstado] = useState<'verificando' | 'liberado' | 'negado' | 'primeiro-acesso' | 'dados-do-instrutor'>('verificando');
+  const [estado, setEstado] = useState<
+    'verificando' | 'liberado' | 'negado' | 'primeiro-acesso' | 'dados-do-instrutor'
+  >('verificando');
   const chavePapeis = papeis.join(',');
 
   useEffect(() => {

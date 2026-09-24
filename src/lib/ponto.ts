@@ -13,9 +13,19 @@ export type SituacaoPonto = 'presente' | 'ausente' | 'justificada';
 
 /** Letra, nome e cor de cada marcação (F de falta, como o professor está acostumado) */
 export const OPCOES_PONTO: { valor: SituacaoPonto; letra: string; rotulo: string; classe: string }[] = [
-  { valor: 'presente', letra: 'P', rotulo: 'Presente', classe: 'bg-favela-green-500 border-favela-green-500 text-[#2d2a5f]' },
+  {
+    valor: 'presente',
+    letra: 'P',
+    rotulo: 'Presente',
+    classe: 'bg-favela-green-500 border-favela-green-500 text-[#2d2a5f]',
+  },
   { valor: 'ausente', letra: 'F', rotulo: 'Falta', classe: 'bg-red-600 border-red-600 text-white' },
-  { valor: 'justificada', letra: 'J', rotulo: 'Falta justificada', classe: 'bg-amber-400 border-amber-400 text-gray-900' },
+  {
+    valor: 'justificada',
+    letra: 'J',
+    rotulo: 'Falta justificada',
+    classe: 'bg-amber-400 border-amber-400 text-gray-900',
+  },
 ];
 
 export const opcaoDoPonto = (valor: SituacaoPonto) => OPCOES_PONTO.find((o) => o.valor === valor)!;
@@ -31,7 +41,11 @@ export interface Ponto {
 export const CHAVE_MEUS_PONTOS = 'meus-pontos';
 
 /** Marca (ou desmarca, com situação nula) o ponto de um dia. Sem professor = o próprio. */
-export async function registrarPonto(data: string, situacao: SituacaoPonto | null, professorId?: string): Promise<void> {
+export async function registrarPonto(
+  data: string,
+  situacao: SituacaoPonto | null,
+  professorId?: string,
+): Promise<void> {
   const { error } = await supabase.rpc('registrar_ponto', {
     p_data: data,
     p_situacao: situacao,

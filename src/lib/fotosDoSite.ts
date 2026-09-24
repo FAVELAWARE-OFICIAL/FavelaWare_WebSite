@@ -37,8 +37,9 @@ function buscarFotos(): Promise<Map<number, string | null>> {
   })
     .then((resposta) => (resposta.ok ? resposta.json() : Promise.reject(new Error(String(resposta.status)))))
     // Foto estranha (fora do site e do bucket) vira "sem foto", nunca imagem de outro endereço
-    .then((linhas: { id: number; foto: string | null }[]) =>
-      new Map(linhas.map((l) => [l.id, typeof l.foto === 'string' && fotoConfiavel(l.foto) ? l.foto : null])),
+    .then(
+      (linhas: { id: number; foto: string | null }[]) =>
+        new Map(linhas.map((l) => [l.id, typeof l.foto === 'string' && fotoConfiavel(l.foto) ? l.foto : null])),
     )
     .catch((erro) => {
       console.error('[fotos do site] ficando com as fotos do arquivo', erro?.message);
@@ -55,7 +56,9 @@ export function useAlunosComFotoAtual<T extends { alunos: Aluno[] }>(turmas: T[]
   useEffect(() => {
     let ativo = true;
     buscarFotos().then((mapa) => ativo && setFotos(mapa));
-    return () => { ativo = false; };
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   if (!fotos?.size) return turmas;

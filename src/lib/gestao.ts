@@ -17,8 +17,14 @@ import type { Situacao } from './dashboard';
 /** Padrão do banco: "Turma Única", "Turma 1", "Turma 2"... ou "Turma A", "Turma B"... */
 export const NOMES_DE_TURMA = [
   'Turma Única',
-  'Turma 1', 'Turma 2', 'Turma 3', 'Turma 4',
-  'Turma A', 'Turma B', 'Turma C', 'Turma D',
+  'Turma 1',
+  'Turma 2',
+  'Turma 3',
+  'Turma 4',
+  'Turma A',
+  'Turma B',
+  'Turma C',
+  'Turma D',
 ];
 
 /** Traduz erros comuns do banco para uma frase que o gestor entende */
@@ -59,7 +65,12 @@ export async function carregarTurmasDaEdicao(edicaoId: number): Promise<TurmaCom
 
 /** Cria a edição depois da última (ordem = maior + 1) e devolve o id dela */
 export async function criarEdicao(nome: string): Promise<{ erro: string | null; id?: number }> {
-  const { data: ultima } = await supabase.from('edicoes').select('ordem').order('ordem', { ascending: false }).limit(1).maybeSingle();
+  const { data: ultima } = await supabase
+    .from('edicoes')
+    .select('ordem')
+    .order('ordem', { ascending: false })
+    .limit(1)
+    .maybeSingle();
   const { data, error } = await supabase
     .from('edicoes')
     .insert({ nome, ordem: (ultima?.ordem ?? 0) + 1 })
@@ -145,13 +156,23 @@ export async function enviarFotoDoAluno(arquivo: File): Promise<string> {
   canvas.height = LADO_DA_FOTO;
   canvas.getContext('2d')!.drawImage(
     imagem,
-    (imagem.width - lado) / 2, (imagem.height - lado) / 2, lado, lado, // recorte quadrado do meio
-    0, 0, LADO_DA_FOTO, LADO_DA_FOTO,
+    (imagem.width - lado) / 2,
+    (imagem.height - lado) / 2,
+    lado,
+    lado, // recorte quadrado do meio
+    0,
+    0,
+    LADO_DA_FOTO,
+    LADO_DA_FOTO,
   );
   imagem.close();
 
   const blob = await new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Não foi possível processar a foto.'))), 'image/webp', 0.85),
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error('Não foi possível processar a foto.'))),
+      'image/webp',
+      0.85,
+    ),
   );
 
   const caminho = `${crypto.randomUUID()}.webp`;
@@ -182,7 +203,11 @@ export async function corrigirPresenca(
   situacao: Exclude<Situacao, 'folga'> | null,
 ): Promise<void> {
   if (!situacao) {
-    const { error } = await supabase.from('presencas').delete().eq('aula_id', aulaId).eq('participante_id', participanteId);
+    const { error } = await supabase
+      .from('presencas')
+      .delete()
+      .eq('aula_id', aulaId)
+      .eq('participante_id', participanteId);
     if (error) throw error;
     return;
   }
@@ -238,12 +263,22 @@ export async function carregarSolicitacoes(edicaoId: number): Promise<Solicitaca
   return data as Solicitacao[];
 }
 
-export async function registrarSolicitacao(participanteId: number, tipo: TipoSolicitacao, descricao: string): Promise<string | null> {
-  const { error } = await supabase.from('solicitacoes').insert({ participante_id: participanteId, tipo, descricao: descricao.trim() });
+export async function registrarSolicitacao(
+  participanteId: number,
+  tipo: TipoSolicitacao,
+  descricao: string,
+): Promise<string | null> {
+  const { error } = await supabase
+    .from('solicitacoes')
+    .insert({ participante_id: participanteId, tipo, descricao: descricao.trim() });
   return error ? 'Não foi possível registrar a solicitação.' : null;
 }
 
-export async function responderSolicitacao(id: number, status: StatusSolicitacao, resposta: string): Promise<string | null> {
+export async function responderSolicitacao(
+  id: number,
+  status: StatusSolicitacao,
+  resposta: string,
+): Promise<string | null> {
   const { data } = await supabase.auth.getUser();
   const pendente = status === 'pendente';
   const { error } = await supabase
@@ -252,7 +287,7 @@ export async function responderSolicitacao(id: number, status: StatusSolicitacao
       status,
       resposta: vazioViraNulo(resposta),
       resolvida_em: pendente ? null : new Date().toISOString(),
-      resolvida_por: pendente ? null : data.user?.id ?? null,
+      resolvida_por: pendente ? null : (data.user?.id ?? null),
     })
     .eq('id', id);
   return error ? 'Não foi possível atualizar a solicitação.' : null;

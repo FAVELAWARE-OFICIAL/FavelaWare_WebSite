@@ -51,7 +51,9 @@ export async function gerenciarAcessos(
     try {
       const corpo = await error.context.json();
       if (typeof corpo?.erro === 'string') return { erro: corpo.erro };
-    } catch { /* resposta sem JSON: cai na mensagem genérica */ }
+    } catch {
+      /* resposta sem JSON: cai na mensagem genérica */
+    }
   }
   return { erro: 'Não foi possível concluir agora. Tente de novo em instantes.' };
 }

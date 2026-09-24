@@ -102,36 +102,85 @@ const PrimeiroAcesso: React.FC = () => {
         </p>
 
         {mensagem && (
-          <div role="alert" className="mb-6 p-4 rounded-lg bg-red-100 text-red-800 border border-red-300">{mensagem}</div>
+          <div role="alert" className="mb-6 p-4 rounded-lg bg-red-100 text-red-800 border border-red-300">
+            {mensagem}
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">Nova senha *</label>
-            <input id="senha" name="senha" type="password" autoComplete="new-password" required minLength={TAMANHO_MINIMO}
-              value={formData.senha} onChange={handleInputChange} className={classeCampo} />
-            <p className="mt-1 text-xs text-gray-500">Pelo menos {TAMANHO_MINIMO} caracteres, diferente da senha padrão.</p>
+            <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">
+              Nova senha *
+            </label>
+            <input
+              id="senha"
+              name="senha"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={TAMANHO_MINIMO}
+              value={formData.senha}
+              onChange={handleInputChange}
+              className={classeCampo}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Pelo menos {TAMANHO_MINIMO} caracteres, diferente da senha padrão.
+            </p>
           </div>
           <div>
-            <label htmlFor="confirmacao" className="block text-sm font-medium text-gray-700 mb-2">Repita a nova senha *</label>
-            <input id="confirmacao" name="confirmacao" type="password" autoComplete="new-password" required
-              value={formData.confirmacao} onChange={handleInputChange} className={classeCampo} />
+            <label htmlFor="confirmacao" className="block text-sm font-medium text-gray-700 mb-2">
+              Repita a nova senha *
+            </label>
+            <input
+              id="confirmacao"
+              name="confirmacao"
+              type="password"
+              autoComplete="new-password"
+              required
+              value={formData.confirmacao}
+              onChange={handleInputChange}
+              className={classeCampo}
+            />
           </div>
           <div>
-            <label htmlFor="dataNascimento" className="block text-sm font-medium text-gray-700 mb-2">Data de nascimento *</label>
-            <input id="dataNascimento" name="dataNascimento" type="date" required max={hoje} autoComplete="bday"
-              value={formData.dataNascimento} onChange={handleInputChange} className={classeCampo} />
+            <label htmlFor="dataNascimento" className="block text-sm font-medium text-gray-700 mb-2">
+              Data de nascimento *
+            </label>
+            <input
+              id="dataNascimento"
+              name="dataNascimento"
+              type="date"
+              required
+              max={hoje}
+              autoComplete="bday"
+              value={formData.dataNascimento}
+              onChange={handleInputChange}
+              className={classeCampo}
+            />
           </div>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Seu e-mail *</label>
-            <input id="email" name="email" type="email" required autoComplete="email"
-              value={formData.email} onChange={handleInputChange} className={classeCampo} placeholder="Ex: maria@email.com" />
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              Seu e-mail *
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              className={classeCampo}
+              placeholder="Ex: maria@email.com"
+            />
           </div>
           <button
             type="submit"
             disabled={salvando}
             className={`w-full py-4 px-6 rounded-lg font-bold text-white text-lg shadow-lg transition-all ${
-              salvando ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-favela-green-600 to-favela-blue-600 hover:shadow-xl'
+              salvando
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-favela-green-600 to-favela-blue-600 hover:shadow-xl'
             }`}
           >
             {salvando ? 'Salvando...' : 'SALVAR E ENTRAR'}

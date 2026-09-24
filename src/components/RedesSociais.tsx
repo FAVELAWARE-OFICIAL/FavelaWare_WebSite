@@ -16,8 +16,8 @@ import { email, instagram } from '../data/contato';
 interface RedeSocial {
   nome: string;
   href: string;
-  rotulo: string;      // Texto lido pelo leitor de tela (o botão só tem ícone)
-  externo: boolean;    // true = abre em nova aba
+  rotulo: string; // Texto lido pelo leitor de tela (o botão só tem ícone)
+  externo: boolean; // true = abre em nova aba
   icone: React.ReactNode;
 }
 
@@ -41,7 +41,14 @@ const redesSociais: RedeSocial[] = [
     externo: false,
     // Ícone de envelope: Heroicons v2, contorno (licença MIT)
     icone: (
-      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+      <svg
+        className="w-5 h-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        aria-hidden="true"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"

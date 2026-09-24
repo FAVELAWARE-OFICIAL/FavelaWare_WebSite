@@ -67,9 +67,7 @@ const TurmaDetalhe: React.FC = () => {
               </span>
             )}
 
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              {turma.nome.toUpperCase()}
-            </h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{turma.nome.toUpperCase()}</h1>
             <p className="text-xl text-white/80">
               {turma.edicao} · {turma.periodo} · {turma.alunos.length} alunos
             </p>
@@ -79,7 +77,6 @@ const TurmaDetalhe: React.FC = () => {
 
       {/* Conteúdo */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-
         {/* Volta para a lista de turmas */}
         <Link
           to="/turmas"

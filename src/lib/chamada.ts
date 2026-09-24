@@ -34,9 +34,7 @@ export interface AulaRegistrada {
 }
 
 export async function carregarMinhasTurmas(): Promise<TurmaDoProfessor[]> {
-  const { data, error } = await supabase
-    .from('turmas')
-    .select('id, nome, edicoes(nome, ordem)');
+  const { data, error } = await supabase.from('turmas').select('id, nome, edicoes(nome, ordem)');
   if (error) throw error;
   // Da edição mais recente para a mais antiga: a primeira da lista é a turma padrão.
   // A edição de demonstração tem ordem 0, então fica sempre no fim.
@@ -84,10 +82,7 @@ export function aulaDoDia(aulas: AulaRegistrada[], data: string): AulaRegistrada
 
 /** Marcações já salvas numa aula: { id do aluno: situação } */
 export async function carregarMarcacoes(aulaId: number): Promise<Record<number, Marcacao>> {
-  const { data, error } = await supabase
-    .from('presencas')
-    .select('participante_id, situacao')
-    .eq('aula_id', aulaId);
+  const { data, error } = await supabase.from('presencas').select('participante_id, situacao').eq('aula_id', aulaId);
   if (error) throw error;
   const marcacoes: Record<number, Marcacao> = {};
   for (const p of data) {

@@ -24,7 +24,10 @@ export interface Edicao {
   demonstracao: boolean;
 }
 
-export interface Turma { id: number; nome: string }
+export interface Turma {
+  id: number;
+  nome: string;
+}
 
 export interface Participante {
   id: number;
@@ -51,7 +54,10 @@ export interface Presenca {
   registro_original: string;
 }
 
-export interface MudancaHorario { participante_id: number; horario: string | null }
+export interface MudancaHorario {
+  participante_id: number;
+  horario: string | null;
+}
 
 export interface DadosDaEdicao {
   turmas: Turma[];
@@ -102,18 +108,28 @@ export async function carregarEdicoes(): Promise<Edicao[]> {
 export async function carregarDadosDaEdicao(edicaoId: number): Promise<DadosDaEdicao> {
   const [turmas, participantes, aulas, presencas, mudancas] = await Promise.all([
     supabase.from('turmas').select('id, nome').eq('edicao_id', edicaoId).order('nome'),
-    supabase.from('participantes').select('id, turma_id, funcao, nome, login, observacao, foto')
-      .eq('edicao_id', edicaoId).order('nome'),
+    supabase
+      .from('participantes')
+      .select('id, turma_id, funcao, nome, login, observacao, foto')
+      .eq('edicao_id', edicaoId)
+      .order('nome'),
     supabase.from('aulas').select('id, turma_id, data, ordem, descricao').eq('edicao_id', edicaoId).order('ordem'),
     // "aulas!inner()" só filtra pela edição: não devolve nenhuma coluna de aulas
-    buscarTudo<Presenca>((de, ate) =>
-      supabase.from('presencas')
-        .select('participante_id, aula_id, situacao, registro_original, aulas!inner()', { count: de === 0 ? 'exact' : undefined })
-        .eq('aulas.edicao_id', edicaoId)
-        .order('aula_id').order('participante_id')
-        .range(de, ate) as unknown as PromiseLike<{ data: Presenca[] | null; error: unknown; count: number | null }>,
+    buscarTudo<Presenca>(
+      (de, ate) =>
+        supabase
+          .from('presencas')
+          .select('participante_id, aula_id, situacao, registro_original, aulas!inner()', {
+            count: de === 0 ? 'exact' : undefined,
+          })
+          .eq('aulas.edicao_id', edicaoId)
+          .order('aula_id')
+          .order('participante_id')
+          .range(de, ate) as unknown as PromiseLike<{ data: Presenca[] | null; error: unknown; count: number | null }>,
     ),
-    supabase.from('mudancas_horario').select('participante_id, horario, participantes!inner()')
+    supabase
+      .from('mudancas_horario')
+      .select('participante_id, horario, participantes!inner()')
       .eq('participantes.edicao_id', edicaoId),
   ]);
   for (const r of [turmas, participantes, aulas, mudancas]) if (r.error) throw r.error;
@@ -199,11 +215,12 @@ export interface Filtros {
 
 export const FILTROS_INICIAIS: Filtros = { turma: 'todas', busca: '', faixa: 'todas', dataDe: '', dataAte: '' };
 
-export type AlunoDoPainel = Participante & Resumo & {
-  turma: string;
-  /** Faltas seguidas nas aulas mais recentes da turma (sem contar justificadas) */
-  faltasSeguidas: number;
-};
+export type AlunoDoPainel = Participante &
+  Resumo & {
+    turma: string;
+    /** Faltas seguidas nas aulas mais recentes da turma (sem contar justificadas) */
+    faltasSeguidas: number;
+  };
 
 const media = (lista: number[]) => (lista.length ? lista.reduce((s, v) => s + v, 0) / lista.length : null);
 
@@ -218,7 +235,9 @@ export function montarPainel(dados: DadosDaEdicao, filtros: Filtros) {
     data ? (!filtros.dataDe || data >= filtros.dataDe) && (!filtros.dataAte || data <= filtros.dataAte) : semPeriodo;
 
   const aulasValidas = aulas.filter((a) => dentroDoPeriodo(a.data));
-  const aulasDeAlunos = aulasValidas.filter((a) => a.turma_id !== null && (turmaEscolhida === null || a.turma_id === turmaEscolhida));
+  const aulasDeAlunos = aulasValidas.filter(
+    (a) => a.turma_id !== null && (turmaEscolhida === null || a.turma_id === turmaEscolhida),
+  );
   const aulasDeProfessores = aulasValidas.filter((a) => a.turma_id === null);
   const idsAulasValidas = new Set(aulasValidas.map((a) => a.id));
 
@@ -228,7 +247,8 @@ export function montarPainel(dados: DadosDaEdicao, filtros: Filtros) {
   const celulas = new Map<string, Presenca>();
   const agrupar = (mapa: Map<number, Presenca[]>, chave: number, p: Presenca) => {
     const lista = mapa.get(chave);
-    if (lista) lista.push(p); else mapa.set(chave, [p]);
+    if (lista) lista.push(p);
+    else mapa.set(chave, [p]);
   };
   for (const p of presencas) {
     if (!idsAulasValidas.has(p.aula_id)) continue;
@@ -243,7 +263,8 @@ export function montarPainel(dados: DadosDaEdicao, filtros: Filtros) {
   for (const a of aulasValidas) {
     if (a.turma_id === null || !a.data) continue;
     const lista = aulasRecentesDaTurma.get(a.turma_id);
-    if (lista) lista.push(a); else aulasRecentesDaTurma.set(a.turma_id, [a]);
+    if (lista) lista.push(a);
+    else aulasRecentesDaTurma.set(a.turma_id, [a]);
   }
   for (const lista of aulasRecentesDaTurma.values()) lista.sort((x, y) => y.data!.localeCompare(x.data!));
 
@@ -271,9 +292,13 @@ export function montarPainel(dados: DadosDaEdicao, filtros: Filtros) {
       ...resumoDe(p.id),
       faltasSeguidas: faltasSeguidasDe(p.id, p.turma_id),
     }))
-    .filter((p) =>
-      filtros.faixa === 'todas'
-      || (filtros.faixa === 'risco' ? p.frequencia !== null && p.frequencia < META_FREQUENCIA : faixaDe(p.frequencia) === filtros.faixa));
+    .filter(
+      (p) =>
+        filtros.faixa === 'todas' ||
+        (filtros.faixa === 'risco'
+          ? p.frequencia !== null && p.frequencia < META_FREQUENCIA
+          : faixaDe(p.frequencia) === filtros.faixa),
+    );
   const idsAlunos = new Set(alunos.map((a) => a.id));
   const frequencias = alunos.map((a) => a.frequencia).filter((f): f is number => f !== null);
 
@@ -301,15 +326,25 @@ export function montarPainel(dados: DadosDaEdicao, filtros: Filtros) {
   );
 
   // Período das aulas (primeira e última data)
-  const datas = aulasDeAlunos.map((a) => a.data).filter((d): d is string => !!d).sort();
+  const datas = aulasDeAlunos
+    .map((a) => a.data)
+    .filter((d): d is string => !!d)
+    .sort();
 
   // Aulas em que a presença foi melhor e pior (média entre as turmas do dia)
   const mediaDoPonto = (ponto: Record<string, string | number | null>) =>
     media(turmasVisiveis.map((t) => ponto[t.nome]).filter((v): v is number => typeof v === 'number'));
-  const pontosComMedia = pontos.map((ponto) => ({ data: String(ponto.data), media: mediaDoPonto(ponto) }))
+  const pontosComMedia = pontos
+    .map((ponto) => ({ data: String(ponto.data), media: mediaDoPonto(ponto) }))
     .filter((p): p is { data: string; media: number } => p.media !== null);
-  const melhorAula = pontosComMedia.reduce<typeof pontosComMedia[number] | null>((m, p) => (!m || p.media > m.media ? p : m), null);
-  const piorAula = pontosComMedia.reduce<typeof pontosComMedia[number] | null>((m, p) => (!m || p.media < m.media ? p : m), null);
+  const melhorAula = pontosComMedia.reduce<(typeof pontosComMedia)[number] | null>(
+    (m, p) => (!m || p.media > m.media ? p : m),
+    null,
+  );
+  const piorAula = pontosComMedia.reduce<(typeof pontosComMedia)[number] | null>(
+    (m, p) => (!m || p.media < m.media ? p : m),
+    null,
+  );
 
   // Quem precisa de atenção: abaixo da meta, de quem tem mais faltas para menos
   // (no empate, a menor frequência primeiro; depois o nome)

@@ -42,8 +42,14 @@ const Sobre = () => {
     { nome: 'Gustavo Pena', cargo: 'Idealizador', organizacao: 'Mundiale', foto: '/imgs/team/gustavo.webp' },
     { nome: 'Cristiane de Ávila', cargo: 'Idealizadora', organizacao: 'Mundiale', foto: '/imgs/team/cristiane.webp' },
     { nome: 'Diomar', cargo: 'Idealizador', organizacao: 'AOPA', foto: '/imgs/team/diomar.webp' },
-    { nome: 'Rafaela Moreira', cargo: 'Idealizadora e Orientadora', organizacao: 'Ânima', foto: '/imgs/team/rafaela.webp', linkedin: 'https://www.linkedin.com/in/rafaelapcmoreira/' },
-    { nome: 'Samara Leal', cargo: 'Idealizadora', organizacao: 'Ânima', foto: '/imgs/team/samara.webp' }
+    {
+      nome: 'Rafaela Moreira',
+      cargo: 'Idealizadora e Orientadora',
+      organizacao: 'Ânima',
+      foto: '/imgs/team/rafaela.webp',
+      linkedin: 'https://www.linkedin.com/in/rafaelapcmoreira/',
+    },
+    { nome: 'Samara Leal', cargo: 'Idealizadora', organizacao: 'Ânima', foto: '/imgs/team/samara.webp' },
   ].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')); // sempre em ordem alfabética
 
   // A equipe da 3ª edição (equipeEdicaoIII) mora em src/data/hallDaFama.ts:
@@ -52,59 +58,66 @@ const Sobre = () => {
   const propositos = [
     {
       titulo: 'Acadêmico',
-      descricao: 'Proporcionar aos alunos de TI da Una Cristiano Machado compartilhar as habilidades adquiridas nos cursos.',
-      cor: 'text-pink-500'
+      descricao:
+        'Proporcionar aos alunos de TI da Una Cristiano Machado compartilhar as habilidades adquiridas nos cursos.',
+      cor: 'text-pink-500',
     },
     {
       titulo: 'Social',
       descricao: 'Gerar mudanças na realidade de jovens de comunidades vulneráveis.',
-      cor: 'text-pink-500'
+      cor: 'text-pink-500',
     },
     {
       titulo: 'Carreira',
       descricao: 'Fornecer experiência prática, abrindo um novo caminho para o futuro da carreira de tecnologia.',
-      cor: 'text-pink-500'
-    }
+      cor: 'text-pink-500',
+    },
   ];
 
   // link é opcional: parceiro sem site oficial conhecido fica sem o botão "SAIBA MAIS"
   const parceiros: { nome: string; descricao: string; logo: string; link?: string }[] = [
     {
       nome: 'Mundiale',
-      descricao: 'Com a união de pessoas, tecnologia e uma metodologia própria, a Mundiale revoluciona a relação entre marcas e consumidores por meio de canais digitais, proporcionando interações mais humanas, assertivas e fluidas.',
+      descricao:
+        'Com a união de pessoas, tecnologia e uma metodologia própria, a Mundiale revoluciona a relação entre marcas e consumidores por meio de canais digitais, proporcionando interações mais humanas, assertivas e fluidas.',
       logo: '/imgs/partners/Mundiale.webp',
-      link: 'https://mundiale.com.br'
+      link: 'https://mundiale.com.br',
     },
     {
       nome: 'AOPA',
-      descricao: 'A AOPA é uma instituição social católica dos Religiosos Pavonianos, que, pela experiência de seu fundador, São Ludovico Pavoni, dedica-se ao atendimento integral de crianças e adolescentes.',
+      descricao:
+        'A AOPA é uma instituição social católica dos Religiosos Pavonianos, que, pela experiência de seu fundador, São Ludovico Pavoni, dedica-se ao atendimento integral de crianças e adolescentes.',
       logo: '/imgs/partners/AOPA.webp',
-      link: 'https://www.pavonianos.org.br/unidade/aopabh'
+      link: 'https://www.pavonianos.org.br/unidade/aopabh',
     },
     {
       nome: 'Ecossistema Ânima Educação',
-      descricao: 'O Ecossistema Ânima Educação é uma das maiores organizações educacionais privadas de ensino superior do Brasil, com cerca de 330 mil estudantes e 18 mil educadores e educadoras.',
+      descricao:
+        'O Ecossistema Ânima Educação é uma das maiores organizações educacionais privadas de ensino superior do Brasil, com cerca de 330 mil estudantes e 18 mil educadores e educadoras.',
       logo: '/imgs/partners/ecossistema ânima.webp',
-      link: 'https://animaeducacao.com.br'
+      link: 'https://animaeducacao.com.br',
     },
     {
       nome: 'Una Cristiano Machado',
-      descricao: 'A Una Cristiano Machado é uma das instituições da Ânima com compromisso de oferecer educação de qualidade, focada na formação acadêmica sólida e inovadora.',
+      descricao:
+        'A Una Cristiano Machado é uma das instituições da Ânima com compromisso de oferecer educação de qualidade, focada na formação acadêmica sólida e inovadora.',
       logo: '/imgs/partners/Una Cristiano Machado.webp',
-      link: 'https://una.br'
+      link: 'https://una.br',
     },
     {
       // O site oficial não traz descrição do Ânima Lab (só o rodapé "Site criado
       // pela equipe Ânima Hub"): texto provisório, a confirmar com a coordenação
       nome: 'Ânima Lab',
-      descricao: 'O Ânima Lab faz parte do Ecossistema Ânima Educação. A equipe Ânima Hub criou o site oficial do FavelaWare.',
-      logo: '/imgs/partners/ânima.webp'
+      descricao:
+        'O Ânima Lab faz parte do Ecossistema Ânima Educação. A equipe Ânima Hub criou o site oficial do FavelaWare.',
+      logo: '/imgs/partners/ânima.webp',
     },
     {
       nome: 'REDE TRANSFORMAR',
-      descricao: 'A REDE TRANSFORMAR é uma organização sem fins lucrativos que desenvolve programas, projetos e ações de assessoramento, defesa e garantia de direitos sociais.',
-      logo: '/imgs/partners/Rede Transformar.webp'
-    }
+      descricao:
+        'A REDE TRANSFORMAR é uma organização sem fins lucrativos que desenvolve programas, projetos e ações de assessoramento, defesa e garantia de direitos sociais.',
+      logo: '/imgs/partners/Rede Transformar.webp',
+    },
   ].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })); // sempre em ordem alfabética
 
   return (
@@ -137,10 +150,13 @@ const Sobre = () => {
           >
             <p>
               O <span className="font-bold text-pink-500">FavelaWare</span> é uma iniciativa voltada para a{' '}
-              <span className="font-bold text-[#8bc53f]">formação de jovens programadores</span>, de 15 a 24 anos, vindos dos aglomerados Barragem Santa Lúcia, Morro do Papagaio, Vila São José, Conjunto Santa Maria, Vila Leonina, Vila Estrela, Morro das Pedras e região, em Belo Horizonte/MG.
+              <span className="font-bold text-[#8bc53f]">formação de jovens programadores</span>, de 15 a 24 anos,
+              vindos dos aglomerados Barragem Santa Lúcia, Morro do Papagaio, Vila São José, Conjunto Santa Maria, Vila
+              Leonina, Vila Estrela, Morro das Pedras e região, em Belo Horizonte/MG.
             </p>
             <p>
-              O projeto é focado na formação técnica (com aulas de lógica básica, low code, back end e front end) e na formação de soft skills (comunicação, desenvolvimento pessoal, trabalho em equipe etc.), com{' '}
+              O projeto é focado na formação técnica (com aulas de lógica básica, low code, back end e front end) e na
+              formação de soft skills (comunicação, desenvolvimento pessoal, trabalho em equipe etc.), com{' '}
               <span className="font-bold text-[#8bc53f]">aulas ministradas por especialistas</span> na área.
             </p>
             <p>
@@ -176,7 +192,9 @@ const Sobre = () => {
             </div>
 
             {/* mt-12 no celular: em tela estreita o título centralizado encostava nos quadradinhos */}
-            <h3 className="mt-12 md:mt-0 text-2xl font-bold text-[#2d2a5f] mb-10 italic text-center">Cronograma Macro</h3>
+            <h3 className="mt-12 md:mt-0 text-2xl font-bold text-[#2d2a5f] mb-10 italic text-center">
+              Cronograma Macro
+            </h3>
 
             {/* Linha do tempo (tablet e computador), no desenho do site oficial:
                 bola verde na linha, texto de um lado e data do outro, alternando.
@@ -192,14 +210,19 @@ const Sobre = () => {
               transition={{ duration: 0.6 }}
             >
               {/* Linha roxa: do centro da primeira bola ao centro da última (metade do w-20) */}
-              <div className="absolute top-1/2 left-10 right-10 h-1.5 -translate-y-1/2 bg-[#2d2a5f] rounded-full" aria-hidden="true" />
+              <div
+                className="absolute top-1/2 left-10 right-10 h-1.5 -translate-y-1/2 bg-[#2d2a5f] rounded-full"
+                aria-hidden="true"
+              />
 
               <ol className="relative flex">
                 {cronogramaItems.map((item, index) => {
                   // Alterna os lados: nos pontos pares o texto fica em cima e a data embaixo
                   const textoEmCima = index % 2 === 0;
                   const haste = <span className="w-[3px] h-7 bg-[#8bc53f]" aria-hidden="true" />;
-                  const bolinha = <span className="w-5 h-5 rounded-full border-2 border-[#8bc53f] bg-white" aria-hidden="true" />;
+                  const bolinha = (
+                    <span className="w-5 h-5 rounded-full border-2 border-[#8bc53f] bg-white" aria-hidden="true" />
+                  );
 
                   return (
                     <li
@@ -247,7 +270,10 @@ const Sobre = () => {
               {cronogramaItems.map((item) => (
                 <li key={item.titulo} className="relative pl-8">
                   {/* Bola VERDE na linha */}
-                  <span className="absolute -left-[14px] top-0 w-6 h-6 bg-[#8bc53f] rounded-full shadow-md" aria-hidden="true" />
+                  <span
+                    className="absolute -left-[14px] top-0 w-6 h-6 bg-[#8bc53f] rounded-full shadow-md"
+                    aria-hidden="true"
+                  />
                   <p className="text-sm font-bold text-[#2d2a5f]">{item.data}</p>
                   <p className="text-gray-600">{item.titulo}</p>
                 </li>
@@ -406,7 +432,13 @@ const Sobre = () => {
                 transition={{ duration: 0.6 }}
               >
                 <div className="w-48 h-48 flex items-center justify-center">
-                  <img src={parceiro.logo} alt={parceiro.nome} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain" />
+                  <img
+                    src={parceiro.logo}
+                    alt={parceiro.nome}
+                    loading="lazy"
+                    decoding="async"
+                    className="max-w-full max-h-full object-contain"
+                  />
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-700 mb-6">{parceiro.descricao}</p>
@@ -419,7 +451,7 @@ const Sobre = () => {
                       whileHover={{
                         backgroundColor: '#2d2a5f',
                         color: '#ffffff',
-                        scale: 1.05
+                        scale: 1.05,
                       }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -442,7 +474,7 @@ const Sobre = () => {
             className="inline-block px-12 py-6 bg-[#2d2a5f] text-white font-black text-xl rounded-full shadow-2xl"
             whileHover={{
               scale: 1.1,
-              boxShadow: '0 20px 60px rgba(45, 42, 95, 0.4)'
+              boxShadow: '0 20px 60px rgba(45, 42, 95, 0.4)',
             }}
             whileTap={{ scale: 0.95 }}
           >

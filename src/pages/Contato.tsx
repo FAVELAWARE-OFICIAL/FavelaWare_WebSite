@@ -100,26 +100,18 @@ const Contato: React.FC = () => {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              CONTATO
-            </h1>
-            <p className="text-xl text-white/80 max-w-3xl mx-auto">
-              Entre em contato conosco
-            </p>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">CONTATO</h1>
+            <p className="text-xl text-white/80 max-w-3xl mx-auto">Entre em contato conosco</p>
           </motion.div>
         </div>
       </div>
 
       {/* Conteúdo Principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-
         {/* ============================================
             SEÇÃO 1: INFORMAÇÕES DE CONTATO
             ============================================ */}
-        <motion.section
-          {...fadeInUp}
-          className="mb-16"
-        >
+        <motion.section {...fadeInUp} className="mb-16">
           <motion.div
             variants={staggerContainer}
             initial="initial"
@@ -134,9 +126,7 @@ const Contato: React.FC = () => {
                 className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-transparent hover:border-favela-green-500 transition-all duration-300"
               >
                 <div className="text-5xl mb-4">{info.icone}</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  {info.titulo}
-                </h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{info.titulo}</h3>
                 {info.link ? (
                   <a
                     href={info.link}
@@ -157,26 +147,16 @@ const Contato: React.FC = () => {
         {/* ============================================
             SEÇÃO 2: OBRAS PAVONIANAS
             ============================================ */}
-        <motion.section
-          {...fadeInUp}
-          transition={{ delay: 0.2 }}
-          className="mb-16"
-        >
+        <motion.section {...fadeInUp} transition={{ delay: 0.2 }} className="mb-16">
           <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              OBRAS PAVONIANAS
-            </h2>
-            <p className="text-lg text-gray-600">
-              Instituição parceira do projeto FavelaWare
-            </p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">OBRAS PAVONIANAS</h2>
+            <p className="text-lg text-gray-600">Instituição parceira do projeto FavelaWare</p>
           </div>
 
           <div className="max-w-3xl mx-auto bg-gradient-to-br from-favela-green-50 to-gray-50 rounded-xl shadow-lg p-8">
             <div className="text-center">
               <div className="text-4xl mb-4">📞</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Telefone
-              </h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Telefone</h3>
               <a
                 href={telefoneLink}
                 className="text-2xl text-favela-green-600 hover:text-favela-green-700 font-bold transition-colors"
@@ -190,17 +170,10 @@ const Contato: React.FC = () => {
         {/* ============================================
             SEÇÃO 3: ENDEREÇO E MAPA
             ============================================ */}
-        <motion.section
-          {...fadeInUp}
-          transition={{ delay: 0.4 }}
-        >
+        <motion.section {...fadeInUp} transition={{ delay: 0.4 }}>
           <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              📍 ENDEREÇO
-            </h2>
-            <p className="text-lg text-gray-600 mb-2">
-              {endereco}
-            </p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">📍 ENDEREÇO</h2>
+            <p className="text-lg text-gray-600 mb-2">{endereco}</p>
           </div>
 
           {/* Mapa do Google Maps */}
@@ -240,18 +213,10 @@ const Contato: React.FC = () => {
         {/* ============================================
             SEÇÃO 4: REDES SOCIAIS (OPCIONAL)
             ============================================ */}
-        <motion.section
-          {...fadeInUp}
-          transition={{ delay: 0.6 }}
-          className="mt-20"
-        >
+        <motion.section {...fadeInUp} transition={{ delay: 0.6 }} className="mt-20">
           <div className="text-center max-w-3xl mx-auto bg-gradient-to-r from-favela-green-50 to-gray-50 rounded-2xl shadow-xl p-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              💬 Siga-nos nas Redes Sociais
-            </h2>
-            <p className="text-lg text-gray-700 mb-6">
-              Fique por dentro das novidades e acompanhe nosso trabalho
-            </p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">💬 Siga-nos nas Redes Sociais</h2>
+            <p className="text-lg text-gray-700 mb-6">Fique por dentro das novidades e acompanhe nosso trabalho</p>
 
             {/* Mesmos botões do rodapé, na versão para fundo claro */}
             <div className="flex justify-center">

@@ -1,0 +1,50 @@
+name: automacao-versiona-por-label
+
+# Se alguem adicionar version:major|minor|patch no PR para a main, recalcula a
+# versao na hora. Sem esta automacao a label so valeria a partir do PROXIMO
+# push, obrigando um commit vazio so para ativa-la.
+#
+# Mesmo script do job `versionar` de versionamento.yml — muda so o gatilho.
+
+on:
+  pull_request:
+    types: [labeled]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  versionar:
+    if: >-
+      startsWith(github.event.pull_request.head.ref, 'release/') ||
+      startsWith(github.event.pull_request.head.ref, 'hotfix/')
+    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      # Mesmo cuidado de versionamento.yml: gitconfig no RUNNER_TEMP e apagado.
+      - name: Gitconfig temporario
+        run: echo "GIT_CONFIG_GLOBAL=$RUNNER_TEMP/gitconfig" >> "$GITHUB_ENV"
+
+      - name: Recalcular versao com a label aplicada
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+          BRANCH_NOME: ${{ github.event.pull_request.head.ref }}
+        run: |
+          command -v gh >/dev/null || { echo "::error::gh ausente no runner"; exit 1; }
+          bash .github/scripts/versionar.sh
+
+      - name: Limpar gitconfig temporario
+        if: always()
+        run: rm -f "$RUNNER_TEMP/gitconfig"

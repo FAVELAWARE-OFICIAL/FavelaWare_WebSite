@@ -1,0 +1,60 @@
+name: validate-merge-source
+
+# ATENCAO: o id do job (validate-merge-source) e o status check que os
+# rulesets protect-main/protect-develop exigem pelo nome literal. Nao renomear.
+#
+# Padrao herdado do padrão da organização, adaptado ao git-flow deste
+# repositorio, que — diferente do SDK — tem `release/*` e `hotfix/*`:
+#
+#   feature|fix|bugfix|chore|docs|refactor|test|perf|ci|build/*  ->  develop
+#   release/*                                                    ->  main
+#   hotfix/*                                                     ->  main  (urgencia)
+#
+# O hotfix e a unica excecao ao caminho `develop -> release/* -> main`, e existe
+# porque producao quebrada nao pode esperar o trem da release. O back-merge
+# automatico (automacao-sincroniza-main-develop.yml) devolve o hotfix para a
+# develop logo apos o merge, para que ele nao se perca no proximo ciclo.
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-merge-source-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-merge-source:
+    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
+    timeout-minutes: 5
+    steps:
+      - name: Checa origem permitida do PR
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          case "$BASE" in
+            main)
+              echo "$HEAD" | grep -Eq '^(release|hotfix)/.+$' \
+                || { echo "::error::main so aceita PR vindo de release/* ou hotfix/* (recebido: $HEAD)"; exit 1; }
+              ;;
+            develop)
+              echo "$HEAD" | grep -Eq '^(feature|feat|fix|bugfix|chore|docs?|refactor|test|perf|ci|build|support|hotfix|release)/.+$' \
+                || { echo "::error::develop so aceita branches de tipo, ex.: feature/x, fix/y (recebido: $HEAD)"; exit 1; }
+              ;;
+          esac
+          echo "Origem OK: $HEAD -> $BASE"
+
+      - name: Checa titulo do PR (Conventional Commits)
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          echo "$TITLE" | grep -Eq '^(build|chore|ci|docs?|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9._/-]+\))?!?: .+' \
+            || { echo "::error::titulo fora do padrao Conventional Commits: '$TITLE'"; exit 1; }
+          echo "Titulo OK."

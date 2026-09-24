@@ -17,12 +17,22 @@ import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
 import { Carregando } from '../../components/admin/Moldura';
 import { Aviso, Cartao, Vazio, classeCampo, type Mensagem } from '../../components/admin/Ui';
 import {
-  carregarEquipe, CHAVE_EQUIPE, convidarProfessor, removerProfessor, vincularTurma,
-  type Professor, type TurmaComEdicao,
+  carregarEquipe,
+  CHAVE_EQUIPE,
+  convidarProfessor,
+  removerProfessor,
+  vincularTurma,
+  type Professor,
+  type TurmaComEdicao,
 } from '../../lib/equipe';
 import { foco, selo, texto } from '../../components/admin/designSystem';
 import Janela from '../../components/admin/Janela';
-import { carregarDadosDoInstrutor, carregarQuemPreencheu, textoParaRpa, type DadosInstrutorDaEquipe } from '../../lib/dadosInstrutor';
+import {
+  carregarDadosDoInstrutor,
+  carregarQuemPreencheu,
+  textoParaRpa,
+  type DadosInstrutorDaEquipe,
+} from '../../lib/dadosInstrutor';
 
 /** Botões de turma que ligam/desligam (usados no cadastro e na lista) */
 const SeletorDeTurmas: React.FC<{
@@ -42,10 +52,13 @@ const SeletorDeTurmas: React.FC<{
           disabled={desabilitado}
           aria-pressed={ativa}
           className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${foco} disabled:opacity-50 ${
-            ativa ? 'border-favela-green-600 bg-favela-green-50 text-favela-green-800' : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
+            ativa
+              ? 'border-favela-green-600 bg-favela-green-50 text-favela-green-800'
+              : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
           }`}
         >
-          {ativa ? '✓ ' : ''}{t.nome} <span className="text-gray-400">· {t.edicao}</span>
+          {ativa ? '✓ ' : ''}
+          {t.nome} <span className="text-gray-400">· {t.edicao}</span>
         </button>
       );
     })}
@@ -65,7 +78,12 @@ const Equipe: React.FC = () => {
   // A lista traz só quem preencheu; a ficha de cada um vem ao abrir a janela.
   const [preencheram, setPreencheram] = useState<Set<string> | null>(null);
   const [erroRpa, setErroRpa] = useState(false);
-  const [vendoRpa, setVendoRpa] = useState<{ id: string; nome: string; dados: DadosInstrutorDaEquipe | null; erro?: boolean } | null>(null);
+  const [vendoRpa, setVendoRpa] = useState<{
+    id: string;
+    nome: string;
+    dados: DadosInstrutorDaEquipe | null;
+    erro?: boolean;
+  } | null>(null);
   const [copia, setCopia] = useState<'copiado' | 'falhou' | null>(null);
 
   useEffect(() => {
@@ -76,7 +94,9 @@ const Equipe: React.FC = () => {
         console.error('[equipe] falha ao carregar os dados do RPA', e?.code);
         if (ativo) setErroRpa(true);
       });
-    return () => { ativo = false; };
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   const abrirRpa = async (id: string, nome: string) => {
@@ -128,7 +148,10 @@ const Equipe: React.FC = () => {
       setMensagem({ tipo: 'erro', texto: erro });
       return;
     }
-    setMensagem({ tipo: 'sucesso', texto: `Convite enviado para ${formData.email.trim()}. O instrutor define a senha pelo link do e-mail.` });
+    setMensagem({
+      tipo: 'sucesso',
+      texto: `Convite enviado para ${formData.email.trim()}. O instrutor define a senha pelo link do e-mail.`,
+    });
     setFormData({ nome: '', email: '', turmas: [] });
     recarregar();
   };
@@ -147,7 +170,12 @@ const Equipe: React.FC = () => {
   };
 
   const remover = async (professor: Professor) => {
-    if (!window.confirm(`Remover ${professor.nome ?? professor.email} da equipe? Ele perde o acesso às turmas; as chamadas que já fez continuam no histórico.`)) return;
+    if (
+      !window.confirm(
+        `Remover ${professor.nome ?? professor.email} da equipe? Ele perde o acesso às turmas; as chamadas que já fez continuam no histórico.`,
+      )
+    )
+      return;
     setOcupado(professor.id);
     try {
       await removerProfessor(professor.id);
@@ -161,7 +189,8 @@ const Equipe: React.FC = () => {
   };
 
   // Carregando: ocupa a página toda (não divide a tela com o formulário)
-  if (erro && dados === undefined) return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar a equipe.' }} />;
+  if (erro && dados === undefined)
+    return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar a equipe.' }} />;
   if (mostrarCarregando || professores === undefined) return <Carregando texto="Carregando equipe" />;
 
   return (
@@ -170,17 +199,43 @@ const Equipe: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
         {/* ============ CADASTRO ============ */}
-        <Cartao titulo="Cadastrar instrutor" descricao="Ele recebe um e-mail para criar a senha." className="xl:col-span-2">
+        <Cartao
+          titulo="Cadastrar instrutor"
+          descricao="Ele recebe um e-mail para criar a senha."
+          className="xl:col-span-2"
+        >
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="nome" className={`${texto.rotulo}`}>Nome *</label>
-              <input id="nome" name="nome" value={formData.nome} onChange={handleInputChange} required maxLength={120}
-                autoComplete="off" placeholder="Ex: Maria Souza" className={classeCampo} />
+              <label htmlFor="nome" className={`${texto.rotulo}`}>
+                Nome *
+              </label>
+              <input
+                id="nome"
+                name="nome"
+                value={formData.nome}
+                onChange={handleInputChange}
+                required
+                maxLength={120}
+                autoComplete="off"
+                placeholder="Ex: Maria Souza"
+                className={classeCampo}
+              />
             </div>
             <div>
-              <label htmlFor="email" className={`${texto.rotulo}`}>E-mail *</label>
-              <input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required
-                autoComplete="off" placeholder="Ex: maria@email.com" className={classeCampo} />
+              <label htmlFor="email" className={`${texto.rotulo}`}>
+                E-mail *
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                autoComplete="off"
+                placeholder="Ex: maria@email.com"
+                className={classeCampo}
+              />
             </div>
             <fieldset>
               <legend className="mb-2 text-xs font-medium text-gray-600">Turmas</legend>
@@ -188,7 +243,10 @@ const Equipe: React.FC = () => {
                 turmas={turmas}
                 escolhidas={formData.turmas}
                 aoAlternar={(id) =>
-                  setFormData((f) => ({ ...f, turmas: f.turmas.includes(id) ? f.turmas.filter((t) => t !== id) : [...f.turmas, id] }))
+                  setFormData((f) => ({
+                    ...f,
+                    turmas: f.turmas.includes(id) ? f.turmas.filter((t) => t !== id) : [...f.turmas, id],
+                  }))
                 }
               />
             </fieldset>
@@ -196,7 +254,9 @@ const Equipe: React.FC = () => {
               type="submit"
               disabled={enviando}
               className={`w-full rounded-lg px-5 py-2.5 text-sm font-bold transition-colors ${foco} focus-visible:ring-offset-2 ${
-                enviando ? 'cursor-not-allowed bg-gray-200 text-gray-500' : 'bg-favela-green-600 text-white hover:bg-favela-green-700'
+                enviando
+                  ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+                  : 'bg-favela-green-600 text-white hover:bg-favela-green-700'
               }`}
             >
               {enviando ? 'Enviando convite...' : 'Cadastrar e enviar convite'}
@@ -260,14 +320,22 @@ const Equipe: React.FC = () => {
       {/* ============ DADOS DO RPA (só leitura) ============ */}
       <Janela
         titulo={vendoRpa ? `Dados do RPA · ${vendoRpa.nome}` : ''}
-        subtitulo={vendoRpa?.dados ? `Atualizado em ${new Date(vendoRpa.dados.atualizado_em).toLocaleDateString('pt-BR')}` : undefined}
+        subtitulo={
+          vendoRpa?.dados
+            ? `Atualizado em ${new Date(vendoRpa.dados.atualizado_em).toLocaleDateString('pt-BR')}`
+            : undefined
+        }
         aberta={vendoRpa !== null}
         onFechar={() => setVendoRpa(null)}
         focoInicial="fechar"
         rodape={
           <div className="flex flex-wrap items-center justify-end gap-3">
             <span role="status" className={copia === 'falhou' ? 'text-sm text-red-700' : texto.apoio}>
-              {copia === 'copiado' ? 'Copiado.' : copia === 'falhou' ? 'Não foi possível copiar; selecione o texto acima.' : ''}
+              {copia === 'copiado'
+                ? 'Copiado.'
+                : copia === 'falhou'
+                  ? 'Não foi possível copiar; selecione o texto acima.'
+                  : ''}
             </span>
             <button
               type="button"
@@ -280,7 +348,9 @@ const Equipe: React.FC = () => {
           </div>
         }
       >
-        {vendoRpa?.erro && <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível abrir os dados. Tente de novo.' }} />}
+        {vendoRpa?.erro && (
+          <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível abrir os dados. Tente de novo.' }} />
+        )}
         {vendoRpa && !vendoRpa.dados && !vendoRpa.erro && <p className={texto.apoio}>Carregando…</p>}
         {vendoRpa?.dados && (
           <pre className="whitespace-pre-wrap break-words rounded-lg bg-gray-50 p-4 font-sans text-sm leading-7 text-gray-800">

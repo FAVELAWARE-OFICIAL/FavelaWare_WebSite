@@ -1,0 +1,106 @@
+name: back-merge-main-develop
+
+# Depois de todo push na main (merge de release/* ou hotfix/*), a develop ainda
+# nao tem esse commit como ancestral — o merge para a main so anexa o commit la.
+# Este job faz o back-merge automatico main -> develop.
+#
+# Sem ele a develop fica permanentemente atras da main, que foi exatamente
+# o que aconteceu ate 24/09/2026 (develop parada em maio, 43 commits de
+# divergencia).
+#
+# Conflito e resolvido a favor da MAIN: ela ja passou por PR, CI e aprovacao,
+# entao e a fonte de verdade. O job nunca aborta pedindo intervencao manual —
+# um back-merge que exige acao humana e um back-merge que ninguem faz.
+#
+# Push direto na develop com o secret GH_TOKEN, token de alguem do time
+# mantenedores-site, o unico com bypass no ruleset protect-develop. Sem o
+# secret cai no github.token, que o ruleset barra. NUNCA usa --force: e um merge de verdade em cima do
+# que a develop ja tem, entao commit proprio feito em paralelo sobrevive.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: back-merge-main-develop
+  cancel-in-progress: false
+
+jobs:
+  back-merge:
+    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          # O token nao fica no .git/config: o push le do env do passo.
+          persist-credentials: false
+
+      # Identidade e credential helper num gitconfig do RUNNER_TEMP (nunca no
+      # $HOME). O helper so referencia $GIT_TOKEN, que existe apenas no env do
+      # passo de back-merge: nenhum segredo e gravado em disco.
+      #
+      # O `credential.helper ''` ANTES do `--add` limpa qualquer helper
+      # herdado de config de sistema do runner (ex.: credential.helper=store
+      # em /etc/gitconfig). Sem isso, o `store` tambem recebe o token no
+      # "approve" e o persiste em disco — exatamente o que este gitconfig
+      # temporario existe para evitar.
+      - name: Gitconfig temporario
+        run: |
+          set -euo pipefail
+          echo "GIT_CONFIG_GLOBAL=$RUNNER_TEMP/gitconfig" >> "$GITHUB_ENV"
+          export GIT_CONFIG_GLOBAL="$RUNNER_TEMP/gitconfig"
+          git config --global user.name "back-merge-bot"
+          git config --global user.email "actions@github.com"
+          git config --global credential.helper ''
+          # shellcheck disable=SC2016
+          git config --global --add credential.helper '!f() { echo username=x-access-token; echo "password=${GIT_TOKEN}"; }; f'
+
+      - name: Back-merge main -> develop
+        env:
+          GIT_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+
+          git fetch origin main develop
+
+          if git merge-base --is-ancestor origin/main origin/develop; then
+            echo "develop ja contem a main, nada a fazer."
+            exit 0
+          fi
+
+          git checkout -B develop origin/develop
+
+          # Merge de verdade, com a main vencendo so onde os dois lados mexeram
+          # no mesmo trecho (-X theirs). Arquivo que so existe na develop e
+          # linha que a main nao tocou ficam como estao.
+          if ! git merge --no-commit --no-ff -X theirs origin/main; then
+            # Sobra so o conflito que o -X nao resolve (ex.: um lado apagou o
+            # arquivo e o outro mudou). Apenas esses vao para a versao da main.
+            git diff --name-only --diff-filter=U | while IFS= read -r arquivo; do
+              if git cat-file -e "origin/main:$arquivo" 2>/dev/null; then
+                git checkout origin/main -- "$arquivo"
+              else
+                git rm -f --ignore-unmatch -- "$arquivo"
+              fi
+            done
+          fi
+
+          git add -A
+          # Commit mesmo com a arvore igual: e o commit de merge que torna a
+          # main ancestral da develop. Sem MERGE_HEAD nao ha nada a fazer.
+          if ! git rev-parse -q --verify MERGE_HEAD >/dev/null && git diff --cached --quiet; then
+            echo "Nada a commitar."
+            exit 0
+          fi
+          git commit --no-edit -m "chore: back-merge main -> develop"
+          git push origin HEAD:develop
+          echo "Back-merge concluido."
+
+      - name: Limpar gitconfig temporario
+        if: always()
+        run: rm -f "$RUNNER_TEMP/gitconfig"

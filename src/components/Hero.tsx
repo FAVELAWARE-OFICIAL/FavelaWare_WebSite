@@ -40,13 +40,16 @@ const Hero = () => {
 
       {/* Padrão de código no fundo */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
             repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px),
             repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)
           `,
-          backgroundSize: '50px 50px'
-        }} />
+            backgroundSize: '50px 50px',
+          }}
+        />
       </div>
 
       {/* Gradiente animado de borda */}
@@ -55,7 +58,6 @@ const Hero = () => {
       {/* Conteúdo Principal */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-
           {/* Logo e Animação */}
           <motion.div
             className="flex justify-center lg:justify-start"
@@ -81,7 +83,7 @@ const Hero = () => {
                 className="w-80 h-80 object-contain"
                 initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
                 animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
               />
             </motion.div>
           </motion.div>
@@ -140,12 +142,7 @@ const Hero = () => {
                   transition={{ duration: 0.5, ease: 'easeInOut' }}
                 />
                 <span className="relative z-10">SAIBA MAIS</span>
-                <svg
-                  className="relative z-10 w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="relative z-10 w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </MotionLink>
@@ -179,7 +176,6 @@ const Hero = () => {
           </div>
         </div>
       </div>
-
     </section>
   );
 };

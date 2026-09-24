@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+# Bloqueia push de branches fora do padrão git-flow.
+#
+# Este regex precisa ficar IDÊNTICO ao do ruleset git-flow-branch-naming
+# (.github/rulesets/branch-naming.json). Se divergirem, o hook rejeita
+# localmente algo que o servidor aceita (ou o contrário).
+
+valid_re='^(main|develop|(feature|feat|fix|bugfix|release|hotfix|support|chore|docs|refactor|test|perf|ci|build)/.+)$'
+branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+if [ -z "$branch" ]; then
+  exit 0
+fi
+
+if ! echo "$branch" | grep -Eq "$valid_re"; then
+  printf '\n\033[31m✗ Branch "%s" não segue o padrão git-flow.\033[0m\n\n' "$branch"
+  echo "Prefixos permitidos:"
+  echo "  feature/  feat/  fix/  bugfix/  release/  hotfix/"
+  echo "  support/  chore/  docs/  refactor/  test/  perf/  ci/  build/"
+  echo ""
+  echo "Renomeie com:  git branch -m <novo-nome>"
+  echo ""
+  exit 1
+fi

@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+# Valida a mensagem contra o Conventional Commits (commitlint.config.cjs)
+# ANTES do commit existir: espelho local do check "Checa título do PR"
+# de .github/workflows/automacao-valida-origem-pr.yml.
+npx --no -- commitlint --edit "$1"

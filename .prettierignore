@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-ssr
+.git
+.github
+*.min.js
+*.min.css
+package-lock.json
+.claude
+.agents
+supabase
+google-apps-script
+public
