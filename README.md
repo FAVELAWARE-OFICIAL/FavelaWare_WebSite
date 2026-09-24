@@ -100,14 +100,18 @@ A `RotaProtegida` só organiza a navegação. Quem protege os dados são as regr
 
 ```
 src/
-├── components/        # Navbar, Footer, Hero, Gallery, RotaProtegida e admin/
-├── pages/             # páginas públicas + admin/, professor/, aluno/, equipe/
-├── lib/               # acesso ao Supabase por assunto (chamada, ponto, turmas...)
-├── data/              # conteúdo estático: trilhas, turmas, hall da fama, contato
+├── pages/             # controladores: páginas públicas + admin/, professor/, aluno/, equipe/
+├── components/        # interface reutilizável (admin/, atividades/, trilhas/)
+├── lib/               # serviços por assunto: classe + instância (servicoSessao, servicoPonto...)
+├── hooks/             # hooks que ligam a interface aos serviços
+├── utils/             # funções usadas por 2+ módulos (datas, texto, preferências)
+├── data/              # conteúdo do site: trilhas, turmas, galeria, parceiros, sobre
+├── config.ts          # configuração (.env.local e nomes fixos do Supabase)
+├── types.ts           # status padronizado e tipos compartilhados
 └── App.tsx            # rotas
 supabase/
 ├── migrations/        # schema, RLS e funções
-├── functions/         # acessos-alunos, convidar-professor, entregas-drive
+├── functions/         # acessos-alunos, convidar-professor, entregas-drive (+ _shared)
 └── testes/            # testes das regras RLS
 google-apps-script/    # ponte portal → Google Drive
 scripts/               # importação de planilhas e otimização de imagens
@@ -139,6 +143,7 @@ Regras de UI na skill `.claude/skills/favelaware-padrao-visual/`.
 | `npm run lint` / `lint:fix` | ESLint |
 | `npm run typecheck` | TypeScript sem emitir arquivos |
 | `npm run format` / `format:check` | Prettier em `src/` |
+| `npm test` | testes (Vitest) |
 
 ## Portal
 
@@ -199,7 +204,7 @@ flowchart LR
 | Peça | O que faz |
 | --- | --- |
 | `validate-merge-source` | `main` só aceita `release/*` ou `hotfix/*`; título do PR em Conventional Commits |
-| `ci` | gitleaks no histórico, ESLint, TypeScript, Prettier e build |
+| `ci` | gitleaks no histórico, ESLint, TypeScript, Prettier, testes, tipos das Edge Functions e build |
 | `Dependency audit` | reprova vulnerabilidade alta ou crítica |
 | `versionamento` | bump da versão no PR de release e tag + release no merge |
 | `back-merge-main-develop` | devolve a `main` para a `develop` depois de todo merge |

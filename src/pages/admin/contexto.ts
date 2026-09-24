@@ -8,7 +8,8 @@
  * tudo de novo, e os filtros continuam valendo entre as páginas.
  */
 import { useOutletContext } from 'react-router-dom';
-import type { DadosDaEdicao, Edicao, Filtros, Painel, Presenca } from '../../lib/dashboard';
+import type { Edicao } from '../../lib/edicoes';
+import type { DadosDaEdicao, Filtros, Painel, Presenca } from '../../lib/painel';
 
 export interface ContextoAdmin {
   edicao: Edicao;

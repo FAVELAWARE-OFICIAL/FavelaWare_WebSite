@@ -21,23 +21,23 @@ import { Aviso, Cartao, Vazio } from '../../components/admin/Ui';
 import { espaco, foco, selo, texto } from '../../components/admin/designSystem';
 import JanelaDaAtividade, { COR_SITUACAO } from '../../components/atividades/JanelaDaAtividade';
 import {
-  carregarAtividadesDoAluno,
   CHAVE_ATIVIDADES_ALUNO,
-  formatarDataHora,
   podeEnviar,
+  servicoAtividades,
   ROTULO_SITUACAO,
   situacaoDoAluno,
   tentativasDe,
   type Atividade,
 } from '../../lib/atividades';
-import { useDadosEmCache } from '../../lib/cache';
-import { carregarTrilhas, CHAVE_MATERIAL, dominioDoLink, type Trilha } from '../../lib/material';
+import { useDadosEmCache } from '../../hooks/useDadosEmCache';
+import { CHAVE_MATERIAL, dominioDoLink, servicoMaterial, type TrilhaDoPortal } from '../../lib/material';
+import { formatarDataHora } from '../../utils/datas';
 
 type Aba = 'materiais' | 'atividades';
 
 const TrilhasAluno: React.FC = () => {
-  const material = useDadosEmCache(CHAVE_MATERIAL, carregarTrilhas);
-  const atividades = useDadosEmCache(CHAVE_ATIVIDADES_ALUNO, carregarAtividadesDoAluno);
+  const material = useDadosEmCache(CHAVE_MATERIAL, () => servicoMaterial.carregarTrilhas());
+  const atividades = useDadosEmCache(CHAVE_ATIVIDADES_ALUNO, () => servicoAtividades.carregarDoAluno());
   const carregando = material.dados === undefined || atividades.dados === undefined;
   const falhou = (material.erro && material.dados === undefined) || (atividades.erro && atividades.dados === undefined);
   const mostrarCarregando = useCarregamentoCompleto(carregando && !falhou, 0);
@@ -100,7 +100,7 @@ const TrilhasAluno: React.FC = () => {
 // CARTÃO DA TRILHA (abas Materiais / Atividades)
 // ============================================
 interface PropsCartao {
-  trilha: Trilha;
+  trilha: TrilhaDoPortal;
   atividades: Atividade[];
   participanteId: number;
   aoAbrir: (atividadeId: number) => void;
@@ -144,7 +144,7 @@ const CartaoDaTrilha: React.FC<PropsCartao> = ({ trilha, atividades, participant
   );
 };
 
-const ListaDeMateriais: React.FC<{ trilha: Trilha }> = ({ trilha }) =>
+const ListaDeMateriais: React.FC<{ trilha: TrilhaDoPortal }> = ({ trilha }) =>
   trilha.materiais.length === 0 ? (
     <p className={`py-2 ${texto.apoio}`}>Em breve: o material desta trilha ainda vai ser publicado.</p>
   ) : (

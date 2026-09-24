@@ -12,23 +12,14 @@
  */
 import { useCallback, useState } from 'react';
 
-import { useDadosEmCache } from '../../lib/cache';
+import { useDadosEmCache } from '../../hooks/useDadosEmCache';
 
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
 import Janela from '../../components/admin/Janela';
 import { Carregando } from '../../components/admin/Moldura';
 import { Aviso, Botao, Cartao, classeCampo, classeRotulo, type Mensagem } from '../../components/admin/Ui';
-import {
-  apagarTurma,
-  carregarTurmasDaEdicao,
-  chaveTurmas,
-  criarEdicao,
-  criarTurma,
-  renomearEdicao,
-  renomearTurma,
-  NOMES_DE_TURMA,
-  type TurmaComAlunos,
-} from '../../lib/gestao';
+import { servicoEdicoes } from '../../lib/edicoes';
+import { chaveTurmas, NOMES_DE_TURMA, servicoTurmas, type TurmaComAlunos } from '../../lib/turmas';
 import { useAdmin } from './contexto';
 import { texto } from '../../components/admin/designSystem';
 
@@ -59,7 +50,7 @@ const Turmas: React.FC = () => {
     dados: turmas,
     erro,
     recarregar: carregar,
-  } = useDadosEmCache(chaveTurmas(edicao.id), () => carregarTurmasDaEdicao(edicao.id));
+  } = useDadosEmCache(chaveTurmas(edicao.id), () => servicoTurmas.carregarDaEdicao(edicao.id));
 
   const usados = (turmas ?? []).map((t) => t.nome);
   // Sem os dados: carregamento na hora (nunca tela em branco) e pintura completa
@@ -73,14 +64,14 @@ const Turmas: React.FC = () => {
   };
   const fechar = useCallback(() => setJanela(null), []);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const aoEnviar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!janela || !valor.trim()) return;
     const nome = valor.trim();
     setSalvando(true);
 
     if (janela.tipo === 'nova-edicao') {
-      const { erro, id } = await criarEdicao(nome);
+      const { erro, id } = await servicoEdicoes.criar(nome);
       setSalvando(false);
       if (erro) return setErroJanela({ tipo: 'erro', texto: erro });
       setJanela(null);
@@ -90,10 +81,10 @@ const Turmas: React.FC = () => {
 
     const erro =
       janela.tipo === 'renomear-edicao'
-        ? await renomearEdicao(edicao.id, nome)
+        ? await servicoEdicoes.renomear(edicao.id, nome)
         : janela.tipo === 'nova-turma'
-          ? await criarTurma(edicao.id, nome)
-          : await renomearTurma(janela.id, nome);
+          ? await servicoTurmas.criar(edicao.id, nome)
+          : await servicoTurmas.renomear(janela.id, nome);
     setSalvando(false);
     if (erro) return setErroJanela({ tipo: 'erro', texto: erro });
 
@@ -105,7 +96,7 @@ const Turmas: React.FC = () => {
 
   const apagar = async (turma: TurmaComAlunos) => {
     if (!window.confirm(`Apagar a ${turma.nome}? Só funciona se ela não tiver alunos nem aulas.`)) return;
-    const erro = await apagarTurma(turma.id);
+    const erro = await servicoTurmas.apagar(turma.id);
     if (erro) return setMensagem({ tipo: 'erro', texto: erro });
     setMensagem({ tipo: 'sucesso', texto: `${turma.nome} apagada.` });
     await Promise.all([carregar(), recarregarDados()]);
@@ -193,7 +184,7 @@ const Turmas: React.FC = () => {
       }
 
       <Janela titulo={janela ? TITULOS[janela.tipo] : ''} aberta={janela !== null} onFechar={fechar}>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={aoEnviar} className="space-y-4">
           <Aviso mensagem={erroJanela} className="" />
           <div>
             <label htmlFor="nome-cadastro" className={classeRotulo}>

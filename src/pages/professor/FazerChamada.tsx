@@ -14,41 +14,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Avatar from '../../components/admin/Avatar';
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
-import { Carregando, gravarPreferencia, lerPreferencia, RodapeFixo } from '../../components/admin/Moldura';
-import { Botao, Cartao, Vazio } from '../../components/admin/Ui';
+import { Carregando, RodapeFixo } from '../../components/admin/Moldura';
+import { Aviso, Botao, Cartao, Vazio } from '../../components/admin/Ui';
 import Janela from '../../components/admin/Janela';
 import {
   aulaDoDia,
-  carregarAlunos,
-  carregarAulas,
-  carregarMarcacoes,
-  carregarMinhasTurmas,
-  hoje,
-  salvarChamada,
+  OPCOES_CHAMADA,
+  servicoChamada,
   type AlunoDaChamada,
   type AulaRegistrada,
   type Marcacao,
-  type TurmaDoProfessor,
 } from '../../lib/chamada';
-import { formatarData } from '../../lib/dashboard';
+import { servicoTurmas, type TurmaComEdicao } from '../../lib/turmas';
+import { formatarData, hoje } from '../../utils/datas';
+import { gravarPreferencia, lerPreferencia, PREFERENCIA_TURMA_DO_PROFESSOR } from '../../utils/preferencias';
 import { campo, foco, texto } from '../../components/admin/designSystem';
-
-// As três opções da chamada: letra no botão, nome completo para leitor de tela
-const OPCOES: { valor: Marcacao; letra: string; rotulo: string; ativo: string }[] = [
-  {
-    valor: 'presente',
-    letra: 'P',
-    rotulo: 'Presente',
-    ativo: 'bg-favela-green-500 border-favela-green-500 text-[#2d2a5f]',
-  },
-  { valor: 'ausente', letra: 'A', rotulo: 'Ausente', ativo: 'bg-red-600 border-red-600 text-white' },
-  {
-    valor: 'justificada',
-    letra: 'J',
-    rotulo: 'Falta justificada',
-    ativo: 'bg-amber-400 border-amber-400 text-gray-900',
-  },
-];
 
 type Marcacoes = Record<number, Marcacao | undefined>;
 
@@ -59,7 +39,7 @@ const FazerChamada: React.FC = () => {
   // ============================================
   // ESTADOS
   // ============================================
-  const [turmas, setTurmas] = useState<TurmaDoProfessor[] | null>(null);
+  const [turmas, setTurmas] = useState<TurmaComEdicao[] | null>(null);
   const [turmaId, setTurmaId] = useState<number | null>(null);
   const [data, setData] = useState(hoje());
   const [alunos, setAlunos] = useState<AlunoDaChamada[]>([]);
@@ -72,10 +52,11 @@ const FazerChamada: React.FC = () => {
 
   // Turmas do professor (o banco só devolve as dele); abre a última usada
   useEffect(() => {
-    carregarMinhasTurmas()
+    servicoTurmas
+      .carregarComEdicao()
       .then((lista) => {
         setTurmas(lista);
-        const lembrada = Number(lerPreferencia('professor:turma'));
+        const lembrada = Number(lerPreferencia(PREFERENCIA_TURMA_DO_PROFESSOR));
         setTurmaId((lista.find((t) => t.id === lembrada) ?? lista[0])?.id ?? null);
         if (!lista.length) setCarregando(false);
       })
@@ -91,8 +72,8 @@ const FazerChamada: React.FC = () => {
     if (turmaId === null) return;
     let ativo = true;
     setCarregando(true);
-    gravarPreferencia('professor:turma', String(turmaId));
-    Promise.all([carregarAlunos(turmaId), carregarAulas(turmaId)])
+    gravarPreferencia(PREFERENCIA_TURMA_DO_PROFESSOR, String(turmaId));
+    Promise.all([servicoChamada.carregarAlunos(turmaId), servicoChamada.carregarAulas(turmaId)])
       .then(([listaAlunos, listaAulas]) => {
         if (!ativo) return;
         setAlunos(listaAlunos);
@@ -115,7 +96,8 @@ const FazerChamada: React.FC = () => {
       setSalvas({});
       return;
     }
-    carregarMarcacoes(aulaAtualId)
+    servicoChamada
+      .carregarMarcacoes(aulaAtualId)
       .then((m) => {
         if (!ativo) return;
         setMarcacoes(m);
@@ -196,9 +178,9 @@ const FazerChamada: React.FC = () => {
     setSalvando(true);
     setMensagem(null);
     try {
-      await salvarChamada(turmaId, data, alunos, marcacoes);
+      await servicoChamada.salvar(turmaId, data, alunos, marcacoes);
       jaAvisados.current.add(`${turmaId}:${data}`); // acabou de salvar: não avisa "já tem chamada"
-      setAulas(await carregarAulas(turmaId)); // o dia pode ter virado aula nova
+      setAulas(await servicoChamada.carregarAulas(turmaId)); // o dia pode ter virado aula nova
       setSalvas(marcacoes);
       setMensagem({ tipo: 'sucesso', texto: `Chamada de ${formatarData(data)} salva.` });
     } catch {
@@ -217,8 +199,6 @@ const FazerChamada: React.FC = () => {
     return <Vazio>Você ainda não está vinculado a nenhuma turma. Peça ao gestor para liberar suas turmas.</Vazio>;
   }
 
-  const classeCampo = campo;
-
   return (
     <div>
       {/* ============ TURMA E DIA ============ */}
@@ -232,7 +212,7 @@ const FazerChamada: React.FC = () => {
               id="turma"
               value={turmaId ?? ''}
               onChange={(e) => trocarTurma(Number(e.target.value))}
-              className={classeCampo}
+              className={campo}
             >
               {turmas.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -251,7 +231,7 @@ const FazerChamada: React.FC = () => {
               value={data}
               max={hoje()}
               onChange={(e) => trocarData(e.target.value)}
-              className={classeCampo}
+              className={campo}
             />
           </div>
         </div>
@@ -281,18 +261,7 @@ const FazerChamada: React.FC = () => {
         )}
       </Cartao>
 
-      {mensagem && (
-        <div
-          role={mensagem.tipo === 'erro' ? 'alert' : 'status'}
-          className={`mb-6 rounded-lg border p-4 text-sm ${
-            mensagem.tipo === 'sucesso'
-              ? 'border-green-300 bg-green-50 text-green-800'
-              : 'border-red-300 bg-red-50 text-red-800'
-          }`}
-        >
-          {mensagem.texto}
-        </div>
-      )}
+      <Aviso mensagem={mensagem} />
 
       {mostrarCarregando || carregando ? (
         <Carregando texto="Carregando alunos" />
@@ -324,7 +293,7 @@ const FazerChamada: React.FC = () => {
 
                 {/* P / A / J: botões de alternância (clicar de novo desmarca) */}
                 <div role="group" aria-label={`Presença de ${aluno.nome}`} className="flex gap-2">
-                  {OPCOES.map((op) => {
+                  {OPCOES_CHAMADA.map((op) => {
                     const escolhido = marcacoes[aluno.id] === op.valor;
                     return (
                       <button
@@ -336,7 +305,7 @@ const FazerChamada: React.FC = () => {
                         title={op.rotulo}
                         className={`h-11 w-11 rounded-lg border-2 text-base font-bold transition-colors ${foco} focus-visible:ring-offset-2 ${
                           escolhido
-                            ? op.ativo
+                            ? op.classe
                             : 'border-gray-200 bg-white text-gray-400 hover:border-gray-400 hover:text-gray-700'
                         }`}
                       >

@@ -12,7 +12,8 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 
-import { useDadosEmCache } from '../../lib/cache';
+import { useDadosEmCache } from '../../hooks/useDadosEmCache';
+import { formatarDia } from '../../utils/datas';
 
 import Avatar from '../../components/admin/Avatar';
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
@@ -20,15 +21,13 @@ import Janela from '../../components/admin/Janela';
 import { Carregando } from '../../components/admin/Moldura';
 import { Aviso, Botao, Cartao, Vazio, classeCampo, classeRotulo, type Mensagem } from '../../components/admin/Ui';
 import {
-  carregarSolicitacoes,
   chaveSolicitacoes,
-  registrarSolicitacao,
-  responderSolicitacao,
+  servicoSolicitacoes,
   TIPOS_SOLICITACAO,
   type Solicitacao,
   type StatusSolicitacao,
   type TipoSolicitacao,
-} from '../../lib/gestao';
+} from '../../lib/solicitacoes';
 import { useAdmin } from './contexto';
 import { foco, texto } from '../../components/admin/designSystem';
 
@@ -37,9 +36,6 @@ const ESTILO_STATUS: Record<StatusSolicitacao, { rotulo: string; classe: string 
   aprovada: { rotulo: 'Aprovada', classe: 'bg-green-100 text-green-800' },
   recusada: { rotulo: 'Recusada', classe: 'bg-gray-200 text-gray-700' },
 };
-
-const formatarDataHora = (iso: string) =>
-  new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 // ============================================
 // ABA 1: SOLICITAÇÕES RECEBIDAS
@@ -54,11 +50,11 @@ const Recebidas: React.FC = () => {
     dados: lista,
     erro,
     recarregar,
-  } = useDadosEmCache(chaveSolicitacoes(edicao.id), () => carregarSolicitacoes(edicao.id));
+  } = useDadosEmCache(chaveSolicitacoes(edicao.id), () => servicoSolicitacoes.carregar(edicao.id));
   const [mostrar, setMostrar] = useState<'pendentes' | 'todas'>('pendentes');
   const [nova, setNova] = useState(false);
   const [respondendo, setRespondendo] = useState<Solicitacao | null>(null);
-  const [formData, setFormData] = useState({
+  const [campos, setCampos] = useState({
     participante_id: '',
     tipo: 'mudanca_turno' as TipoSolicitacao,
     descricao: '',
@@ -71,9 +67,9 @@ const Recebidas: React.FC = () => {
   const carregar = () =>
     recarregar().catch(() => setMensagem({ tipo: 'erro', texto: 'Não foi possível atualizar as solicitações.' }));
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const aoAlterarCampo = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((anterior) => ({ ...anterior, [name]: value }));
+    setCampos((anterior) => ({ ...anterior, [name]: value }));
   };
 
   const fecharNova = useCallback(() => setNova(false), []);
@@ -81,12 +77,12 @@ const Recebidas: React.FC = () => {
 
   const registrar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData.participante_id || !formData.descricao.trim()) {
+    if (!campos.participante_id || !campos.descricao.trim()) {
       setErroJanela({ tipo: 'erro', texto: 'Escolha o aluno e descreva o pedido.' });
       return;
     }
     setSalvando(true);
-    const erro = await registrarSolicitacao(Number(formData.participante_id), formData.tipo, formData.descricao);
+    const erro = await servicoSolicitacoes.registrar(Number(campos.participante_id), campos.tipo, campos.descricao);
     setSalvando(false);
     if (erro) return setErroJanela({ tipo: 'erro', texto: erro });
     setNova(false);
@@ -97,7 +93,7 @@ const Recebidas: React.FC = () => {
   const responder = async (status: StatusSolicitacao) => {
     if (!respondendo) return;
     setSalvando(true);
-    const erro = await responderSolicitacao(respondendo.id, status, formData.resposta);
+    const erro = await servicoSolicitacoes.responder(respondendo.id, status, campos.resposta);
     setSalvando(false);
     if (erro) return setErroJanela({ tipo: 'erro', texto: erro });
     setRespondendo(null);
@@ -143,7 +139,7 @@ const Recebidas: React.FC = () => {
           onClick={() => {
             setMensagem(null);
             setErroJanela(null);
-            setFormData({ participante_id: '', tipo: 'mudanca_turno', descricao: '', resposta: '' });
+            setCampos({ participante_id: '', tipo: 'mudanca_turno', descricao: '', resposta: '' });
             setNova(true);
           }}
         >
@@ -179,8 +175,8 @@ const Recebidas: React.FC = () => {
                       </span>
                     </div>
                     <p className={`${texto.apoio}`}>
-                      {TIPOS_SOLICITACAO[s.tipo]} · recebida em {formatarDataHora(s.criada_em)}
-                      {s.resolvida_em ? ` · respondida em ${formatarDataHora(s.resolvida_em)}` : ''}
+                      {TIPOS_SOLICITACAO[s.tipo]} · recebida em {formatarDia(s.criada_em)}
+                      {s.resolvida_em ? ` · respondida em ${formatarDia(s.resolvida_em)}` : ''}
                     </p>
                     <p className="mt-2 whitespace-pre-line text-sm text-gray-800">{s.descricao}</p>
                     {s.resposta && (
@@ -193,7 +189,7 @@ const Recebidas: React.FC = () => {
                     tamanho="pequeno"
                     onClick={() => {
                       setErroJanela(null);
-                      setFormData((f) => ({ ...f, resposta: s.resposta ?? '' }));
+                      setCampos((f) => ({ ...f, resposta: s.resposta ?? '' }));
                       setRespondendo(s);
                     }}
                   >
@@ -217,8 +213,8 @@ const Recebidas: React.FC = () => {
             <select
               id="sol-aluno"
               name="participante_id"
-              value={formData.participante_id}
-              onChange={handleInputChange}
+              value={campos.participante_id}
+              onChange={aoAlterarCampo}
               className={classeCampo}
             >
               <option value="">Escolha o aluno</option>
@@ -233,13 +229,7 @@ const Recebidas: React.FC = () => {
             <label htmlFor="sol-tipo" className={classeRotulo}>
               Tipo de pedido *
             </label>
-            <select
-              id="sol-tipo"
-              name="tipo"
-              value={formData.tipo}
-              onChange={handleInputChange}
-              className={classeCampo}
-            >
+            <select id="sol-tipo" name="tipo" value={campos.tipo} onChange={aoAlterarCampo} className={classeCampo}>
               {Object.entries(TIPOS_SOLICITACAO).map(([valor, rotulo]) => (
                 <option key={valor} value={valor}>
                   {rotulo}
@@ -256,8 +246,8 @@ const Recebidas: React.FC = () => {
               name="descricao"
               rows={4}
               maxLength={2000}
-              value={formData.descricao}
-              onChange={handleInputChange}
+              value={campos.descricao}
+              onChange={aoAlterarCampo}
               className={classeCampo}
               placeholder="Ex: pediu para passar do turno da manhã para o da tarde, porque começou a trabalhar."
             />
@@ -289,8 +279,8 @@ const Recebidas: React.FC = () => {
                 name="resposta"
                 rows={3}
                 maxLength={2000}
-                value={formData.resposta}
-                onChange={handleInputChange}
+                value={campos.resposta}
+                onChange={aoAlterarCampo}
                 className={classeCampo}
                 placeholder="Ex: aprovado a partir da próxima semana."
               />

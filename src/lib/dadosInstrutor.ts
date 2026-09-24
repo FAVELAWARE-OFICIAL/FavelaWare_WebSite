@@ -11,6 +11,8 @@
  * cache do navegador. Quem garante que só o dono e o gestor leem é o RLS da
  * tabela dados_instrutores.
  */
+import { emailValido } from '../utils/texto';
+import { codigoDoErro } from './banco';
 import { supabase } from './supabase';
 
 export interface DadosInstrutor {
@@ -105,7 +107,7 @@ export const UFS = [
 ];
 
 // ---------- Números: só dígitos no banco, com máscara na tela ----------
-export const soDigitos = (valor: string) => valor.replace(/\D/g, '');
+const soDigitos = (valor: string) => valor.replace(/\D/g, '');
 
 /** Aplica uma máscara tipo "000.000.000-00" aos dígitos digitados */
 function mascarar(valor: string, molde: string): string {
@@ -126,7 +128,7 @@ export const mascaraTelefone = (v: string) =>
   soDigitos(v).length > 10 ? mascarar(v, '(00) 00000-0000') : mascarar(v, '(00) 0000-0000');
 
 /** Dígitos verificadores do CPF (a mesma conta do banco, private.cpf_valido) */
-export function cpfValido(cpf: string): boolean {
+function cpfValido(cpf: string): boolean {
   const d = soDigitos(cpf);
   if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
   const dv = (n: number) => {
@@ -138,7 +140,7 @@ export function cpfValido(cpf: string): boolean {
 }
 
 /** Dígito verificador do PIS/PASEP/NIT (mesma conta de private.pis_valido) */
-export function pisValido(pis: string): boolean {
+function pisValido(pis: string): boolean {
   const d = soDigitos(pis);
   if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
   const pesos = [3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
@@ -152,7 +154,7 @@ export function pisValido(pis: string): boolean {
  * Completa o que a pessoa costuma colar ("linkedin.com/in/maria", sem https).
  * Devolve null se vazio, ou undefined se não for um perfil do LinkedIn.
  */
-export function normalizarLinkedin(valor: string | null): string | null | undefined {
+function normalizarLinkedin(valor: string | null): string | null | undefined {
   const texto = (valor ?? '').trim();
   if (!texto) return null;
   const completo = /^https?:\/\//i.test(texto) ? texto.replace(/^https?:/i, 'https:') : `https://${texto}`;
@@ -188,8 +190,7 @@ export function validarDados(
   }
   if (!/^\d{10,11}$/.test(soDigitos(dados.telefone)))
     return { campo: 'telefone', texto: 'Informe o telefone com DDD.' };
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(dados.email.trim()))
-    return { campo: 'email', texto: 'Informe um e-mail válido.' };
+  if (!emailValido(dados.email)) return { campo: 'email', texto: 'Informe um e-mail válido.' };
   if (soDigitos(dados.cep).length !== 8) return { campo: 'cep', texto: 'Informe o CEP com 8 números.' };
   if (vazio(dados.logradouro) || dados.logradouro.trim().length < 2)
     return { campo: 'logradouro', texto: 'Informe a rua.' };
@@ -213,73 +214,86 @@ export function validarDados(
 
 // ---------- Banco ----------
 
-// Quem já preencheu não precisa ser consultado de novo nesta sessão
-let preenchidoPor: string | null = null;
+export class ServicoDadosInstrutor {
+  /** Quem já preencheu não precisa ser consultado de novo nesta sessão */
+  private preenchidoPor: string | null = null;
 
-/**
- * O instrutor já preencheu os dados? Usado pela guarda de rota. Em erro de
- * rede devolve true: a exigência é de cadastro, não de segurança, e não deve
- * trancar o instrutor fora da chamada por uma falha momentânea.
- */
-export async function jaPreencheuDados(usuarioId: string): Promise<boolean> {
-  if (preenchidoPor === usuarioId) return true;
-  const { count, error } = await supabase
-    .from('dados_instrutores')
-    .select('perfil_id', { count: 'exact', head: true })
-    .eq('perfil_id', usuarioId);
-  if (error) {
-    console.error('[dados-instrutor] falha ao conferir o preenchimento', error.code);
-    return true;
+  /**
+   * O instrutor já preencheu os dados? Usado pela guarda de rota. Em erro de
+   * rede devolve true: a exigência é de cadastro, não de segurança, e não deve
+   * trancar o instrutor fora da chamada por uma falha momentânea.
+   */
+  async jaPreencheu(usuarioId: string): Promise<boolean> {
+    if (this.preenchidoPor === usuarioId) return true;
+    const { count, error } = await supabase
+      .from('dados_instrutores')
+      .select('perfil_id', { count: 'exact', head: true })
+      .eq('perfil_id', usuarioId);
+    if (error) {
+      console.error('[dados-instrutor] falha ao conferir o preenchimento', error.code);
+      return true;
+    }
+    if (count) this.preenchidoPor = usuarioId;
+    return Boolean(count);
   }
-  if (count) preenchidoPor = usuarioId;
-  return Boolean(count);
+
+  /** Os dados de quem está logado (null se ainda não preencheu) */
+  async carregarMeus(usuarioId: string): Promise<DadosInstrutor | null> {
+    const { data, error } = await supabase
+      .from('dados_instrutores')
+      .select(COLUNAS)
+      .eq('perfil_id', usuarioId)
+      .maybeSingle();
+    if (error) throw error;
+    return data as DadosInstrutor | null;
+  }
+
+  /** Grava (cria ou atualiza) os dados do instrutor logado, com os números só em dígitos */
+  async salvarMeus(usuarioId: string, dados: DadosInstrutor): Promise<void> {
+    const linha = {
+      ...dados,
+      perfil_id: usuarioId,
+      cpf: soDigitos(dados.cpf),
+      pis: soDigitos(dados.pis),
+      telefone: soDigitos(dados.telefone),
+      cep: soDigitos(dados.cep),
+      complemento: dados.complemento?.trim() || null,
+      linkedin: normalizarLinkedin(dados.linkedin) ?? null,
+    };
+    const { error } = await supabase.from('dados_instrutores').upsert(linha, { onConflict: 'perfil_id' });
+    if (error) throw error;
+    this.preenchidoPor = usuarioId;
+  }
+
+  /** Gestor: só QUEM já preencheu (para o selo); a ficha vem ao abrir, uma por vez */
+  async carregarQuemPreencheu(): Promise<Set<string>> {
+    const { data, error } = await supabase.from('dados_instrutores').select('perfil_id');
+    if (error) throw error;
+    return new Set(data.map((d) => d.perfil_id as string));
+  }
+
+  /** Gestor: a ficha de um instrutor (minimização: nunca baixa a de todos) */
+  async carregarDoInstrutor(perfilId: string): Promise<DadosInstrutorDaEquipe> {
+    const { data, error } = await supabase
+      .from('dados_instrutores')
+      .select(`perfil_id, atualizado_em, ${COLUNAS}`)
+      .eq('perfil_id', perfilId)
+      .single();
+    if (error) throw error;
+    return data as DadosInstrutorDaEquipe;
+  }
+
+  /** Texto para o instrutor a partir do erro do banco ao salvar (o código vai para o log) */
+  mensagemDoErroAoSalvar(erro: unknown): string {
+    const codigo = codigoDoErro(erro);
+    console.error('[dados-instrutor] falha ao salvar', codigo); // só o código: a mensagem pode trazer os dados
+    return codigo === '23514'
+      ? 'Algum dado não passou na conferência. Revise CPF, INSS/PIS e data de nascimento.'
+      : 'Não foi possível salvar agora. Tente de novo em instantes.';
+  }
 }
 
-/** Os dados de quem está logado (null se ainda não preencheu) */
-export async function carregarMeusDadosDeInstrutor(usuarioId: string): Promise<DadosInstrutor | null> {
-  const { data, error } = await supabase
-    .from('dados_instrutores')
-    .select(COLUNAS)
-    .eq('perfil_id', usuarioId)
-    .maybeSingle();
-  if (error) throw error;
-  return data as DadosInstrutor | null;
-}
-
-/** Grava (cria ou atualiza) os dados do instrutor logado, com os números só em dígitos */
-export async function salvarMeusDadosDeInstrutor(usuarioId: string, dados: DadosInstrutor): Promise<void> {
-  const linha = {
-    ...dados,
-    perfil_id: usuarioId,
-    cpf: soDigitos(dados.cpf),
-    pis: soDigitos(dados.pis),
-    telefone: soDigitos(dados.telefone),
-    cep: soDigitos(dados.cep),
-    complemento: dados.complemento?.trim() || null,
-    linkedin: normalizarLinkedin(dados.linkedin) ?? null,
-  };
-  const { error } = await supabase.from('dados_instrutores').upsert(linha, { onConflict: 'perfil_id' });
-  if (error) throw error;
-  preenchidoPor = usuarioId;
-}
-
-/** Gestor: só QUEM já preencheu (para o selo); a ficha vem ao abrir, uma por vez */
-export async function carregarQuemPreencheu(): Promise<Set<string>> {
-  const { data, error } = await supabase.from('dados_instrutores').select('perfil_id');
-  if (error) throw error;
-  return new Set(data.map((d) => d.perfil_id as string));
-}
-
-/** Gestor: a ficha de um instrutor (minimização: nunca baixa a de todos) */
-export async function carregarDadosDoInstrutor(perfilId: string): Promise<DadosInstrutorDaEquipe> {
-  const { data, error } = await supabase
-    .from('dados_instrutores')
-    .select(`perfil_id, atualizado_em, ${COLUNAS}`)
-    .eq('perfil_id', perfilId)
-    .single();
-  if (error) throw error;
-  return data as DadosInstrutorDaEquipe;
-}
+export const servicoDadosInstrutor = new ServicoDadosInstrutor();
 
 /** Texto no formato do documento "DADOS PARA RPA", para copiar */
 export function textoParaRpa(d: DadosInstrutor): string {

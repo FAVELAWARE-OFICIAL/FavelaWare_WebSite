@@ -29,7 +29,7 @@ import {
   YAxis,
 } from 'recharts';
 import { Cartao } from './Ui';
-import { META_FREQUENCIA } from '../../lib/dashboard';
+import { META_FREQUENCIA, corDaFrequencia } from '../../lib/painel';
 
 // Cores das séries: verde e roxo da marca primeiro, depois tons de apoio
 export const CORES_SERIES = ['#8bc53f', '#2d2a5f', '#2563eb', '#db2777', '#f59e0b'];
@@ -211,15 +211,22 @@ export const GraficoDistribuicao: React.FC<{
 // 3. BARRAS HORIZONTAIS EM % (turmas, conteúdos) com a meta
 // ============================================
 export const GraficoBarrasPercentual: React.FC<{
-  barras: { rotulo: string; valor: number; detalhe?: string }[];
+  /** valor null = sem aula contável no período: mostra "sem dados", nunca 0% */
+  barras: { rotulo: string; valor: number | null; detalhe?: string }[];
   /** Cor única; se omitida, cada barra fica verde (na meta) ou âmbar/vermelha (abaixo) */
   cor?: string;
   larguraRotulo?: number;
 }> = ({ barras, cor, larguraRotulo = 150 }) => {
-  const corDa = (valor: number) => cor ?? (valor >= META_FREQUENCIA ? '#8bc53f' : valor >= 0.5 ? '#f59e0b' : '#dc2626');
+  const corDa = (valor: number | null) => (valor === null ? corDaFrequencia(null) : (cor ?? corDaFrequencia(valor)));
+  // O gráfico desenha a barra com o valor numérico; o original fica para rótulo e dica
+  const dados = barras.map((b) => ({
+    ...b,
+    barra: b.valor ?? 0,
+    textoDoRotulo: b.valor === null ? 'sem dados' : paraPercentual(b.valor),
+  }));
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={barras} layout="vertical" margin={{ top: 4, right: 48, bottom: 0, left: 0 }}>
+      <BarChart data={dados} layout="vertical" margin={{ top: 4, right: 48, bottom: 0, left: 0 }}>
         <CartesianGrid stroke={COR_GRADE} horizontal={false} />
         <XAxis type="number" {...eixoPercentual} tick={estiloEixo} tickLine={false} axisLine={false} />
         <YAxis
@@ -238,23 +245,27 @@ export const GraficoBarrasPercentual: React.FC<{
         <Tooltip
           cursor={{ fill: '#f3f4f6' }}
           content={({ active, payload }) => {
-            const b = payload?.[0]?.payload as (typeof barras)[number] | undefined;
-            return active && b ? (
+            const b = payload?.[0]?.payload as (typeof dados)[number] | undefined;
+            if (!active || !b) return null;
+            return (
               <CaixaDica
                 titulo={b.rotulo}
-                linhas={[{ cor: corDa(b.valor), texto: b.detalhe ?? 'Percentual', destaque: paraPercentual(b.valor) }]}
+                linhas={[
+                  b.valor === null
+                    ? { cor: corDa(null), texto: 'Sem aulas no período' }
+                    : { cor: corDa(b.valor), texto: b.detalhe ?? 'Percentual', destaque: paraPercentual(b.valor) },
+                ]}
               />
-            ) : null;
+            );
           }}
         />
-        <Bar dataKey="valor" radius={[0, 8, 8, 0]} maxBarSize={32}>
-          {barras.map((b) => (
+        <Bar dataKey="barra" radius={[0, 8, 8, 0]} maxBarSize={32}>
+          {dados.map((b) => (
             <Cell key={b.rotulo} fill={corDa(b.valor)} />
           ))}
           <LabelList
-            dataKey="valor"
+            dataKey="textoDoRotulo"
             position="right"
-            formatter={(v: unknown) => paraPercentual(Number(v))}
             style={{ fontSize: 12, fontWeight: 600, fill: '#111827' }}
           />
         </Bar>
@@ -262,34 +273,3 @@ export const GraficoBarrasPercentual: React.FC<{
     </ResponsiveContainer>
   );
 };
-
-// ============================================
-// 4. CONTAGEM SIMPLES (ex.: horários escolhidos)
-// ============================================
-export const GraficoBarrasContagem: React.FC<{
-  barras: { rotulo: string; valor: number; cor: string }[];
-  unidade: string;
-}> = ({ barras, unidade }) => (
-  <ResponsiveContainer width="100%" height="100%">
-    <BarChart data={barras} margin={{ top: 24, right: 8, bottom: 0, left: 0 }}>
-      <CartesianGrid stroke={COR_GRADE} vertical={false} />
-      <XAxis dataKey="rotulo" tick={estiloEixo} tickLine={false} axisLine={{ stroke: COR_GRADE }} />
-      <YAxis allowDecimals={false} tick={estiloEixo} tickLine={false} axisLine={false} width={32} />
-      <Tooltip
-        cursor={{ fill: '#f3f4f6' }}
-        content={({ active, payload }) => {
-          const b = payload?.[0]?.payload as (typeof barras)[number] | undefined;
-          return active && b ? (
-            <CaixaDica titulo={b.rotulo} linhas={[{ cor: b.cor, texto: `${b.valor} ${unidade}` }]} />
-          ) : null;
-        }}
-      />
-      <Bar dataKey="valor" radius={[8, 8, 0, 0]} maxBarSize={96}>
-        {barras.map((b) => (
-          <Cell key={b.rotulo} fill={b.cor} />
-        ))}
-        <LabelList dataKey="valor" position="top" style={{ fontSize: 12, fontWeight: 600, fill: '#111827' }} />
-      </Bar>
-    </BarChart>
-  </ResponsiveContainer>
-);

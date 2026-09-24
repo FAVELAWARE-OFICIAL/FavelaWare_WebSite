@@ -14,23 +14,18 @@ import { useEffect, useState } from 'react';
 import { Aviso, Botao, Vazio, classeCampo, classeRotulo, type Mensagem } from '../admin/Ui';
 import { espaco, foco, texto } from '../admin/designSystem';
 import HistoricoDeTentativas from './HistoricoDeTentativas';
+import { servicoAtividades, tentativasDe, type AlunoDaTurma, type Atividade } from '../../lib/atividades';
 import {
-  avaliarTentativa,
-  deCampoDataHora,
   FORMATOS,
-  paraCampoDataHora,
   ROTULO_TIPO_LINK,
-  salvarAtividade,
   SEM_REGRAS,
-  tentativasDe,
-  type AlunoDaTurma,
-  type Atividade,
   type Formato,
   type RegrasDeEntrega,
   type TipoLink,
-} from '../../lib/atividades';
-import { useDadosEmCache } from '../../lib/cache';
-import { carregarTrilhas, CHAVE_MATERIAL } from '../../lib/material';
+} from '../../lib/entregas';
+import { useDadosEmCache } from '../../hooks/useDadosEmCache';
+import { CHAVE_MATERIAL, servicoMaterial } from '../../lib/material';
+import { deCampoDataHora, paraCampoDataHora } from '../../utils/datas';
 
 // ============ CRIAR / EDITAR ============
 export const FormularioDeAtividade: React.FC<{
@@ -40,7 +35,7 @@ export const FormularioDeAtividade: React.FC<{
   trilhaInicial?: number;
   aoSalvar: (mensagem: string) => Promise<void>;
 }> = ({ turmaId, atividade, trilhaInicial, aoSalvar }) => {
-  const { dados: trilhas, erro } = useDadosEmCache(CHAVE_MATERIAL, carregarTrilhas);
+  const { dados: trilhas, erro } = useDadosEmCache(CHAVE_MATERIAL, () => servicoMaterial.carregarTrilhas());
   const [campos, setCampos] = useState({
     trilhaId: atividade?.trilha_id ?? trilhaInicial ?? 0,
     titulo: atividade?.titulo ?? '',
@@ -76,7 +71,7 @@ export const FormularioDeAtividade: React.FC<{
     setMensagem(null);
     if (!campos.prazo) return setMensagem({ tipo: 'erro', texto: 'Escolha o prazo.' });
     setSalvando(true);
-    const falha = await salvarAtividade(
+    const falha = await servicoAtividades.salvar(
       {
         trilha_id: campos.trilhaId,
         titulo: campos.titulo,
@@ -326,12 +321,8 @@ export const Corrigir: React.FC<{ atividade: Atividade; aluno: AlunoDaTurma; aoS
 
   const responder = async (status: 'concluida' | 'refazer') => {
     setMensagem(null);
-    const numero = nota.trim() === '' ? null : Number(nota);
-    if (numero !== null && (!Number.isInteger(numero) || numero < 0 || numero > 100)) {
-      return setMensagem({ tipo: 'erro', texto: 'A nota vai de 0 a 100, sem vírgula.' });
-    }
     setSalvando(status);
-    const falha = await avaliarTentativa(ultima.id, { status, feedback, nota: numero });
+    const falha = await servicoAtividades.avaliar(ultima.id, { status, feedback, notaDigitada: nota });
     if (falha) {
       setSalvando(null);
       return setMensagem({ tipo: 'erro', texto: falha });

@@ -19,8 +19,8 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { turmas as turmasDoArquivo, type Aluno, type Turma } from '../data/turmas';
-import { useAlunosComFotoAtual } from '../lib/fotosDoSite';
+import { turmas as turmasDoArquivo, type Aluno, type TurmaDoSite } from '../data/turmas';
+import { useAlunosComFotoAtual } from '../hooks/useAlunosComFotoAtual';
 
 /** Prévia do card: até 5 fotos sobrepostas e o "+N" de quem ficou de fora. */
 const PreviaAlunos: React.FC<{ alunos: Aluno[] }> = ({ alunos }) => {
@@ -54,7 +54,7 @@ const Turmas: React.FC = () => {
   // ============================================
 
   // Transforma a lista plana em { "3ª Edição": [...], "2ª Edição": [...] }
-  const porEdicao = turmas.reduce<Record<string, Turma[]>>((acumulado, turma) => {
+  const porEdicao = turmas.reduce<Record<string, TurmaDoSite[]>>((acumulado, turma) => {
     (acumulado[turma.edicao] ||= []).push(turma);
     return acumulado;
   }, {});

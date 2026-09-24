@@ -19,9 +19,9 @@ import Moldura, { Carregando } from '../../components/admin/Moldura';
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
 import type { ItemMenu } from '../../components/admin/MenuLateral';
 import { IconeMaterial } from '../../components/admin/Icones';
-import { carregarAtividadesDoAluno, CHAVE_ATIVIDADES_ALUNO } from '../../lib/atividades';
-import { buscarComCache } from '../../lib/cache';
-import { carregarTrilhas, CHAVE_MATERIAL } from '../../lib/material';
+import { CHAVE_ATIVIDADES_ALUNO, servicoAtividades } from '../../lib/atividades';
+import { servicoCache } from '../../lib/cache';
+import { CHAVE_MATERIAL, servicoMaterial } from '../../lib/material';
 
 const ITENS_MENU: ItemMenu[] = [
   // Materiais e atividades juntos, em abas dentro de cada trilha
@@ -39,8 +39,8 @@ const AreaDoAluno: React.FC = () => {
     Promise.all([
       import('./TrilhasAluno'),
       import('../Perfil'),
-      buscarComCache(CHAVE_MATERIAL, carregarTrilhas, true),
-      buscarComCache(CHAVE_ATIVIDADES_ALUNO, carregarAtividadesDoAluno, true),
+      servicoCache.buscar(CHAVE_MATERIAL, () => servicoMaterial.carregarTrilhas(), true),
+      servicoCache.buscar(CHAVE_ATIVIDADES_ALUNO, () => servicoAtividades.carregarDoAluno(), true),
     ])
       .catch(() => undefined) // a página mostra o erro, se houver
       .finally(() => setPronta(true));

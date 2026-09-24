@@ -12,7 +12,9 @@
 import { useState } from 'react';
 
 import { foco, texto } from '../admin/designSystem';
-import { formatarDataHora, linkDoArquivo, type Tentativa } from '../../lib/atividades';
+import type { Tentativa } from '../../lib/atividades';
+import { servicoEntregas } from '../../lib/entregas';
+import { formatarDataHora } from '../../utils/datas';
 
 const Avatar: React.FC<{ nome: string; tom: 'aluno' | 'professor' }> = ({ nome, tom }) => {
   const iniciais =
@@ -41,7 +43,7 @@ const BotaoArquivo: React.FC<{ tentativa: Tentativa; nome: string }> = ({ tentat
     try {
       // Baixa por aqui e salva com o nome certo: se o servidor ou o Drive falhar,
       // o erro aparece no botão, sem tirar a pessoa do portal
-      const r = await fetch(await linkDoArquivo(tentativa));
+      const r = await fetch(await servicoEntregas.linkDoArquivo(tentativa));
       if (!r.ok) throw new Error(`download ${r.status}`);
       const endereco = URL.createObjectURL(await r.blob());
       const a = document.createElement('a');

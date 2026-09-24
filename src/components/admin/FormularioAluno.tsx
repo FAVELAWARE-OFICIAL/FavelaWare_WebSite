@@ -4,16 +4,17 @@
  * ============================================
  *
  * Usado dentro de uma <Janela> na página de alunos do gestor.
- * A foto é opcional: é reduzida no navegador antes de subir (ver gestao.ts).
+ * A foto é opcional: é reduzida no navegador antes de subir (ver lib/alunos.ts).
+ * Foto enviada e não salva (trocada, tirada ou formulário fechado) é apagada.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Avatar from './Avatar';
 import { AcessoDoAluno } from './AcessosAlunos';
 import type { SituacaoDoAcesso } from '../../lib/acessos';
 import { Aviso, Botao, classeCampo, classeRotulo, type Mensagem } from './Ui';
-import type { Participante, Turma } from '../../lib/dashboard';
-import { apagarFotoAntiga, enviarFotoDoAluno, removerAluno, salvarAluno } from '../../lib/gestao';
+import type { Participante, Turma } from '../../lib/painel';
+import { servicoAlunos } from '../../lib/alunos';
 
 interface Props {
   edicaoId: number;
@@ -27,7 +28,7 @@ interface Props {
 }
 
 const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir, situacaoAcesso, aoMudarAcesso }) => {
-  const [formData, setFormData] = useState({
+  const [campos, setCampos] = useState({
     nome: aluno?.nome ?? '',
     login: aluno?.login ?? '',
     turma_id: String(aluno?.turma_id ?? turmas[0]?.id ?? ''),
@@ -39,9 +40,29 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
   const [confirmandoRemocao, setConfirmandoRemocao] = useState(false);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  // Foto da tela, lida na hora de fechar o formulário (o efeito de saída não vê o estado novo)
+  const fotoNaTela = useRef(foto);
+  const salvou = useRef(false);
+  const fotoOriginal = aluno?.foto ?? null;
+  useEffect(() => {
+    fotoNaTela.current = foto;
+  }, [foto]);
+  useEffect(
+    () => () => {
+      if (!salvou.current) servicoAlunos.descartarFotoNaoSalva(fotoNaTela.current, fotoOriginal);
+    },
+    [fotoOriginal],
+  );
+
+  /** Troca a foto da tela; a anterior, se foi enviada agora e não salva, vai embora */
+  const trocarFoto = (nova: string | null) => {
+    servicoAlunos.descartarFotoNaoSalva(foto, fotoOriginal);
+    setFoto(nova);
+  };
+
+  const aoAlterarCampo = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((anterior) => ({ ...anterior, [name]: value }));
+    setCampos((anterior) => ({ ...anterior, [name]: value }));
   };
 
   const escolherFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,7 +72,7 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
     setEnviandoFoto(true);
     setMensagem(null);
     try {
-      setFoto(await enviarFotoDoAluno(arquivo));
+      trocarFoto(await servicoAlunos.enviarFoto(arquivo));
     } catch (erro) {
       setMensagem({ tipo: 'erro', texto: erro instanceof Error ? erro.message : 'Não foi possível enviar a foto.' });
     } finally {
@@ -59,33 +80,40 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const aoEnviar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData.nome.trim()) {
+    if (!campos.nome.trim()) {
       setMensagem({ tipo: 'erro', texto: 'Informe o nome do aluno.' });
       return;
     }
     setSalvando(true);
-    const erro = await salvarAluno(edicaoId, { ...formData, turma_id: Number(formData.turma_id), foto }, aluno?.id);
+    const erro = await servicoAlunos.salvar(
+      edicaoId,
+      { ...campos, turma_id: Number(campos.turma_id), foto },
+      aluno?.id,
+    );
     setSalvando(false);
     if (erro) {
       setMensagem({ tipo: 'erro', texto: erro });
       return;
     }
-    if (aluno && aluno.foto !== foto) await apagarFotoAntiga(aluno.foto); // trocou a foto: apaga a velha
-    onConcluir(aluno ? `${formData.nome.trim()} atualizado.` : `${formData.nome.trim()} cadastrado.`);
+    salvou.current = true;
+    if (aluno && aluno.foto !== foto) await servicoAlunos.apagarFoto(aluno.foto); // trocou a foto: apaga a velha
+    onConcluir(aluno ? `${campos.nome.trim()} atualizado.` : `${campos.nome.trim()} cadastrado.`);
   };
 
   const remover = async () => {
     if (!aluno) return;
     setSalvando(true);
-    const erro = await removerAluno(aluno.id);
+    const erro = await servicoAlunos.remover(aluno.id);
     setSalvando(false);
     if (erro) {
       setMensagem({ tipo: 'erro', texto: erro });
       return;
     }
-    await apagarFotoAntiga(aluno.foto);
+    salvou.current = true;
+    await servicoAlunos.apagarFoto(aluno.foto);
+    servicoAlunos.descartarFotoNaoSalva(foto, fotoOriginal);
     onConcluir(`${aluno.nome} removido.`);
   };
 
@@ -98,12 +126,12 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={aoEnviar} className="space-y-4">
       <Aviso mensagem={mensagem} className="" />
 
       {/* Foto: prévia + botão de trocar */}
       <div className="flex items-center gap-4">
-        <Avatar foto={foto} nome={formData.nome || 'aluno'} tamanho="lg" />
+        <Avatar foto={foto} nome={campos.nome || 'aluno'} tamanho="lg" />
         <div className="flex flex-wrap gap-2">
           <label
             className={`inline-flex cursor-pointer items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus-within:ring-2 focus-within:ring-favela-green-500 ${enviandoFoto ? 'pointer-events-none opacity-50' : ''}`}
@@ -112,7 +140,7 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
             <input type="file" accept="image/*" onChange={escolherFoto} className="sr-only" />
           </label>
           {foto && (
-            <Botao variante="perigo" onClick={() => setFoto(null)}>
+            <Botao variante="perigo" disabled={enviandoFoto} onClick={() => trocarFoto(null)}>
               Tirar foto
             </Botao>
           )}
@@ -126,8 +154,8 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
         <input
           id="aluno-nome"
           name="nome"
-          value={formData.nome}
-          onChange={handleInputChange}
+          value={campos.nome}
+          onChange={aoAlterarCampo}
           required
           maxLength={120}
           className={classeCampo}
@@ -143,8 +171,8 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
           <select
             id="aluno-turma"
             name="turma_id"
-            value={formData.turma_id}
-            onChange={handleInputChange}
+            value={campos.turma_id}
+            onChange={aoAlterarCampo}
             className={classeCampo}
           >
             {turmas.map((t) => (
@@ -161,8 +189,8 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
           <input
             id="aluno-login"
             name="login"
-            value={formData.login}
-            onChange={handleInputChange}
+            value={campos.login}
+            onChange={aoAlterarCampo}
             maxLength={60}
             className={classeCampo}
             placeholder="Ex: maria.santos"
@@ -178,8 +206,8 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
         <textarea
           id="aluno-observacao"
           name="observacao"
-          value={formData.observacao}
-          onChange={handleInputChange}
+          value={campos.observacao}
+          onChange={aoAlterarCampo}
           rows={2}
           maxLength={500}
           className={classeCampo}

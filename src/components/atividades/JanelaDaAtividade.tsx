@@ -19,22 +19,24 @@ import { Aviso, Botao, classeCampo, classeRotulo, type Mensagem } from '../admin
 import { estado, foco, selo, texto } from '../admin/designSystem';
 import HistoricoDeTentativas from './HistoricoDeTentativas';
 import {
-  enviarTentativa,
-  formatarDataHora,
-  formatosEmTexto,
   podeEnviar,
   ROTULO_SITUACAO,
-  ROTULO_TIPO_LINK,
   situacaoDoAluno,
-  tiposAceitos,
-  type Formato,
-  TAMANHO_MAXIMO_ARQUIVO,
   tentativasDe,
-  validarEntrega,
   type Atividade,
-  type EtapaEnvio,
   type Situacao,
 } from '../../lib/atividades';
+import {
+  formatosEmTexto,
+  ROTULO_TIPO_LINK,
+  servicoEntregas,
+  tiposAceitos,
+  TAMANHO_MAXIMO_ARQUIVO,
+  type EtapaEnvio,
+  type Formato,
+} from '../../lib/entregas';
+import { StatusProcessamento } from '../../types';
+import { formatarDataHora } from '../../utils/datas';
 
 export const COR_SITUACAO: Record<Situacao, string> = {
   pendente: selo.neutro,
@@ -124,15 +126,15 @@ const JanelaDaAtividade: React.FC<PropsJanela> = ({ atividade, participanteId, d
 
     if (demonstracao) {
       // Confere igual ao aluno, mas não grava nada
-      const problema = validarEntrega(entrega, atividade);
+      const problema = servicoEntregas.validar(entrega, atividade);
       if (problema) return setMensagem({ tipo: 'erro', texto: problema });
       return setAvisoDemonstracao(true);
     }
 
-    const erro = await enviarTentativa(atividade.id, participanteId, entrega, setEtapa, atividade);
-    if (erro) {
+    const resultado = await servicoEntregas.enviar(atividade.id, participanteId, entrega, setEtapa, atividade);
+    if (resultado.status !== StatusProcessamento.Sucesso) {
       setEtapa(null);
-      return setMensagem({ tipo: 'erro', texto: erro });
+      return setMensagem({ tipo: 'erro', texto: resultado.mensagem! });
     }
     try {
       await aoEnviar(); // a janela passa a mostrar o envio no histórico

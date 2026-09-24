@@ -18,6 +18,7 @@ import { motion } from 'framer-motion';
 
 // Link do React Router que aceita animações do Framer Motion
 import { MotionLink } from './MotionLink';
+import { estatisticasDoProjeto } from '../data/sobre';
 
 const Hero = () => {
   return (
@@ -155,11 +156,7 @@ const Hero = () => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.9 }}
             >
-              {[
-                { number: '150+', label: 'Alunos' },
-                { number: '5+', label: 'Turmas' },
-                { number: '3', label: 'Edições' },
-              ].map((stat, index) => (
+              {estatisticasDoProjeto.map((estatistica, index) => (
                 <motion.div
                   key={index}
                   className="text-center p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20"
@@ -168,8 +165,8 @@ const Hero = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1 + index * 0.1 }}
                 >
-                  <div className="text-3xl md:text-4xl font-black text-white">{stat.number}</div>
-                  <div className="text-sm md:text-base text-white/80 font-semibold">{stat.label}</div>
+                  <div className="text-3xl md:text-4xl font-black text-white">{estatistica.numero}</div>
+                  <div className="text-sm md:text-base text-white/80 font-semibold">{estatistica.rotulo}</div>
                 </motion.div>
               ))}
             </motion.div>

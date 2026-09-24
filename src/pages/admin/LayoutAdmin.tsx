@@ -15,7 +15,7 @@ import { useLocation, useOutlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 
 import RotaProtegida from '../../components/RotaProtegida';
-import Moldura, { Carregando, gravarPreferencia, lerPreferencia } from '../../components/admin/Moldura';
+import Moldura, { Carregando } from '../../components/admin/Moldura';
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
 import type { ItemMenu } from '../../components/admin/MenuLateral';
 import AbasDeRota, { ABAS_ALUNOS_E_CHAMADAS, ABAS_PROFESSORES } from '../../components/admin/AbasDeRota';
@@ -27,20 +27,21 @@ import {
   IconeVisaoGeral,
 } from '../../components/admin/Icones';
 import {
-  carregarDadosDaEdicao,
-  carregarEdicoes,
   montarPainel,
+  servicoPainel,
   FILTROS_INICIAIS,
   type DadosDaEdicao,
-  type Edicao,
   type Filtros,
   type Presenca,
-} from '../../lib/dashboard';
-import { buscarComCache, esquecerCache } from '../../lib/cache';
-import { carregarSolicitacoes, carregarTurmasDaEdicao, chaveSolicitacoes, chaveTurmas } from '../../lib/gestao';
-import { carregarEquipe, CHAVE_EQUIPE } from '../../lib/equipe';
-import { carregarTrilhas, CHAVE_MATERIAL } from '../../lib/material';
-import { carregarAcessos, CHAVE_ACESSOS } from '../../lib/acessos';
+} from '../../lib/painel';
+import { servicoEdicoes, type Edicao } from '../../lib/edicoes';
+import { servicoCache } from '../../lib/cache';
+import { chaveTurmas, servicoTurmas } from '../../lib/turmas';
+import { chaveSolicitacoes, servicoSolicitacoes } from '../../lib/solicitacoes';
+import { CHAVE_EQUIPE, servicoEquipe } from '../../lib/equipe';
+import { CHAVE_MATERIAL, servicoMaterial } from '../../lib/material';
+import { CHAVE_ACESSOS, servicoAcessos } from '../../lib/acessos';
+import { gravarPreferencia, lerPreferencia } from '../../utils/preferencias';
 import type { ContextoAdmin } from './contexto';
 
 const ITENS_MENU: ItemMenu[] = [
@@ -101,13 +102,13 @@ const preCarregarPaginas = () =>
  */
 async function carregarTudo(edicaoId: number): Promise<DadosDaEdicao> {
   const [dados] = await Promise.all([
-    carregarDadosDaEdicao(edicaoId),
+    servicoPainel.carregarDadosDaEdicao(edicaoId),
     preCarregarPaginas(),
-    buscarComCache(chaveTurmas(edicaoId), () => carregarTurmasDaEdicao(edicaoId), true),
-    buscarComCache(chaveSolicitacoes(edicaoId), () => carregarSolicitacoes(edicaoId), true),
-    buscarComCache(CHAVE_EQUIPE, carregarEquipe),
-    buscarComCache(CHAVE_MATERIAL, carregarTrilhas),
-    buscarComCache(CHAVE_ACESSOS, carregarAcessos, true),
+    servicoCache.buscar(chaveTurmas(edicaoId), () => servicoTurmas.carregarDaEdicao(edicaoId), true),
+    servicoCache.buscar(chaveSolicitacoes(edicaoId), () => servicoSolicitacoes.carregar(edicaoId), true),
+    servicoCache.buscar(CHAVE_EQUIPE, () => servicoEquipe.carregar()),
+    servicoCache.buscar(CHAVE_MATERIAL, () => servicoMaterial.carregarTrilhas()),
+    servicoCache.buscar(CHAVE_ACESSOS, () => servicoAcessos.carregar(), true),
   ]);
   return dados;
 }
@@ -129,7 +130,7 @@ const AreaDoGestor: React.FC = () => {
   // Lista de edições. Na primeira vez, abre a última usada neste navegador (ou a mais recente)
   const recarregarEdicoes = useCallback(async (selecionar?: number) => {
     try {
-      const lista = await carregarEdicoes();
+      const lista = await servicoEdicoes.carregar();
       setEdicoes(lista);
       setEdicaoId((atual) => {
         const desejada = selecionar ?? atual ?? Number(lerPreferencia('admin:edicao'));
@@ -170,8 +171,8 @@ const AreaDoGestor: React.FC = () => {
   const recarregarDados = useCallback(async () => {
     if (edicaoId === null) return;
     // Alunos mudaram: as contagens da aba Edições e turmas também (atualiza por trás)
-    esquecerCache(chaveTurmas(edicaoId));
-    setDados(await carregarDadosDaEdicao(edicaoId));
+    servicoCache.esquecer(chaveTurmas(edicaoId));
+    setDados(await servicoPainel.carregarDadosDaEdicao(edicaoId));
   }, [edicaoId]);
 
   // Correção de uma célula: troca só aquela presença, e as contas são refeitas na hora

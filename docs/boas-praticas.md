@@ -6,15 +6,24 @@ As 10 regras abaixo valem para todo código deste repositório, sem exceção.
 
 | Camada da regra 8 | Neste projeto |
 | --- | --- |
-| controllers | páginas em `src/pages/` e as Edge Functions em `supabase/functions/`: recebem o evento e coordenam |
-| services | módulos por assunto em `src/lib/` (`chamada.ts`, `ponto.ts`, `equipe.ts`...) |
-| utils | só função usada por 2+ módulos |
-| config | `import.meta.env` (`VITE_*`) no front e secrets do Supabase nas functions |
-| repositories | as chamadas ao Supabase dentro de `src/lib/` |
-| models | tipos em `src/types.ts` e tipos exportados de cada módulo de `src/lib/` |
+| controllers | páginas em `src/pages/` e o `Deno.serve` de cada Edge Function: recebem o evento e coordenam |
+| services | uma classe por assunto em `src/lib/`, com a instância exportada (`servicoPonto`, `servicoSessao`...) |
+| utils | `src/utils/`: só função usada por 2+ módulos |
+| config | `src/config.ts` (lê o `.env.local`) no front; secrets do Supabase nas functions |
+| repositories | as consultas ao Supabase dentro dos serviços de `src/lib/` |
+| models | `src/types.ts`, os tipos de cada serviço e o conteúdo do site em `src/data/` |
+| hooks | `src/hooks/`: ligam a interface aos serviços, sem regra de negócio |
 
-Os exemplos das regras estão em Python. Em TypeScript vale o mesmo: `const servico = new ServicoRelatorio()`
-no lugar de funções soltas quando há várias etapas da mesma responsabilidade.
+Os exemplos das regras estão em Python. Em TypeScript vale o mesmo: `servicoPonto.registrar(...)` no lugar
+de funções soltas. Método de serviço passado como callback vai numa arrow (`() => servicoX.carregar()`),
+senão perde o `this`.
+
+**Os 5 status (regra 3) aqui:** `StatusProcessamento` e `ResultadoOperacao` em `src/types.ts` (e em
+`supabase/functions/_shared/http.ts`). Toda operação que pode falhar por regra de negócio ou por falha
+técnica devolve o status: login, senha, convite, acessos dos alunos, envio de entrega e as respostas das
+Edge Functions (4xx = exceção de negócio, 5xx = de sistema). Estados de domínio gravados no banco
+(solicitação pendente/aprovada, tentativa aguardando/concluída, presença) não são status de
+processamento e ficam como estão.
 
 ---
 

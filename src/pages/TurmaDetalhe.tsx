@@ -17,7 +17,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { acharTurma, turmas } from '../data/turmas';
-import { useAlunosComFotoAtual } from '../lib/fotosDoSite';
+import { useAlunosComFotoAtual } from '../hooks/useAlunosComFotoAtual';
 
 // Avatar genérico (silhueta branca sobre o verde) para aluno sem foto —
 // o mesmo que o site oficial usa para quem não tem retrato

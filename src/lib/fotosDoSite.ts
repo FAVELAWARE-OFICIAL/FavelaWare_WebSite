@@ -11,62 +11,45 @@
  *
  * Usa fetch direto (sem o cliente do Supabase) para o site público continuar
  * leve. Se o banco não responder, a página fica com as fotos do arquivo.
+ * O hook das páginas fica em src/hooks/useAlunosComFotoAtual.ts.
  */
-import { useEffect, useState } from 'react';
-
-import type { Aluno } from '../data/turmas';
-
-const URL_DO_BANCO = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const CHAVE = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+import { BUCKET_FOTOS_ALUNOS, CHAVE_PUBLICAVEL_SUPABASE, URL_SUPABASE } from '../config';
 
 // Só aceita foto do próprio site ou do bucket de fotos do projeto: um valor
 // estranho no banco nunca vira imagem de outro endereço no site público
-const PREFIXO_DO_BUCKET = URL_DO_BANCO ? `${URL_DO_BANCO}/storage/v1/object/public/fotos-alunos/` : null;
+const PREFIXO_DO_BUCKET = URL_SUPABASE ? `${URL_SUPABASE}/storage/v1/object/public/${BUCKET_FOTOS_ALUNOS}/` : null;
 const fotoConfiavel = (foto: string) =>
   foto.startsWith('/imgs/') || (PREFIXO_DO_BUCKET !== null && foto.startsWith(PREFIXO_DO_BUCKET));
 
-// Buscado uma vez por visita e reaproveitado entre as páginas de turmas
-let promessa: Promise<Map<number, string | null>> | null = null;
+export class ServicoFotosDoSite {
+  /** Buscado uma vez por visita e reaproveitado entre as páginas de turmas */
+  private promessa: Promise<Map<number, string | null>> | null = null;
 
-function buscarFotos(): Promise<Map<number, string | null>> {
-  if (!URL_DO_BANCO || !CHAVE) return Promise.resolve(new Map());
-  promessa ??= fetch(`${URL_DO_BANCO}/rest/v1/rpc/fotos_das_turmas`, {
-    method: 'POST',
-    headers: { apikey: CHAVE, Authorization: `Bearer ${CHAVE}`, 'Content-Type': 'application/json' },
-    body: '{}',
-  })
-    .then((resposta) => (resposta.ok ? resposta.json() : Promise.reject(new Error(String(resposta.status)))))
-    // Foto estranha (fora do site e do bucket) vira "sem foto", nunca imagem de outro endereço
-    .then(
-      (linhas: { id: number; foto: string | null }[]) =>
-        new Map(linhas.map((l) => [l.id, typeof l.foto === 'string' && fotoConfiavel(l.foto) ? l.foto : null])),
-    )
-    .catch((erro) => {
-      console.error('[fotos do site] ficando com as fotos do arquivo', erro?.message);
-      promessa = null; // na próxima página tenta de novo
-      return new Map<number, string | null>();
-    });
-  return promessa;
+  /** { id do aluno: foto atual (null = sem foto) }; vazio se o banco não responder */
+  buscar(): Promise<Map<number, string | null>> {
+    if (!URL_SUPABASE || !CHAVE_PUBLICAVEL_SUPABASE) return Promise.resolve(new Map());
+    this.promessa ??= fetch(`${URL_SUPABASE}/rest/v1/rpc/fotos_das_turmas`, {
+      method: 'POST',
+      headers: {
+        apikey: CHAVE_PUBLICAVEL_SUPABASE,
+        Authorization: `Bearer ${CHAVE_PUBLICAVEL_SUPABASE}`,
+        'Content-Type': 'application/json',
+      },
+      body: '{}',
+    })
+      .then((resposta) => (resposta.ok ? resposta.json() : Promise.reject(new Error(String(resposta.status)))))
+      // Foto estranha (fora do site e do bucket) vira "sem foto", nunca imagem de outro endereço
+      .then(
+        (linhas: { id: number; foto: string | null }[]) =>
+          new Map(linhas.map((l) => [l.id, typeof l.foto === 'string' && fotoConfiavel(l.foto) ? l.foto : null])),
+      )
+      .catch((erro) => {
+        console.error('[fotos do site] ficando com as fotos do arquivo', erro?.message);
+        this.promessa = null; // na próxima página tenta de novo
+        return new Map<number, string | null>();
+      });
+    return this.promessa;
+  }
 }
 
-/** A lista de alunos com a foto atual do dashboard (enquanto carrega, a do arquivo) */
-export function useAlunosComFotoAtual<T extends { alunos: Aluno[] }>(turmas: T[]): T[] {
-  const [fotos, setFotos] = useState<Map<number, string | null> | null>(null);
-
-  useEffect(() => {
-    let ativo = true;
-    buscarFotos().then((mapa) => ativo && setFotos(mapa));
-    return () => {
-      ativo = false;
-    };
-  }, []);
-
-  if (!fotos?.size) return turmas;
-  return turmas.map((turma) => ({
-    ...turma,
-    alunos: turma.alunos.map((aluno) => {
-      if (!aluno.participanteId || !fotos.has(aluno.participanteId)) return aluno;
-      return { ...aluno, foto: fotos.get(aluno.participanteId) ?? undefined };
-    }),
-  }));
-}
+export const servicoFotosDoSite = new ServicoFotosDoSite();

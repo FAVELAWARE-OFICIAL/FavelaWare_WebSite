@@ -16,9 +16,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 
 import Carregamento from '../components/admin/Carregamento';
-import { hoje as hojeLocal } from '../lib/chamada';
+import { classeCampoDeAcesso } from '../components/estilosDeAcesso';
 import {
-  carregarMeusDadosDeInstrutor,
   CORES_RACAS,
   ESTADOS_CIVIS,
   GRAUS_DE_INSTRUCAO,
@@ -27,15 +26,15 @@ import {
   mascaraPis,
   mascaraTelefone,
   nascimentoMaximo,
-  salvarMeusDadosDeInstrutor,
+  servicoDadosInstrutor,
   UFS,
   validarDados,
   type DadosInstrutor,
 } from '../lib/dadosInstrutor';
-import { supabase, carregarPerfil } from '../lib/supabase';
+import { servicoSessao } from '../lib/sessao';
+import { hoje as hojeLocal } from '../utils/datas';
 
-const classeCampo =
-  'w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-favela-green-500 focus:border-transparent transition-all';
+const classeCampo = `${classeCampoDeAcesso} bg-white`;
 const classeRotulo = 'block text-sm font-medium text-gray-700 mb-2';
 
 const VAZIO: DadosInstrutor = {
@@ -74,7 +73,7 @@ const DadosDoInstrutor: React.FC = () => {
   const navigate = useNavigate();
   const formulario = useRef<HTMLFormElement>(null);
   const [estado, setEstado] = useState<Estado>({ tipo: 'verificando' });
-  const [formData, setFormData] = useState<DadosInstrutor>(VAZIO);
+  const [campos, setCampos] = useState<DadosInstrutor>(VAZIO);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [erroCarregar, setErroCarregar] = useState(false);
@@ -83,16 +82,16 @@ const DadosDoInstrutor: React.FC = () => {
   useEffect(() => {
     let ativo = true;
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      const usuario = data.session?.user;
-      const perfil = usuario ? await carregarPerfil(usuario.id) : null;
+      const logada = await servicoSessao.contaLogada();
+      const usuario = logada?.conta;
+      const perfil = logada?.perfil ?? null;
       if (!ativo) return;
       if (!usuario || perfil?.papel !== 'professor') return setEstado({ tipo: 'sem-acesso' });
       try {
-        const salvos = await carregarMeusDadosDeInstrutor(usuario.id);
+        const salvos = await servicoDadosInstrutor.carregarMeus(usuario.id);
         if (!ativo) return;
         if (salvos) {
-          setFormData({
+          setCampos({
             ...salvos,
             complemento: salvos.complemento ?? '',
             linkedin: salvos.linkedin ?? '',
@@ -103,7 +102,7 @@ const DadosDoInstrutor: React.FC = () => {
           });
         } else {
           // Primeira vez: aproveita o nome e o e-mail que já estão no perfil
-          setFormData((f) => ({ ...f, nome_completo: perfil.nome ?? '', email: usuario.email ?? '' }));
+          setCampos((f) => ({ ...f, nome_completo: perfil.nome ?? '', email: usuario.email ?? '' }));
         }
         setEstado({ tipo: 'pronto', usuarioId: usuario.id, jaTinha: Boolean(salvos) });
       } catch (erro) {
@@ -119,18 +118,18 @@ const DadosDoInstrutor: React.FC = () => {
     };
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const aoAlterarCampo = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const mascara = MASCARAS[name as keyof DadosInstrutor];
-    setFormData((anterior) => ({ ...anterior, [name]: mascara ? mascara(value) : value }));
+    setCampos((anterior) => ({ ...anterior, [name]: mascara ? mascara(value) : value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const aoEnviar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (estado.tipo !== 'pronto') return;
     setMensagem(null);
 
-    const problema = validarDados(formData, hojeLocal());
+    const problema = validarDados(campos, hojeLocal());
     if (problema) {
       setMensagem(problema.texto);
       // Leva a pessoa até o campo com problema
@@ -140,16 +139,11 @@ const DadosDoInstrutor: React.FC = () => {
 
     setSalvando(true);
     try {
-      await salvarMeusDadosDeInstrutor(estado.usuarioId, formData);
+      await servicoDadosInstrutor.salvarMeus(estado.usuarioId, campos);
       navigate(estado.jaTinha ? '/professor/perfil' : '/professor', { replace: true });
     } catch (erro) {
-      console.error('[dados-instrutor] falha ao salvar', (erro as { code?: string })?.code);
       setSalvando(false);
-      setMensagem(
-        (erro as { code?: string })?.code === '23514'
-          ? 'Algum dado não passou na conferência. Revise CPF, INSS/PIS e data de nascimento.'
-          : 'Não foi possível salvar agora. Tente de novo em instantes.',
-      );
+      setMensagem(servicoDadosInstrutor.mensagemDoErroAoSalvar(erro));
     }
   };
 
@@ -175,8 +169,8 @@ const DadosDoInstrutor: React.FC = () => {
       <input
         id={nome}
         name={nome}
-        value={formData[nome] ?? ''}
-        onChange={handleInputChange}
+        value={campos[nome] ?? ''}
+        onChange={aoAlterarCampo}
         className={classeCampo}
         {...extras}
       />
@@ -195,8 +189,8 @@ const DadosDoInstrutor: React.FC = () => {
       <select
         id={nome}
         name={nome}
-        value={formData[nome] ?? ''}
-        onChange={handleInputChange}
+        value={campos[nome] ?? ''}
+        onChange={aoAlterarCampo}
         required
         className={classeCampo}
         {...extras}
@@ -240,7 +234,7 @@ const DadosDoInstrutor: React.FC = () => {
           </div>
         )}
 
-        <form ref={formulario} onSubmit={handleSubmit} noValidate className="space-y-8">
+        <form ref={formulario} onSubmit={aoEnviar} noValidate className="space-y-8">
           <fieldset className="space-y-6">
             <legend className="mb-4 text-lg font-bold text-gray-900">Identificação</legend>
             {campo('nome_completo', 'Nome completo *', { autoComplete: 'name', maxLength: 150, required: true })}

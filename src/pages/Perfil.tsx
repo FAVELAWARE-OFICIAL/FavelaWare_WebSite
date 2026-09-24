@@ -15,17 +15,11 @@ import { useCarregamentoCompleto } from '../components/admin/Carregamento';
 import { Carregando } from '../components/admin/Moldura';
 import { Aviso, Botao, Cartao, classeCampo, classeRotulo, type Mensagem } from '../components/admin/Ui';
 import { espaco, foco, texto } from '../components/admin/designSystem';
-import { hoje as hojeLocal } from '../lib/chamada';
-import {
-  carregarMeusDados,
-  mensagemDoErroDePerfil,
-  salvarDadosDeAluno,
-  salvarNome,
-  TAMANHO_MINIMO_SENHA,
-  trocarSenha,
-  type EtapaSenha,
-  type MeusDados,
-} from '../lib/perfil';
+import { servicoPerfil, type MeusDados } from '../lib/perfil';
+import { servicoSenha, TAMANHO_MINIMO_SENHA, type EtapaSenha } from '../lib/senha';
+import { StatusProcessamento } from '../types';
+import { hoje as hojeLocal } from '../utils/datas';
+import { emailValido } from '../utils/texto';
 
 const NOME_DO_PAPEL = { gestor: 'Gestor', professor: 'Instrutor', aluno: 'Aluno' } as const;
 
@@ -36,7 +30,8 @@ const Perfil: React.FC = () => {
 
   useEffect(() => {
     let ativo = true;
-    carregarMeusDados()
+    servicoPerfil
+      .carregarMeusDados()
       .then((d) => ativo && setDados(d))
       .catch((e) => {
         console.error('[perfil] falha ao carregar', e);
@@ -87,16 +82,15 @@ const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
     setMensagem(null);
     if (!ehEquipe) {
       if (!dataNascimento) return setMensagem({ tipo: 'erro', texto: 'Informe sua data de nascimento.' });
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()))
-        return setMensagem({ tipo: 'erro', texto: 'Informe um e-mail válido.' });
+      if (!emailValido(email)) return setMensagem({ tipo: 'erro', texto: 'Informe um e-mail válido.' });
     }
     setSalvando(true);
     try {
-      if (ehEquipe) await salvarNome(nome);
-      else await salvarDadosDeAluno(dataNascimento, email);
+      if (ehEquipe) await servicoPerfil.salvarNome(nome);
+      else await servicoPerfil.salvarDadosDeAluno(dataNascimento, email);
       setMensagem({ tipo: 'sucesso', texto: 'Dados salvos.' });
     } catch (erro) {
-      setMensagem({ tipo: 'erro', texto: mensagemDoErroDePerfil(erro, !ehEquipe) });
+      setMensagem({ tipo: 'erro', texto: servicoPerfil.mensagemDoErro(erro, !ehEquipe) });
     } finally {
       setSalvando(false);
     }
@@ -210,18 +204,13 @@ const TrocarSenhaCartao: React.FC = () => {
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
     setMensagem(null);
-    if (campos.nova.length < TAMANHO_MINIMO_SENHA) {
-      return setMensagem({
-        tipo: 'erro',
-        texto: `A nova senha precisa ter pelo menos ${TAMANHO_MINIMO_SENHA} caracteres.`,
-      });
-    }
-    if (campos.nova !== campos.confirmacao)
-      return setMensagem({ tipo: 'erro', texto: 'As duas senhas novas não são iguais.' });
+    const problema = servicoSenha.validarNova(campos.nova, campos.confirmacao, 'A nova senha', 'As duas senhas novas');
+    if (problema) return setMensagem({ tipo: 'erro', texto: problema });
 
-    const erro = await trocarSenha(campos.atual, campos.nova, setEtapa);
+    const resultado = await servicoSenha.trocar(campos.atual, campos.nova, setEtapa);
     setEtapa(null);
-    if (erro) return setMensagem({ tipo: 'erro', texto: erro });
+    if (resultado.status !== StatusProcessamento.Sucesso)
+      return setMensagem({ tipo: 'erro', texto: resultado.mensagem! });
     setCampos(vazio);
     setMensagem({ tipo: 'sucesso', texto: 'Senha trocada. Nos outros aparelhos, será preciso entrar de novo.' });
   };

@@ -1,0 +1,121 @@
+/**
+ * ============================================
+ * SENHA
+ * ============================================
+ *
+ * As três formas de definir senha, com as mesmas regras e mensagens:
+ * - troca pelo "Meu perfil" (confere a senha atual antes);
+ * - primeiro acesso do aluno (troca a senha padrão e completa os dados);
+ * - convite do instrutor (link do e-mail).
+ */
+import { excecaoDeNegocio, excecaoDeSistema, sucesso, type ResultadoOperacao } from '../types';
+import { servicoSessao } from './sessao';
+import { supabase } from './supabase';
+
+export const TAMANHO_MINIMO_SENHA = 8;
+
+/**
+ * O login aceita a partir de 6 porque é o mínimo do Supabase Auth: contas
+ * criadas antes da regra de 8 não podem ficar trancadas para fora.
+ */
+export const TAMANHO_MINIMO_SENHA_NO_LOGIN = 6;
+
+export type EtapaSenha = 'conferindo' | 'salvando';
+
+/** Mensagem do erro do Supabase ao gravar a senha */
+function traduzirErroDeSenha(
+  codigo: string | undefined,
+  diferenteDe: string | null,
+  padrao: string,
+): ResultadoOperacao {
+  if (codigo === 'same_password' && diferenteDe) {
+    return excecaoDeNegocio(`A nova senha precisa ser diferente ${diferenteDe}.`);
+  }
+  if (codigo === 'weak_password') return excecaoDeNegocio('Senha fraca ou já vazada em outros sites. Escolha outra.');
+  return excecaoDeSistema(padrao);
+}
+
+export class ServicoSenha {
+  /** Confere a nova senha antes de enviar. Devolve o problema, ou null. */
+  validarNova(senha: string, confirmacao: string, rotulo = 'A senha', asDuas = 'As duas senhas'): string | null {
+    if (senha.length < TAMANHO_MINIMO_SENHA) {
+      return `${rotulo} precisa ter pelo menos ${TAMANHO_MINIMO_SENHA} caracteres.`;
+    }
+    if (senha !== confirmacao) return `${asDuas} não são iguais.`;
+    return null;
+  }
+
+  /**
+   * Troca a senha: confere a senha atual (entrando de novo com ela) e só então
+   * grava a nova. Depois encerra as sessões abertas em outros aparelhos.
+   */
+  async trocar(atual: string, nova: string, aoMudarEtapa: (etapa: EtapaSenha) => void): Promise<ResultadoOperacao> {
+    const email = (await servicoSessao.contaAtual())?.email;
+    if (!email) return excecaoDeNegocio('Sua sessão terminou. Entre de novo.');
+
+    aoMudarEtapa('conferindo');
+    const conferencia = await supabase.auth.signInWithPassword({ email, password: atual });
+    if (conferencia.error) {
+      return excecaoDeNegocio(
+        conferencia.error.status === 429
+          ? 'Muitas tentativas. Espere alguns minutos e tente de novo.'
+          : 'A senha atual não confere.',
+      );
+    }
+
+    aoMudarEtapa('salvando');
+    const troca = await supabase.auth.updateUser({ password: nova });
+    if (troca.error) {
+      console.error('[senha] falha ao trocar a senha', troca.error.code);
+      return traduzirErroDeSenha(troca.error.code, 'da atual', 'Não foi possível trocar a senha. Tente de novo.');
+    }
+
+    // Quem estava logado com a senha antiga em outro aparelho sai
+    const saida = await supabase.auth.signOut({ scope: 'others' });
+    if (saida.error) console.error('[senha] senha trocada, mas não encerrou as outras sessões', saida.error.code);
+    return sucesso();
+  }
+
+  /** Primeiro acesso do aluno: troca a senha padrão e grava nascimento e e-mail (libera a conta) */
+  async concluirPrimeiroAcesso(senha: string, dataNascimento: string, email: string): Promise<ResultadoOperacao> {
+    const troca = await supabase.auth.updateUser({ password: senha });
+    if (troca.error) {
+      console.error('[senha] primeiro acesso: falha ao trocar a senha', troca.error.code);
+      return traduzirErroDeSenha(
+        troca.error.code,
+        'da senha padrão',
+        'Não foi possível trocar a senha. Tente de novo.',
+      );
+    }
+
+    const { error } = await supabase.rpc('concluir_primeiro_acesso', {
+      p_data_nascimento: dataNascimento,
+      p_email: email.trim(),
+    });
+    if (error) {
+      console.error('[senha] primeiro acesso: falha ao salvar os dados', error.code);
+      return excecaoDeSistema('A senha foi trocada, mas não foi possível salvar seus dados. Tente de novo.');
+    }
+    servicoSessao.esquecerPerfil(); // o perfil mudou (não precisa mais trocar a senha)
+    return sucesso();
+  }
+
+  /** Convite do instrutor: grava a senha e devolve a área da pessoa */
+  async definirPeloConvite(senha: string): Promise<{ resultado: ResultadoOperacao; destino: string }> {
+    const { data, error } = await supabase.auth.updateUser({ password: senha });
+    if (error || !data.user) {
+      console.error('[senha] convite: falha ao salvar a senha', error?.code);
+      return {
+        resultado: traduzirErroDeSenha(error?.code, null, 'Não foi possível salvar a senha. Tente de novo.'),
+        destino: '/',
+      };
+    }
+    servicoSessao.esquecerPerfil();
+    return {
+      resultado: sucesso(),
+      destino: servicoSessao.destinoDoPerfil(await servicoSessao.carregarPerfil(data.user.id)) ?? '/',
+    };
+  }
+}
+
+export const servicoSenha = new ServicoSenha();

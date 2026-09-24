@@ -16,66 +16,45 @@ import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import Carregamento from '../components/admin/Carregamento';
-import { supabase, carregarPerfil, esquecerPerfil, type MeuPerfil } from '../lib/supabase';
-
-const TAMANHO_MINIMO = 8;
-
-const classeCampo =
-  'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-favela-green-500 focus:border-transparent transition-all';
+import { classeCampoDeAcesso } from '../components/estilosDeAcesso';
+import { servicoSenha, TAMANHO_MINIMO_SENHA as TAMANHO_MINIMO } from '../lib/senha';
+import { servicoSessao, type MeuPerfil } from '../lib/sessao';
+import { StatusProcessamento } from '../types';
+import { hoje as hojeLocal } from '../utils/datas';
+import { emailValido } from '../utils/texto';
 
 const PrimeiroAcesso: React.FC = () => {
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<MeuPerfil | null | undefined>(undefined); // undefined = verificando
-  const [formData, setFormData] = useState({ senha: '', confirmacao: '', dataNascimento: '', email: '' });
+  const [campos, setCampos] = useState({ senha: '', confirmacao: '', dataNascimento: '', email: '' });
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
 
   // Só aluno ligado a uma turma, e que ainda não fez o primeiro acesso
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      setPerfil(data.session ? await carregarPerfil(data.session.user.id) : null);
-    });
+    servicoSessao.contaLogada().then((logada) => setPerfil(logada?.perfil ?? null));
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const aoAlterarCampo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((anterior) => ({ ...anterior, [name]: value }));
+    setCampos((anterior) => ({ ...anterior, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const aoEnviar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMensagem(null);
 
-    if (formData.senha.length < TAMANHO_MINIMO) {
-      return setMensagem(`A nova senha precisa ter pelo menos ${TAMANHO_MINIMO} caracteres.`);
-    }
-    if (formData.senha !== formData.confirmacao) return setMensagem('As duas senhas não são iguais.');
-    if (!formData.dataNascimento) return setMensagem('Informe sua data de nascimento.');
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.email.trim())) return setMensagem('Informe um e-mail válido.');
+    const problemaNaSenha = servicoSenha.validarNova(campos.senha, campos.confirmacao, 'A nova senha');
+    if (problemaNaSenha) return setMensagem(problemaNaSenha);
+    if (!campos.dataNascimento) return setMensagem('Informe sua data de nascimento.');
+    if (!emailValido(campos.email)) return setMensagem('Informe um e-mail válido.');
 
     setSalvando(true);
-    const troca = await supabase.auth.updateUser({ password: formData.senha });
-    if (troca.error) {
+    const resultado = await servicoSenha.concluirPrimeiroAcesso(campos.senha, campos.dataNascimento, campos.email);
+    if (resultado.status !== StatusProcessamento.Sucesso) {
       setSalvando(false);
-      return setMensagem(
-        troca.error.code === 'same_password'
-          ? 'A nova senha precisa ser diferente da senha padrão.'
-          : troca.error.code === 'weak_password'
-            ? 'Senha fraca ou já vazada em outros sites. Escolha outra.'
-            : 'Não foi possível trocar a senha. Tente de novo.',
-      );
+      return setMensagem(resultado.mensagem);
     }
-
-    const { error } = await supabase.rpc('concluir_primeiro_acesso', {
-      p_data_nascimento: formData.dataNascimento,
-      p_email: formData.email.trim(),
-    });
-    if (error) {
-      setSalvando(false);
-      return setMensagem('A senha foi trocada, mas não foi possível salvar seus dados. Tente de novo.');
-    }
-
-    esquecerPerfil(); // o perfil mudou (não precisa mais trocar a senha)
     navigate('/aluno', { replace: true });
   };
 
@@ -89,7 +68,8 @@ const PrimeiroAcesso: React.FC = () => {
   if (!perfil || perfil.papel !== 'aluno' || !perfil.participanteId) return <Navigate to="/login" replace />;
   if (!perfil.precisaTrocarSenha) return <Navigate to="/aluno" replace />;
 
-  const hoje = new Date().toISOString().slice(0, 10);
+  // Data local (a mesma regra do "Meu perfil"): em UTC, depois das 21h já seria amanhã
+  const hoje = hojeLocal();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4 py-12">
@@ -107,7 +87,7 @@ const PrimeiroAcesso: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={aoEnviar} className="space-y-6">
           <div>
             <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">
               Nova senha *
@@ -119,9 +99,9 @@ const PrimeiroAcesso: React.FC = () => {
               autoComplete="new-password"
               required
               minLength={TAMANHO_MINIMO}
-              value={formData.senha}
-              onChange={handleInputChange}
-              className={classeCampo}
+              value={campos.senha}
+              onChange={aoAlterarCampo}
+              className={classeCampoDeAcesso}
             />
             <p className="mt-1 text-xs text-gray-500">
               Pelo menos {TAMANHO_MINIMO} caracteres, diferente da senha padrão.
@@ -137,9 +117,9 @@ const PrimeiroAcesso: React.FC = () => {
               type="password"
               autoComplete="new-password"
               required
-              value={formData.confirmacao}
-              onChange={handleInputChange}
-              className={classeCampo}
+              value={campos.confirmacao}
+              onChange={aoAlterarCampo}
+              className={classeCampoDeAcesso}
             />
           </div>
           <div>
@@ -153,9 +133,9 @@ const PrimeiroAcesso: React.FC = () => {
               required
               max={hoje}
               autoComplete="bday"
-              value={formData.dataNascimento}
-              onChange={handleInputChange}
-              className={classeCampo}
+              value={campos.dataNascimento}
+              onChange={aoAlterarCampo}
+              className={classeCampoDeAcesso}
             />
           </div>
           <div>
@@ -168,9 +148,9 @@ const PrimeiroAcesso: React.FC = () => {
               type="email"
               required
               autoComplete="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className={classeCampo}
+              value={campos.email}
+              onChange={aoAlterarCampo}
+              className={classeCampoDeAcesso}
               placeholder="Ex: maria@email.com"
             />
           </div>

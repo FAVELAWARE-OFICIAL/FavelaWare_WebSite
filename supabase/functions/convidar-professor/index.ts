@@ -11,36 +11,24 @@
  *
  * Corpo: { "nome": "Maria", "email": "maria@exemplo.com", "turmas": [5], "redirecionar_para": "https://.../definir-senha" }
  */
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { cabecalhosCors, clienteAdmin, criarResposta, recusaSeNaoForGestor } from '../_shared/http.ts';
 
-const CABECALHOS_CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+const CORS = cabecalhosCors('POST, OPTIONS');
+const resposta = criarResposta(CORS);
 
-const resposta = (status: number, corpo: Record<string, unknown>) =>
-  new Response(JSON.stringify(corpo), { status, headers: { ...CABECALHOS_CORS, 'Content-Type': 'application/json' } });
-
+/** Mesma regra de src/utils/texto.ts (emailValido) */
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TAMANHO_MAXIMO_NOME = 120;
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CABECALHOS_CORS });
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return resposta(405, { erro: 'Método não permitido' });
 
-  const url = Deno.env.get('SUPABASE_URL')!;
-  const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const admin = clienteAdmin();
 
   // 1. Quem chamou? (o token do gestor vem no cabeçalho Authorization)
-  const token = req.headers.get('Authorization')?.replace(/^Bearer /, '');
-  if (!token) return resposta(401, { erro: 'Faça login novamente.' });
-  const { data: quem, error: erroUsuario } = await admin.auth.getUser(token);
-  if (erroUsuario || !quem.user) return resposta(401, { erro: 'Faça login novamente.' });
-
-  const { data: perfilGestor } = await admin.from('perfis').select('papel').eq('id', quem.user.id).maybeSingle();
-  if (perfilGestor?.papel !== 'gestor') return resposta(403, { erro: 'Só o gestor pode cadastrar instrutores.' });
+  const recusa = await recusaSeNaoForGestor(admin, req, 'Só o gestor pode cadastrar instrutores.');
+  if (recusa) return resposta(recusa.http, { erro: recusa.erro });
 
   // 2. Valida o pedido
   let corpo: { nome?: unknown; email?: unknown; turmas?: unknown; redirecionar_para?: unknown };
@@ -54,7 +42,7 @@ Deno.serve(async (req) => {
   const turmas = Array.isArray(corpo.turmas) ? corpo.turmas.filter((t): t is number => Number.isInteger(t)) : [];
   const redirecionar = typeof corpo.redirecionar_para === 'string' ? corpo.redirecionar_para : undefined;
 
-  if (!nome || nome.length > 120) return resposta(400, { erro: 'Informe o nome do instrutor.' });
+  if (!nome || nome.length > TAMANHO_MAXIMO_NOME) return resposta(400, { erro: 'Informe o nome do instrutor.' });
   if (!EMAIL_VALIDO.test(email)) return resposta(400, { erro: 'E-mail inválido.' });
 
   // 3. Convite (cria a conta e manda o e-mail). O gatilho do banco cria o perfil como "aluno".

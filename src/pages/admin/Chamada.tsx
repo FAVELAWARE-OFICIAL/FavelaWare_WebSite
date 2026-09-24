@@ -13,8 +13,9 @@ import Carregamento, { aguardarCicloCompleto } from '../../components/admin/Carr
 import Janela from '../../components/admin/Janela';
 import PlanilhaDeChamada, { ESTILO_SITUACAO, LegendaSituacoes } from '../../components/admin/PlanilhaDeChamada';
 import { Aviso, BarraDeFiltros, Botao, Cartao, Vazio, type Mensagem } from '../../components/admin/Ui';
-import { formatarData, type Aula, type Presenca } from '../../lib/dashboard';
-import { corrigirPresenca, LETRA_DA_SITUACAO } from '../../lib/gestao';
+import type { Aula, Presenca } from '../../lib/painel';
+import { LETRA_DA_MARCACAO, servicoChamada } from '../../lib/chamada';
+import { formatarData } from '../../utils/datas';
 import { useAdmin } from './contexto';
 import { foco } from '../../components/admin/designSystem';
 
@@ -42,7 +43,7 @@ const Chamada: React.FC = () => {
     setSalvando(true);
     try {
       // Grava e deixa a pintura do carregamento terminar (não corta no meio)
-      await corrigirPresenca(correcao.aula.id, correcao.pessoa.id, situacao);
+      await servicoChamada.corrigirPresenca(correcao.aula.id, correcao.pessoa.id, situacao);
       await aguardarCicloCompleto();
       // Gravou no banco: troca só esta célula na tela (sem baixar a edição inteira de novo)
       atualizarPresencaNaTela(
@@ -53,7 +54,7 @@ const Chamada: React.FC = () => {
               aula_id: correcao.aula.id,
               participante_id: correcao.pessoa.id,
               situacao,
-              registro_original: LETRA_DA_SITUACAO[situacao],
+              registro_original: LETRA_DA_MARCACAO[situacao],
             }
           : null,
       );

@@ -31,7 +31,7 @@ export interface Aluno {
   foto?: string; // sem foto, a página mostra o avatar padrão
 }
 
-export interface Turma {
+export interface TurmaDoSite {
   slug: string; // usado na URL: /turmas/<slug>
   nome: string;
   edicao: string;
@@ -41,7 +41,7 @@ export interface Turma {
   alunos: Aluno[];
 }
 
-export const turmas: Turma[] = [
+export const turmas: TurmaDoSite[] = [
   {
     slug: 'turma-2025',
     nome: 'Turma Única',
@@ -606,4 +606,4 @@ export const turmas: Turma[] = [
 ];
 
 /** Busca uma turma pelo slug da URL. */
-export const acharTurma = (slug?: string): Turma | undefined => turmas.find((t) => t.slug === slug);
+export const acharTurma = (slug?: string): TurmaDoSite | undefined => turmas.find((t) => t.slug === slug);

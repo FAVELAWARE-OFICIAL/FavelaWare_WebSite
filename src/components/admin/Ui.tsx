@@ -7,7 +7,7 @@
  * fundo cinza, cartões brancos com borda fina, sombra leve, texto compacto
  * e sem animação de entrada (quem usa o painel quer os números rápido).
  */
-import { FAIXAS, FILTROS_INICIAIS, type Filtros } from '../../lib/dashboard';
+import { FAIXAS, FILTROS_INICIAIS, type Filtros } from '../../lib/painel';
 import { useAdmin } from '../../pages/admin/contexto';
 import { campo, foco, superficie, texto } from './designSystem';
 

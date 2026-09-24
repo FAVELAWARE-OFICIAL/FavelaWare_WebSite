@@ -13,11 +13,11 @@ import { useCallback, useMemo, useState } from 'react';
 import Avatar from '../../components/admin/Avatar';
 import FormularioAluno from '../../components/admin/FormularioAluno';
 import { AcessosDaTurma, SeloAcesso } from '../../components/admin/AcessosAlunos';
-import { carregarAcessos, CHAVE_ACESSOS, type SituacaoDoAcesso } from '../../lib/acessos';
-import { useDadosEmCache } from '../../lib/cache';
+import { CHAVE_ACESSOS, servicoAcessos, type SituacaoDoAcesso } from '../../lib/acessos';
+import { useDadosEmCache } from '../../hooks/useDadosEmCache';
 import Janela from '../../components/admin/Janela';
 import { Aviso, BarraDeFiltros, Botao, Vazio, type Mensagem } from '../../components/admin/Ui';
-import { FAIXAS, faixaDe, formatarPercentual, type AlunoDoPainel, type Participante } from '../../lib/dashboard';
+import { FAIXAS, faixaDe, formatarPercentual, type AlunoDoPainel, type Participante } from '../../lib/painel';
 import { useAdmin } from './contexto';
 import { campo, foco, superficie, texto } from '../../components/admin/designSystem';
 
@@ -67,7 +67,9 @@ const Alunos: React.FC = () => {
   const [mensagem, setMensagem] = useState<Mensagem>(null);
   const [janelaAcessos, setJanelaAcessos] = useState(false);
   // Quem já tem login no sistema (vem pronto do cache; o layout carrega na abertura)
-  const { dados: acessos, recarregar: recarregarAcessos } = useDadosEmCache(CHAVE_ACESSOS, carregarAcessos);
+  const { dados: acessos, recarregar: recarregarAcessos } = useDadosEmCache(CHAVE_ACESSOS, () =>
+    servicoAcessos.carregar(),
+  );
   const situacao = (id: number): SituacaoDoAcesso => acessos?.[id] ?? 'sem-acesso';
   // Criar acesso pode gerar o login do aluno: atualiza as duas listas
   const aoMudarAcesso = async () => {

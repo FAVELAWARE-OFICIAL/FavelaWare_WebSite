@@ -15,10 +15,10 @@ import { useState } from 'react';
 
 import { Aviso, Botao, classeCampo, classeRotulo, type Mensagem } from './Ui';
 import { espaco, selo, texto } from './designSystem';
-import type { Participante, Turma } from '../../lib/dashboard';
-import { gerenciarAcessos, ROTULO_ACESSO, type ResultadoDosAcessos, type SituacaoDoAcesso } from '../../lib/acessos';
-
-const TAMANHO_MINIMO = 8;
+import type { Participante, Turma } from '../../lib/painel';
+import { ROTULO_ACESSO, servicoAcessos, type ResultadoDosAcessos, type SituacaoDoAcesso } from '../../lib/acessos';
+import { TAMANHO_MINIMO_SENHA as TAMANHO_MINIMO } from '../../lib/senha';
+import { StatusProcessamento } from '../../types';
 
 const ESTILO_SELO: Record<SituacaoDoAcesso, string> = {
   'sem-acesso': selo.neutro,
@@ -109,14 +109,14 @@ export const AcessosDaTurma: React.FC<{
         texto: `A senha padrão precisa ter pelo menos ${TAMANHO_MINIMO} caracteres.`,
       });
     setEnviando(true);
-    const { resultado: r, erro } = await gerenciarAcessos(
+    const { resultado: r, acessos } = await servicoAcessos.gerenciar(
       'criar',
       semAcesso.map((a) => a.id),
       senha,
     );
     setEnviando(false);
-    if (erro) return setMensagem({ tipo: 'erro', texto: erro });
-    setResultado(r!);
+    if (r.status !== StatusProcessamento.Sucesso) return setMensagem({ tipo: 'erro', texto: r.mensagem! });
+    setResultado(acessos!);
     await onConcluir();
   };
 
@@ -195,10 +195,10 @@ export const AcessoDoAluno: React.FC<{
         texto: `A senha padrão precisa ter pelo menos ${TAMANHO_MINIMO} caracteres.`,
       });
     setEnviando(true);
-    const { resultado: r, erro } = await gerenciarAcessos(acao, [aluno.id], senha);
+    const { resultado: r, acessos } = await servicoAcessos.gerenciar(acao, [aluno.id], senha);
     setEnviando(false);
-    if (erro) return setMensagem({ tipo: 'erro', texto: erro });
-    setResultado(r!);
+    if (r.status !== StatusProcessamento.Sucesso) return setMensagem({ tipo: 'erro', texto: r.mensagem! });
+    setResultado(acessos!);
     setAberto(false);
     await onConcluir();
   };

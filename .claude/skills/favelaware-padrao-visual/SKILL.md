@@ -20,7 +20,7 @@ abra o arquivo de referência da tabela abaixo e copie o que já existe.
 | Ícone de marca / rede social  | `src/components/RedesSociais.tsx` (`<LinksRedesSociais fundo="roxo" \| "claro">`) |
 | E-mail, telefone, endereço, Instagram | `src/data/contato.ts` — **sempre** importados daqui, nunca escritos no JSX |
 | Voltar ao topo ao trocar de rota | `src/components/RolarAoTopo.tsx` (já montado no `App.tsx`)               |
-| Linha do tempo / etapas       | `src/components/MacroTimeline.tsx`                                          |
+| Linha do tempo / etapas       | `src/pages/Sobre.tsx` (cronograma)                                          |
 | Seção de destaque colorida    | `src/components/Hero.tsx`                                                   |
 | Cores e animações do tema     | `tailwind.config.js`                                                        |
 | Utilitários CSS               | `src/index.css` (`.glass-effect`, `.glow-*`)                                |

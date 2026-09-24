@@ -10,29 +10,19 @@
  */
 import { useEffect, useState } from 'react';
 
-import { useDadosEmCache } from '../../lib/cache';
+import { useDadosEmCache } from '../../hooks/useDadosEmCache';
+import { StatusProcessamento } from '../../types';
+import { formatarDia } from '../../utils/datas';
 
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
 
 import { Carregando } from '../../components/admin/Moldura';
 import { Aviso, Cartao, Vazio, classeCampo, type Mensagem } from '../../components/admin/Ui';
-import {
-  carregarEquipe,
-  CHAVE_EQUIPE,
-  convidarProfessor,
-  removerProfessor,
-  vincularTurma,
-  type Professor,
-  type TurmaComEdicao,
-} from '../../lib/equipe';
+import { CHAVE_EQUIPE, servicoEquipe, type Professor } from '../../lib/equipe';
+import type { TurmaComEdicao } from '../../lib/turmas';
 import { foco, selo, texto } from '../../components/admin/designSystem';
 import Janela from '../../components/admin/Janela';
-import {
-  carregarDadosDoInstrutor,
-  carregarQuemPreencheu,
-  textoParaRpa,
-  type DadosInstrutorDaEquipe,
-} from '../../lib/dadosInstrutor';
+import { servicoDadosInstrutor, textoParaRpa, type DadosInstrutorDaEquipe } from '../../lib/dadosInstrutor';
 
 /** Botões de turma que ligam/desligam (usados no cadastro e na lista) */
 const SeletorDeTurmas: React.FC<{
@@ -67,10 +57,10 @@ const SeletorDeTurmas: React.FC<{
 
 const Equipe: React.FC = () => {
   // Já vem pronto do cache (o layout carrega na abertura); atualiza por trás
-  const { dados, erro, recarregar: recarregarEquipe } = useDadosEmCache(CHAVE_EQUIPE, carregarEquipe);
+  const { dados, erro, recarregar: recarregarEquipe } = useDadosEmCache(CHAVE_EQUIPE, () => servicoEquipe.carregar());
   const turmas = dados?.turmas ?? [];
   const professores = dados?.professores;
-  const [formData, setFormData] = useState({ nome: '', email: '', turmas: [] as number[] });
+  const [campos, setCampos] = useState({ nome: '', email: '', turmas: [] as number[] });
   const [enviando, setEnviando] = useState(false);
   const [ocupado, setOcupado] = useState<string | null>(null); // professor sendo alterado
   const [mensagem, setMensagem] = useState<Mensagem>(null);
@@ -88,7 +78,8 @@ const Equipe: React.FC = () => {
 
   useEffect(() => {
     let ativo = true;
-    carregarQuemPreencheu()
+    servicoDadosInstrutor
+      .carregarQuemPreencheu()
       .then((ids) => ativo && setPreencheram(ids))
       .catch((e) => {
         console.error('[equipe] falha ao carregar os dados do RPA', e?.code);
@@ -103,7 +94,7 @@ const Equipe: React.FC = () => {
     setCopia(null);
     setVendoRpa({ id, nome, dados: null });
     try {
-      const dados = await carregarDadosDoInstrutor(id);
+      const dados = await servicoDadosInstrutor.carregarDoInstrutor(id);
       setVendoRpa((atual) => (atual?.id === id ? { ...atual, dados } : atual));
     } catch (e) {
       console.error('[equipe] falha ao abrir os dados do RPA', (e as { code?: string })?.code);
@@ -129,30 +120,30 @@ const Equipe: React.FC = () => {
   const recarregar = () =>
     recarregarEquipe().catch(() => setMensagem({ tipo: 'erro', texto: 'Não foi possível carregar a equipe.' }));
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const aoAlterarCampo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((anterior) => ({ ...anterior, [name]: value }));
+    setCampos((anterior) => ({ ...anterior, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const aoEnviar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMensagem(null);
-    if (!formData.nome.trim() || !formData.email.trim()) {
+    if (!campos.nome.trim() || !campos.email.trim()) {
       setMensagem({ tipo: 'erro', texto: 'Preencha o nome e o e-mail do instrutor.' });
       return;
     }
     setEnviando(true);
-    const erro = await convidarProfessor(formData.nome.trim(), formData.email.trim(), formData.turmas);
+    const resultado = await servicoEquipe.convidar(campos.nome.trim(), campos.email.trim(), campos.turmas);
     setEnviando(false);
-    if (erro) {
-      setMensagem({ tipo: 'erro', texto: erro });
+    if (resultado.status !== StatusProcessamento.Sucesso) {
+      setMensagem({ tipo: 'erro', texto: resultado.mensagem! });
       return;
     }
     setMensagem({
       tipo: 'sucesso',
-      texto: `Convite enviado para ${formData.email.trim()}. O instrutor define a senha pelo link do e-mail.`,
+      texto: `Convite enviado para ${campos.email.trim()}. O instrutor define a senha pelo link do e-mail.`,
     });
-    setFormData({ nome: '', email: '', turmas: [] });
+    setCampos({ nome: '', email: '', turmas: [] });
     recarregar();
   };
 
@@ -160,7 +151,7 @@ const Equipe: React.FC = () => {
     setOcupado(professor.id);
     setMensagem(null);
     try {
-      await vincularTurma(professor.id, turmaId, !professor.turmas.includes(turmaId));
+      await servicoEquipe.vincularTurma(professor.id, turmaId, !professor.turmas.includes(turmaId));
       await recarregar();
     } catch {
       setMensagem({ tipo: 'erro', texto: 'Não foi possível alterar as turmas do instrutor.' });
@@ -178,7 +169,7 @@ const Equipe: React.FC = () => {
       return;
     setOcupado(professor.id);
     try {
-      await removerProfessor(professor.id);
+      await servicoEquipe.remover(professor.id);
       await recarregar();
       setMensagem({ tipo: 'sucesso', texto: `${professor.nome ?? professor.email} removido da equipe.` });
     } catch {
@@ -204,7 +195,7 @@ const Equipe: React.FC = () => {
           descricao="Ele recebe um e-mail para criar a senha."
           className="xl:col-span-2"
         >
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={aoEnviar} className="space-y-4">
             <div>
               <label htmlFor="nome" className={`${texto.rotulo}`}>
                 Nome *
@@ -212,8 +203,8 @@ const Equipe: React.FC = () => {
               <input
                 id="nome"
                 name="nome"
-                value={formData.nome}
-                onChange={handleInputChange}
+                value={campos.nome}
+                onChange={aoAlterarCampo}
                 required
                 maxLength={120}
                 autoComplete="off"
@@ -229,8 +220,8 @@ const Equipe: React.FC = () => {
                 id="email"
                 name="email"
                 type="email"
-                value={formData.email}
-                onChange={handleInputChange}
+                value={campos.email}
+                onChange={aoAlterarCampo}
                 required
                 autoComplete="off"
                 placeholder="Ex: maria@email.com"
@@ -241,9 +232,9 @@ const Equipe: React.FC = () => {
               <legend className="mb-2 text-xs font-medium text-gray-600">Turmas</legend>
               <SeletorDeTurmas
                 turmas={turmas}
-                escolhidas={formData.turmas}
+                escolhidas={campos.turmas}
                 aoAlternar={(id) =>
-                  setFormData((f) => ({
+                  setCampos((f) => ({
                     ...f,
                     turmas: f.turmas.includes(id) ? f.turmas.filter((t) => t !== id) : [...f.turmas, id],
                   }))
@@ -320,11 +311,7 @@ const Equipe: React.FC = () => {
       {/* ============ DADOS DO RPA (só leitura) ============ */}
       <Janela
         titulo={vendoRpa ? `Dados do RPA · ${vendoRpa.nome}` : ''}
-        subtitulo={
-          vendoRpa?.dados
-            ? `Atualizado em ${new Date(vendoRpa.dados.atualizado_em).toLocaleDateString('pt-BR')}`
-            : undefined
-        }
+        subtitulo={vendoRpa?.dados ? `Atualizado em ${formatarDia(vendoRpa.dados.atualizado_em)}` : undefined}
         aberta={vendoRpa !== null}
         onFechar={() => setVendoRpa(null)}
         focoInicial="fechar"

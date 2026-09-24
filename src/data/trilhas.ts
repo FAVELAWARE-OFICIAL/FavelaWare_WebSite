@@ -29,7 +29,7 @@
  * Para mudar uma aula ou um tópico, edite só este arquivo.
  */
 
-export interface Aula {
+export interface AulaDoCronograma {
   data: string;
   titulo: string;
   detalhes: string[];
@@ -39,12 +39,12 @@ export interface Modulo {
   nome: string;
   duracao?: string;
   topicos: string[];
-  aulas?: Aula[];
+  aulas?: AulaDoCronograma[];
   /** Observação curta (ex.: onde está a aula de uma oficina) */
   nota?: string;
 }
 
-export interface Trilha {
+export interface TrilhaDoCurso {
   id: string;
   titulo: string;
   horas: string;
@@ -54,7 +54,7 @@ export interface Trilha {
 export interface EdicaoAnterior {
   id: string;
   nome: string;
-  trilhas: Trilha[];
+  trilhas: TrilhaDoCurso[];
 }
 
 // Tópicos de JavaScript: iguais na edição atual e na Edição II
@@ -73,7 +73,7 @@ const TOPICOS_JAVASCRIPT = [
 ];
 
 /** Edição III (atual): programa + cronograma, módulo a módulo */
-export const trilhasAtuais: Trilha[] = [
+export const trilhasAtuais: TrilhaDoCurso[] = [
   {
     id: 'cultura',
     titulo: '1ª TRILHA: CULTURA E ENCANTAMENTO',

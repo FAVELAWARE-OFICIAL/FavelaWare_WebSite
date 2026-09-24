@@ -20,7 +20,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { edicoesAnteriores, trilhasAtuais, type Modulo, type Trilha } from '../data/trilhas';
+import { edicoesAnteriores, trilhasAtuais, type Modulo, type TrilhaDoCurso } from '../data/trilhas';
 
 /** Seta que gira quando o módulo abre (decorativa) */
 const Seta: React.FC<{ aberta: boolean }> = ({ aberta }) => (
@@ -104,7 +104,7 @@ const ComoFazemos = () => {
   // NivelTitulo: h2 nas trilhas atuais; h3 dentro de "Edições Anteriores" (que já é h2).
   // NivelModulo: o botão de cada módulo fica dentro de um título (padrão de acordeão),
   // para o leitor de tela navegar pelos módulos com a tecla H.
-  const renderTrilha = (trilha: Trilha, prefixo: string, NivelTitulo: 'h2' | 'h3' = 'h2') => {
+  const renderTrilha = (trilha: TrilhaDoCurso, prefixo: string, NivelTitulo: 'h2' | 'h3' = 'h2') => {
     const NivelModulo = NivelTitulo === 'h2' ? 'h3' : 'h4';
     return (
       <>

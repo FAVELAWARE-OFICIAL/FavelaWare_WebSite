@@ -19,9 +19,9 @@ import Moldura, { Carregando } from '../../components/admin/Moldura';
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
 import type { ItemMenu } from '../../components/admin/MenuLateral';
 import { IconeChamada, IconeMaterial, IconePonto } from '../../components/admin/Icones';
-import { buscarComCache } from '../../lib/cache';
-import { carregarTrilhas, CHAVE_MATERIAL } from '../../lib/material';
-import { carregarMeusPontos, CHAVE_MEUS_PONTOS } from '../../lib/ponto';
+import { servicoCache } from '../../lib/cache';
+import { CHAVE_MATERIAL, servicoMaterial } from '../../lib/material';
+import { CHAVE_MEUS_PONTOS, servicoPonto } from '../../lib/ponto';
 
 const ITEM_CHAMADA: ItemMenu = { caminho: '/professor', rotulo: 'Fazer chamada', Icone: IconeChamada };
 const ITENS_COMUNS: ItemMenu[] = [
@@ -50,8 +50,10 @@ const AreaDoProfessor: React.FC = () => {
       import('./MeuPonto'),
       import('../equipe/TrilhasEquipe'),
       import('../Perfil'),
-      buscarComCache(CHAVE_MATERIAL, carregarTrilhas),
-      buscarComCache(CHAVE_MEUS_PONTOS, carregarMeusPontos, true).then((m) => setSouProfessor(m.souProfessor)),
+      servicoCache.buscar(CHAVE_MATERIAL, () => servicoMaterial.carregarTrilhas()),
+      servicoCache
+        .buscar(CHAVE_MEUS_PONTOS, () => servicoPonto.carregarMeus(), true)
+        .then((m) => setSouProfessor(m.souProfessor)),
     ])
       .catch(() => undefined) // a página mostra o erro, se houver
       .finally(() => setPronta(true));

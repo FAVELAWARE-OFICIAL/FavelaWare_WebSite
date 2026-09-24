@@ -27,26 +27,10 @@ import {
   type Mensagem,
 } from '../../components/admin/Ui';
 import { espaco, foco, selo, texto } from '../../components/admin/designSystem';
-import { useDadosEmCache } from '../../lib/cache';
-import { hoje } from '../../lib/chamada';
-import { formatarData } from '../../lib/dashboard';
-import {
-  carregarPontosDaEquipe,
-  mensagemDoErroDePonto,
-  OPCOES_PONTO,
-  opcaoDoPonto,
-  registrarPonto,
-  type SituacaoPonto,
-} from '../../lib/ponto';
+import { useDadosEmCache } from '../../hooks/useDadosEmCache';
+import { OPCOES_PONTO, opcaoDoPonto, servicoPonto, type SituacaoPonto } from '../../lib/ponto';
+import { diasAtras, formatarData, hoje } from '../../utils/datas';
 import { useAdmin } from './contexto';
-
-/** "AAAA-MM-DD" de N dias atrás (pela data local, sem passar por UTC) */
-const diasAtras = (n: number) => {
-  const d = new Date(`${hoje()}T12:00:00`);
-  d.setDate(d.getDate() - n);
-  const doisDigitos = (x: number) => String(x).padStart(2, '0');
-  return `${d.getFullYear()}-${doisDigitos(d.getMonth() + 1)}-${doisDigitos(d.getDate())}`;
-};
 
 type Correcao = { professorId: string; nome: string; data: string; atual?: SituacaoPonto };
 
@@ -57,7 +41,9 @@ const PresencaProfessores: React.FC = () => {
   const de = filtros.dataDe || diasAtras(30);
   const ate = filtros.dataAte || hoje();
   const ultimoDiaLancavel = ate < hoje() ? ate : hoje(); // "Lançar ponto": dentro do período e nunca no futuro
-  const { dados, erro, recarregar } = useDadosEmCache(`pontos:${de}:${ate}`, () => carregarPontosDaEquipe(de, ate));
+  const { dados, erro, recarregar } = useDadosEmCache(`pontos:${de}:${ate}`, () =>
+    servicoPonto.carregarDaEquipe(de, ate),
+  );
   const mostrarCarregando = useCarregamentoCompleto(dados === undefined && !erro, 0);
 
   const [correcao, setCorrecao] = useState<Correcao | null>(null);
@@ -96,9 +82,9 @@ const PresencaProfessores: React.FC = () => {
   const salvar = async (professorId: string, nome: string, data: string, situacao: SituacaoPonto | null) => {
     setSalvando(true);
     try {
-      await registrarPonto(data, situacao, professorId);
+      await servicoPonto.registrar(data, situacao, professorId);
     } catch (e) {
-      setMensagem({ tipo: 'erro', texto: mensagemDoErroDePonto(e) });
+      setMensagem({ tipo: 'erro', texto: servicoPonto.mensagemDoErro(e) });
       setCorrecao(null);
       setLancando(false);
       setSalvando(false);

@@ -12,68 +12,55 @@
  */
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase, carregarPerfil, destinoDoPerfil, esquecerPerfil } from '../lib/supabase';
-
-const TAMANHO_MINIMO = 8;
+import { classeCampoDeAcesso } from '../components/estilosDeAcesso';
+import { servicoSenha, TAMANHO_MINIMO_SENHA as TAMANHO_MINIMO } from '../lib/senha';
+import { servicoSessao } from '../lib/sessao';
+import { StatusProcessamento } from '../types';
 
 const DefinirSenha: React.FC = () => {
   const navigate = useNavigate();
   const [estado, setEstado] = useState<'verificando' | 'pronto' | 'sem-convite'>('verificando');
-  const [formData, setFormData] = useState({ senha: '', confirmacao: '' });
+  const [campos, setCampos] = useState({ senha: '', confirmacao: '' });
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
 
   // O cliente do Supabase troca o link do e-mail por uma sessão logo ao carregar
   useEffect(() => {
     let ativo = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (ativo) setEstado(data.session ? 'pronto' : 'sem-convite');
+    servicoSessao.contaAtual().then((conta) => {
+      if (ativo) setEstado(conta ? 'pronto' : 'sem-convite');
     });
-    const { data: ouvinte } = supabase.auth.onAuthStateChange((_evento, sessao) => {
-      if (ativo && sessao) setEstado('pronto');
-    });
+    const pararDeOuvir = servicoSessao.aoIniciar(() => ativo && setEstado('pronto'));
     return () => {
       ativo = false;
-      ouvinte.subscription.unsubscribe();
+      pararDeOuvir();
     };
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const aoAlterarCampo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((anterior) => ({ ...anterior, [name]: value }));
+    setCampos((anterior) => ({ ...anterior, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const aoEnviar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMensagem(null);
 
-    if (formData.senha.length < TAMANHO_MINIMO) {
-      setMensagem(`A senha precisa ter pelo menos ${TAMANHO_MINIMO} caracteres.`);
-      return;
-    }
-    if (formData.senha !== formData.confirmacao) {
-      setMensagem('As duas senhas não são iguais.');
+    const problema = servicoSenha.validarNova(campos.senha, campos.confirmacao);
+    if (problema) {
+      setMensagem(problema);
       return;
     }
 
     setSalvando(true);
-    const { data, error } = await supabase.auth.updateUser({ password: formData.senha });
-    if (error || !data.user) {
+    const { resultado, destino } = await servicoSenha.definirPeloConvite(campos.senha);
+    if (resultado.status !== StatusProcessamento.Sucesso) {
       setSalvando(false);
-      setMensagem(
-        error?.code === 'weak_password'
-          ? 'Senha fraca ou já vazada em outros sites. Escolha outra.'
-          : 'Não foi possível salvar a senha. Tente de novo.',
-      );
+      setMensagem(resultado.mensagem);
       return;
     }
-
-    esquecerPerfil();
-    navigate(destinoDoPerfil(await carregarPerfil(data.user.id)) ?? '/', { replace: true });
+    navigate(destino, { replace: true });
   };
-
-  const classeCampo =
-    'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-favela-green-500 focus:border-transparent transition-all';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4 py-12">
@@ -109,7 +96,7 @@ const DefinirSenha: React.FC = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={aoEnviar} className="space-y-6">
               <div>
                 <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">
                   Nova senha *
@@ -121,9 +108,9 @@ const DefinirSenha: React.FC = () => {
                   autoComplete="new-password"
                   required
                   minLength={TAMANHO_MINIMO}
-                  value={formData.senha}
-                  onChange={handleInputChange}
-                  className={classeCampo}
+                  value={campos.senha}
+                  onChange={aoAlterarCampo}
+                  className={classeCampoDeAcesso}
                 />
                 <p className="mt-1 text-xs text-gray-500">Pelo menos {TAMANHO_MINIMO} caracteres.</p>
               </div>
@@ -137,9 +124,9 @@ const DefinirSenha: React.FC = () => {
                   type="password"
                   autoComplete="new-password"
                   required
-                  value={formData.confirmacao}
-                  onChange={handleInputChange}
-                  className={classeCampo}
+                  value={campos.confirmacao}
+                  onChange={aoAlterarCampo}
+                  className={classeCampoDeAcesso}
                 />
               </div>
               <button

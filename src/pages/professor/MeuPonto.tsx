@@ -8,45 +8,63 @@
  * - Clicar grava na hora; clicar de novo na marcação escolhida desmarca.
  * - Embaixo, os últimos pontos dele.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
 import { Carregando } from '../../components/admin/Moldura';
 import { Aviso, Cartao, Vazio, classeCampo, classeRotulo, type Mensagem } from '../../components/admin/Ui';
 import { espaco, foco, selo, texto } from '../../components/admin/designSystem';
-import { useDadosEmCache } from '../../lib/cache';
-import { hoje } from '../../lib/chamada';
-import { formatarData } from '../../lib/dashboard';
-import {
-  carregarMeusPontos,
-  CHAVE_MEUS_PONTOS,
-  mensagemDoErroDePonto,
-  OPCOES_PONTO,
-  opcaoDoPonto,
-  registrarPonto,
-  type SituacaoPonto,
-} from '../../lib/ponto';
+import { useDadosEmCache } from '../../hooks/useDadosEmCache';
+import { CHAVE_MEUS_PONTOS, OPCOES_PONTO, opcaoDoPonto, servicoPonto, type SituacaoPonto } from '../../lib/ponto';
+import { formatarData, hoje } from '../../utils/datas';
 
 const diaDaSemana = (data: string) => new Date(`${data}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long' });
 
 const MeuPonto: React.FC = () => {
-  const { dados, erro, recarregar } = useDadosEmCache(CHAVE_MEUS_PONTOS, carregarMeusPontos);
+  const { dados, erro, recarregar } = useDadosEmCache(CHAVE_MEUS_PONTOS, () => servicoPonto.carregarMeus());
   const pontos = dados?.pontos;
   const mostrarCarregando = useCarregamentoCompleto(dados === undefined && !erro, 0);
   const [dia, setDia] = useState(hoje());
   const [salvando, setSalvando] = useState<SituacaoPonto | 'limpar' | null>(null);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
 
-  const marcadoNoDia = pontos?.find((p) => p.data === dia)?.situacao;
+  // Dia mais antigo que o histórico carregado: a marcação vem do banco, só daquele dia
+  const noHistorico = !pontos || servicoPonto.diaEstaNoHistorico(pontos, dia);
+  const [diaForaDoHistorico, setDiaForaDoHistorico] = useState<{ dia: string; situacao: SituacaoPonto | null }>();
+  useEffect(() => {
+    if (noHistorico) return;
+    let ativo = true;
+    servicoPonto
+      .carregarMeuDia(dia)
+      .then((situacao) => ativo && setDiaForaDoHistorico({ dia, situacao }))
+      .catch((erro) => {
+        console.error('[ponto] falha ao conferir o dia', erro?.code, erro?.message);
+        if (!ativo) return;
+        // Libera os botões: marcar grava o dia de qualquer forma, e a mensagem avisa
+        setDiaForaDoHistorico({ dia, situacao: null });
+        setMensagem({
+          tipo: 'erro',
+          texto: 'Não foi possível conferir o ponto deste dia. Se já estava marcado, a marcação será trocada.',
+        });
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [dia, noHistorico]);
+  const conferindoDia = !noHistorico && diaForaDoHistorico?.dia !== dia;
+  const marcadoNoDia = noHistorico
+    ? pontos?.find((p) => p.data === dia)?.situacao
+    : (diaForaDoHistorico?.situacao ?? undefined);
 
   const marcar = async (valor: SituacaoPonto) => {
     const nova = marcadoNoDia === valor ? null : valor; // clicar de novo desmarca
     setSalvando(nova ?? 'limpar');
     setMensagem(null);
     try {
-      await registrarPonto(dia, nova);
+      await servicoPonto.registrar(dia, nova);
+      if (!noHistorico) setDiaForaDoHistorico({ dia, situacao: nova });
     } catch (e) {
-      setMensagem({ tipo: 'erro', texto: mensagemDoErroDePonto(e) });
+      setMensagem({ tipo: 'erro', texto: servicoPonto.mensagemDoErro(e) });
       setSalvando(null);
       return;
     }
@@ -116,7 +134,7 @@ const MeuPonto: React.FC = () => {
                   key={op.valor}
                   type="button"
                   onClick={() => marcar(op.valor)}
-                  disabled={salvando !== null}
+                  disabled={salvando !== null || conferindoDia}
                   aria-pressed={escolhido}
                   className={`flex flex-col items-center gap-1 rounded-xl border-2 px-2 py-4 transition-colors disabled:cursor-wait ${foco} ${
                     escolhido ? op.classe : 'border-gray-200 bg-white text-gray-600 hover:border-gray-400'

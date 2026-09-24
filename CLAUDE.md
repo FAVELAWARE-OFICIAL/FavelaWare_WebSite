@@ -52,13 +52,16 @@ npm run build         # build de produção
 npm run lint          # ESLint
 npm run typecheck     # TypeScript
 npm run format:check  # Prettier
+npm test              # Vitest
 ```
 
-Antes de dar algo por pronto: `lint`, `typecheck`, `format:check` e `build` verdes. É o mesmo que o CI roda.
+Antes de dar algo por pronto: `lint`, `typecheck`, `format:check`, `test` e `build` verdes. É o mesmo que o CI roda.
+As Edge Functions são conferidas com `npx --yes deno@2.9.6 check <função>/index.ts` dentro de `supabase/functions`.
 
 ## Convenções
 
 - **Regras de código:** `docs/boas-praticas.md`. Domínio em português; termos técnicos da linguagem e das bibliotecas em inglês.
+- **Camadas:** página coordena; serviço em `src/lib/` (classe + instância) tem a regra e fala com o banco; `src/utils/` só com 2+ consumidores; configuração em `src/config.ts`; conteúdo do site em `src/data/`.
 - **UI:** skill `favelaware-padrao-visual`. Cores `favela-*` do `tailwind.config.js`, roxo institucional `#2d2a5f`.
 - **Acesso:** a `RotaProtegida` só organiza a navegação. Quem protege dado é a RLS. Toda tabela nova nasce com RLS e teste em `supabase/testes/`.
 - **Config:** valores que mudam por ambiente vêm de `import.meta.env` (`VITE_*`). Segredo nunca vai para o front nem para o repositório.

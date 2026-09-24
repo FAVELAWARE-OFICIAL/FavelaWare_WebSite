@@ -15,9 +15,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import MenuLateral, { itemEstaAtivo, type ItemMenu } from './MenuLateral';
 import { IconeMenu } from './Icones';
-import { supabase, alternarPapel, carregarPerfil, type Papel } from '../../lib/supabase';
-import { esquecerCache } from '../../lib/cache';
+import { servicoSessao, type Papel } from '../../lib/sessao';
 import { EVENTO_PERFIL_ALTERADO } from '../../lib/perfil';
+import { StatusProcessamento } from '../../types';
+import { gravarPreferencia, lerPreferencia } from '../../utils/preferencias';
 import Carregamento from './Carregamento';
 import { foco } from './designSystem';
 import './tema-escuro.css';
@@ -32,23 +33,6 @@ function temaInicial(): Tema {
     ? 'escuro'
     : 'claro';
 }
-
-// Preferências deste navegador. localStorage pode falhar (aba anônima,
-// bloqueio): nesse caso só não lembra.
-export const lerPreferencia = (chave: string) => {
-  try {
-    return localStorage.getItem(chave);
-  } catch {
-    return null;
-  }
-};
-export const gravarPreferencia = (chave: string, valor: string) => {
-  try {
-    localStorage.setItem(chave, valor);
-  } catch {
-    /* sem memória, sem problema */
-  }
-};
 
 interface Props {
   itens: ItemMenu[];
@@ -84,10 +68,9 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
   // Relê quando a pessoa muda o nome na tela "Meu perfil".
   useEffect(() => {
     const ler = () =>
-      supabase.auth.getSession().then(async ({ data }) => {
-        const conta = data.session?.user;
-        if (!conta) return;
-        const perfil = await carregarPerfil(conta.id);
+      servicoSessao.contaLogada().then((logada) => {
+        if (!logada) return;
+        const { conta, perfil } = logada;
         setUsuario({
           nome: perfil.nome || (conta.email ?? '').split('@')[0],
           foto: perfil.foto,
@@ -124,20 +107,17 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
   const verComo = async (papel: Papel) => {
     setTrocandoPapel(true);
     setErroTroca(null);
-    try {
-      const destino = await alternarPapel(papel);
-      esquecerCache(); // dados guardados eram do papel anterior
+    const { resultado, destino } = await servicoSessao.alternarPapel(papel);
+    if (resultado.status === StatusProcessamento.Sucesso && destino) {
       navigate(destino, { replace: true });
-    } catch (e) {
-      console.error('[ver como] falha ao trocar de papel', e);
-      const texto = (e as { message?: string } | null)?.message;
-      setErroTroca(texto && /demonstra/i.test(texto) ? texto : 'Não foi possível trocar de papel. Tente de novo.');
-      setTrocandoPapel(false);
+      return;
     }
+    setErroTroca(resultado.mensagem);
+    setTrocandoPapel(false);
   };
 
   const sair = async () => {
-    await supabase.auth.signOut();
+    await servicoSessao.sair();
     navigate('/login', { replace: true });
   };
 

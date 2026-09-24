@@ -22,104 +22,11 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { MotionLink } from '../components/MotionLink';
 import { equipeEdicaoIII } from '../data/hallDaFama';
+import { parceiros } from '../data/parceiros';
+import { cronograma, idealizadores, propositos } from '../data/sobre';
 import { LinkLinkedin } from '../components/RedesSociais';
 
 const Sobre = () => {
-  // Ordem cronológica, da esquerda para a direita, como no cronograma do site
-  // oficial: lá cada texto fica alinhado com a data do mesmo ponto da linha.
-  const cronogramaItems = [
-    { data: '26/05', titulo: 'Início das divulgações' },
-    { data: '29/05', titulo: 'Pré-inscrições para as oficinas' },
-    { data: '11/06', titulo: 'Oficina Mundo Tech' },
-    { data: '18/06', titulo: 'Oficina Developer na Prática' },
-    { data: '25/06', titulo: 'Oficina ChatBot e IA' },
-    { data: '25/06', titulo: 'Inscrições FavelaWare' },
-    { data: '05/08', titulo: 'Início das aulas' },
-    { data: '01/08/26', titulo: 'Formatura' },
-  ];
-
-  const idealizadores = [
-    { nome: 'Gustavo Pena', cargo: 'Idealizador', organizacao: 'Mundiale', foto: '/imgs/team/gustavo.webp' },
-    { nome: 'Cristiane de Ávila', cargo: 'Idealizadora', organizacao: 'Mundiale', foto: '/imgs/team/cristiane.webp' },
-    { nome: 'Diomar', cargo: 'Idealizador', organizacao: 'AOPA', foto: '/imgs/team/diomar.webp' },
-    {
-      nome: 'Rafaela Moreira',
-      cargo: 'Idealizadora e Orientadora',
-      organizacao: 'Ânima',
-      foto: '/imgs/team/rafaela.webp',
-      linkedin: 'https://www.linkedin.com/in/rafaelapcmoreira/',
-    },
-    { nome: 'Samara Leal', cargo: 'Idealizadora', organizacao: 'Ânima', foto: '/imgs/team/samara.webp' },
-  ].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')); // sempre em ordem alfabética
-
-  // A equipe da 3ª edição (equipeEdicaoIII) mora em src/data/hallDaFama.ts:
-  // a mesma lista abastece esta página e a 3ª edição do hall.
-
-  const propositos = [
-    {
-      titulo: 'Acadêmico',
-      descricao:
-        'Proporcionar aos alunos de TI da Una Cristiano Machado compartilhar as habilidades adquiridas nos cursos.',
-      cor: 'text-pink-500',
-    },
-    {
-      titulo: 'Social',
-      descricao: 'Gerar mudanças na realidade de jovens de comunidades vulneráveis.',
-      cor: 'text-pink-500',
-    },
-    {
-      titulo: 'Carreira',
-      descricao: 'Fornecer experiência prática, abrindo um novo caminho para o futuro da carreira de tecnologia.',
-      cor: 'text-pink-500',
-    },
-  ];
-
-  // link é opcional: parceiro sem site oficial conhecido fica sem o botão "SAIBA MAIS"
-  const parceiros: { nome: string; descricao: string; logo: string; link?: string }[] = [
-    {
-      nome: 'Mundiale',
-      descricao:
-        'Com a união de pessoas, tecnologia e uma metodologia própria, a Mundiale revoluciona a relação entre marcas e consumidores por meio de canais digitais, proporcionando interações mais humanas, assertivas e fluidas.',
-      logo: '/imgs/partners/Mundiale.webp',
-      link: 'https://mundiale.com.br',
-    },
-    {
-      nome: 'AOPA',
-      descricao:
-        'A AOPA é uma instituição social católica dos Religiosos Pavonianos, que, pela experiência de seu fundador, São Ludovico Pavoni, dedica-se ao atendimento integral de crianças e adolescentes.',
-      logo: '/imgs/partners/AOPA.webp',
-      link: 'https://www.pavonianos.org.br/unidade/aopabh',
-    },
-    {
-      nome: 'Ecossistema Ânima Educação',
-      descricao:
-        'O Ecossistema Ânima Educação é uma das maiores organizações educacionais privadas de ensino superior do Brasil, com cerca de 330 mil estudantes e 18 mil educadores e educadoras.',
-      logo: '/imgs/partners/ecossistema ânima.webp',
-      link: 'https://animaeducacao.com.br',
-    },
-    {
-      nome: 'Una Cristiano Machado',
-      descricao:
-        'A Una Cristiano Machado é uma das instituições da Ânima com compromisso de oferecer educação de qualidade, focada na formação acadêmica sólida e inovadora.',
-      logo: '/imgs/partners/Una Cristiano Machado.webp',
-      link: 'https://una.br',
-    },
-    {
-      // O site oficial não traz descrição do Ânima Lab (só o rodapé "Site criado
-      // pela equipe Ânima Hub"): texto provisório, a confirmar com a coordenação
-      nome: 'Ânima Lab',
-      descricao:
-        'O Ânima Lab faz parte do Ecossistema Ânima Educação. A equipe Ânima Hub criou o site oficial do FavelaWare.',
-      logo: '/imgs/partners/ânima.webp',
-    },
-    {
-      nome: 'REDE TRANSFORMAR',
-      descricao:
-        'A REDE TRANSFORMAR é uma organização sem fins lucrativos que desenvolve programas, projetos e ações de assessoramento, defesa e garantia de direitos sociais.',
-      logo: '/imgs/partners/Rede Transformar.webp',
-    },
-  ].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })); // sempre em ordem alfabética
-
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -216,7 +123,7 @@ const Sobre = () => {
               />
 
               <ol className="relative flex">
-                {cronogramaItems.map((item, index) => {
+                {cronograma.map((item, index) => {
                   // Alterna os lados: nos pontos pares o texto fica em cima e a data embaixo
                   const textoEmCima = index % 2 === 0;
                   const haste = <span className="w-[3px] h-7 bg-[#8bc53f]" aria-hidden="true" />;
@@ -228,7 +135,7 @@ const Sobre = () => {
                     <li
                       key={item.titulo}
                       // A formatura fica isolada na ponta, como no original: é no ano seguinte
-                      className={`w-20 shrink-0 flex flex-col items-center text-center ${index === cronogramaItems.length - 1 ? 'ml-auto' : ''}`}
+                      className={`w-20 shrink-0 flex flex-col items-center text-center ${index === cronograma.length - 1 ? 'ml-auto' : ''}`}
                     >
                       {/* Metade de cima: o conteúdo encosta na bola verde */}
                       <div className="h-20 flex flex-col items-center justify-end">
@@ -267,7 +174,7 @@ const Sobre = () => {
             {/* Versão vertical do cronograma (celular): mesmos itens e cores,
                 com a linha roxa na esquerda e as bolas sobre ela */}
             <ol className="md:hidden relative ml-3 border-l-4 border-[#2d2a5f] space-y-8">
-              {cronogramaItems.map((item) => (
+              {cronograma.map((item) => (
                 <li key={item.titulo} className="relative pl-8">
                   {/* Bola VERDE na linha */}
                   <span
@@ -433,7 +340,7 @@ const Sobre = () => {
               >
                 <div className="w-48 h-48 flex items-center justify-center">
                   <img
-                    src={parceiro.logo}
+                    src={parceiro.imagem}
                     alt={parceiro.nome}
                     loading="lazy"
                     decoding="async"
@@ -442,9 +349,9 @@ const Sobre = () => {
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-700 mb-6">{parceiro.descricao}</p>
-                  {parceiro.link && (
+                  {parceiro.site && (
                     <motion.a
-                      href={parceiro.link}
+                      href={parceiro.site}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-block px-6 py-3 bg-white border-2 border-[#2d2a5f] text-[#2d2a5f] font-bold rounded-lg transition-all duration-300"

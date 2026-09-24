@@ -38,7 +38,12 @@ var TIPOS = {
   'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx'
 };
 var TAMANHO_MAXIMO = 10 * 1024 * 1024; // 10 MB
-var VALIDADE_MS = 60 * 1000;           // pedido vale 1 minuto
+// Pedido vale 1 minuto. A Edge Function entregas-drive desiste depois de
+// DRIVE_TEMPO_LIMITE_MS (padrão 60 s): os dois andam juntos. Aumentar um sem o
+// outro faz pedido lento chegar vencido aqui (ou a função desistir antes).
+var VALIDADE_MS = 60 * 1000;
+// Espera máxima pela trava das pastas: precisa caber dentro dos 60 s acima
+var ESPERA_DA_TRAVA_MS = 20 * 1000;
 var ID_DRIVE = /^[A-Za-z0-9_-]{10,200}$/;
 
 function doPost(e) {
@@ -93,7 +98,7 @@ function enviar(dados, raiz) {
 
   // Criar pastas com trava: dois envios ao mesmo tempo não duplicam a pasta
   var trava = LockService.getScriptLock();
-  trava.waitLock(20000);
+  trava.waitLock(ESPERA_DA_TRAVA_MS);
   var pasta;
   try {
     pasta = pastaFilha(pastaFilha(raiz, 'turma_' + dados.turma), 'atividade_' + dados.atividade);
