@@ -3,7 +3,7 @@
 Mudanças relevantes do projeto. Versão semântica, calculada pelo workflow `versionamento` a partir
 dos commits (Conventional Commits) ou da label `version:*` no PR de release.
 
-## [Não lançado]
+## [1.0.0] - 2026-09-24
 
 Código no padrão das 10 regras de `docs/boas-praticas.md`.
 
