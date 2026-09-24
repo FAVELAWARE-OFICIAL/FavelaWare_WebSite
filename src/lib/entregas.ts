@@ -7,11 +7,11 @@
  * sem arquivo) e o link de download dos arquivos. As mesmas regras são
  * conferidas de novo na Edge Function entregas-drive e no banco.
  */
-import { BUCKET_ENTREGAS_ANTIGAS, VALIDADE_LINK_DOWNLOAD_S } from '../config';
+import { BUCKET_ENTREGAS_ANTIGAS, TAMANHO_MAXIMO_ARQUIVO, VALIDADE_LINK_DOWNLOAD_S } from '../config';
 import { excecaoDeNegocio, excecaoDeSistema, sucesso, type ResultadoOperacao } from '../types';
 import { linkValido } from '../utils/texto';
 import type { Tentativa } from './atividades';
-import { erroDeSistemaNaFuncao, mensagemDaFuncao } from './banco';
+import { CODIGO_REGRA_DO_BANCO, linkDaFuncao, resultadoDaFuncao } from './banco';
 import { supabase } from './supabase';
 
 export type TipoLink = 'qualquer' | 'github' | 'drive';
@@ -35,8 +35,6 @@ export const SEM_REGRAS: RegrasDeEntrega = {
   exige_arquivo: false,
   formatos: [],
 };
-
-export const TAMANHO_MAXIMO_ARQUIVO = 10 * 1024 * 1024;
 
 /** Tipos de arquivo aceitos pelo portal e a extensão de cada um */
 const TIPOS_ACEITOS: Record<string, string> = {
@@ -171,8 +169,7 @@ export class ServicoEntregas {
       const { error } = await supabase.functions.invoke('entregas-drive/enviar', { body: form });
       if (!error) return sucesso();
       console.error('[entregas] falha ao enviar para o Drive', error.message);
-      const mensagem = await mensagemDaFuncao(error, 'Não foi possível enviar o arquivo. Tente de novo.');
-      return erroDeSistemaNaFuncao(error) ? excecaoDeSistema(mensagem) : excecaoDeNegocio(mensagem);
+      return resultadoDaFuncao(error, 'Não foi possível enviar o arquivo. Tente de novo.');
     }
 
     aoMudarEtapa('registro');
@@ -185,7 +182,7 @@ export class ServicoEntregas {
     if (!error) return sucesso();
     console.error('[entregas] falha ao registrar a entrega', error.code);
     // 22023: regra da atividade recusada pelo banco, com o texto para o aluno
-    return error.code === '22023'
+    return error.code === CODIGO_REGRA_DO_BANCO
       ? excecaoDeNegocio(error.message)
       : excecaoDeSistema('Não foi possível registrar a entrega. Tente de novo.');
   }
@@ -197,11 +194,7 @@ export class ServicoEntregas {
    */
   async linkDoArquivo(t: Pick<Tentativa, 'arquivo_id' | 'arquivo_caminho' | 'arquivo_nome'>): Promise<string> {
     if (t.arquivo_id) {
-      const { data, error } = await supabase.functions.invoke('entregas-drive/link', {
-        body: { arquivo_id: t.arquivo_id },
-      });
-      if (error) throw new Error(await mensagemDaFuncao(error, 'Não foi possível baixar o arquivo.'));
-      return (data as { url: string }).url;
+      return linkDaFuncao('entregas-drive/link', { arquivo_id: t.arquivo_id }, 'Não foi possível baixar o arquivo.');
     }
     const { data, error } = await supabase.storage
       .from(BUCKET_ENTREGAS_ANTIGAS)

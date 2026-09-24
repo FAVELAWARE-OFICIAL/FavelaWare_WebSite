@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { dataDoBanco, deCampoDataHora, diasAtras, formatarData, hoje, paraCampoDataHora } from './datas';
-import { emailValido, linkValido, vazioViraNulo } from './texto';
+import { tamanhoLegivel } from './arquivos';
+import { emailValido, iniciaisDoNome, linkValido, perfilLinkedinValido, vazioViraNulo } from './texto';
 
 describe('datas', () => {
   afterEach(() => {
@@ -42,5 +43,24 @@ describe('texto', () => {
     expect(emailValido('maria@exemplo')).toBe(false);
     expect(linkValido('https://drive.google.com/x')).toBe(true);
     expect(linkValido('http://drive.google.com/x')).toBe(false);
+  });
+});
+
+describe('ajudantes compartilhados', () => {
+  it('iniciais do avatar: duas primeiras palavras, e "?" sem nome', () => {
+    expect(iniciaisDoNome('maria da silva')).toBe('MD');
+    expect(iniciaisDoNome('  ')).toBe('?');
+  });
+
+  it('tamanho do arquivo com vírgula decimal', () => {
+    expect(tamanhoLegivel(300)).toBe('1 KB');
+    expect(tamanhoLegivel(1.5 * 1024 * 1024)).toBe('1,5 MB');
+  });
+
+  it('LinkedIn: só o perfil no formato que o banco aceita', () => {
+    expect(perfilLinkedinValido('https://www.linkedin.com/in/maria-silva')).toBe(true);
+    expect(perfilLinkedinValido('https://br.linkedin.com/in/maria/')).toBe(true);
+    expect(perfilLinkedinValido('https://linkedin.com/company/x')).toBe(false);
+    expect(perfilLinkedinValido('https://outro.site/in/maria')).toBe(false);
   });
 });

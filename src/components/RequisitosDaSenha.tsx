@@ -13,13 +13,14 @@
 import { motion } from 'framer-motion';
 
 import { REQUISITOS_DA_SENHA } from '../lib/senha';
+import { estado } from './admin/designSystem';
 
 /** Nome e cor da força pela quantidade de requisitos cumpridos */
 function forcaDa(cumpridos: number) {
   if (cumpridos === REQUISITOS_DA_SENHA.length)
-    return { rotulo: 'Forte', cor: 'bg-favela-green-500', texto: 'text-green-700' };
-  if (cumpridos >= 3) return { rotulo: 'Média', cor: 'bg-amber-400', texto: 'text-amber-700' };
-  return { rotulo: 'Fraca', cor: 'bg-red-500', texto: 'text-red-700' };
+    return { rotulo: 'Forte', cor: 'bg-favela-green-500', texto: 'text-green-800' };
+  if (cumpridos >= 3) return { rotulo: 'Média', cor: 'bg-amber-400', texto: 'text-amber-800' };
+  return { rotulo: 'Fraca', cor: 'bg-red-500', texto: 'text-red-800' };
 }
 
 const RequisitosDaSenha: React.FC<{ senha: string; id?: string }> = ({ senha, id }) => {
@@ -28,7 +29,7 @@ const RequisitosDaSenha: React.FC<{ senha: string; id?: string }> = ({ senha, id
   const forca = forcaDa(cumpridos);
 
   return (
-    <div id={id} className="mt-3 rounded-xl border border-gray-200 bg-gray-50/80 p-3">
+    <div id={id} className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
       {/* Barra de força: uma parte por requisito */}
       <div className="mb-2.5 flex items-center gap-3">
         <div className="grid flex-1 grid-cols-5 gap-1.5" aria-hidden="true">
@@ -55,7 +56,7 @@ const RequisitosDaSenha: React.FC<{ senha: string; id?: string }> = ({ senha, id
             key={r.id}
             aria-label={`${r.texto}: ${r.ok ? 'cumprido' : 'falta'}`}
             className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors duration-300 ${
-              r.ok ? 'border-green-200 bg-green-50 text-green-800' : 'border-gray-200 bg-white text-gray-500'
+              r.ok ? estado.sucesso : 'border-gray-200 bg-white text-gray-500'
             }`}
           >
             <motion.span

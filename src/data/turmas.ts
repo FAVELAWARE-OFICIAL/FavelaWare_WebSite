@@ -25,7 +25,7 @@
  */
 
 export interface Aluno {
-  /** Id do aluno no banco: a foto posta no dashboard substitui a daqui (lib/fotosDoSite.ts) */
+  /** Id do aluno no banco: a foto posta no dashboard substitui a daqui (lib/sitePublico.ts) */
   participanteId?: number;
   nome: string;
   foto?: string; // sem foto, a página mostra o avatar padrão
@@ -604,6 +604,3 @@ export const turmas: TurmaDoSite[] = [
     ],
   },
 ];
-
-/** Busca uma turma pelo slug da URL. */
-export const acharTurma = (slug?: string): TurmaDoSite | undefined => turmas.find((t) => t.slug === slug);

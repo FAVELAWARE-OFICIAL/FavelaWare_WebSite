@@ -11,7 +11,7 @@
  */
 import { useEffect, useState } from 'react';
 
-import { Aviso, Botao, Vazio, classeCampo, classeRotulo, type Mensagem } from '../admin/Ui';
+import { Aviso, Botao, Vazio, classeCampo, classeTextoLongo, classeRotulo, type Mensagem } from '../admin/Ui';
 import { espaco, foco, texto } from '../admin/designSystem';
 import HistoricoDeTentativas from './HistoricoDeTentativas';
 import { servicoAtividades, tentativasDe, type AlunoDaTurma, type Atividade } from '../../lib/atividades';
@@ -135,7 +135,7 @@ export const FormularioDeAtividade: React.FC<{
           value={campos.enunciado}
           disabled={salvando}
           placeholder="O que o aluno precisa fazer e entregar"
-          className={classeCampo}
+          className={classeTextoLongo}
           onChange={(e) => setCampos((c) => ({ ...c, enunciado: e.target.value }))}
         />
       </div>
@@ -361,7 +361,7 @@ export const Corrigir: React.FC<{ atividade: Atividade; aluno: AlunoDaTurma; aoS
             value={feedback}
             disabled={salvando !== null}
             onChange={(e) => setFeedback(e.target.value)}
-            className={classeCampo}
+            className={classeTextoLongo}
           />
         </div>
         <div className="sm:max-w-[10rem]">

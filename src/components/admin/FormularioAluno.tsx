@@ -10,11 +10,14 @@
 import { useEffect, useRef, useState } from 'react';
 
 import Avatar from './Avatar';
+import EscolherFoto from './EscolherFoto';
 import { AcessoDoAluno } from './AcessosAlunos';
 import type { SituacaoDoAcesso } from '../../lib/acessos';
-import { Aviso, Botao, classeCampo, classeRotulo, type Mensagem } from './Ui';
+import { Aviso, Botao, classeCampo, classeTextoLongo, classeRotulo, type Mensagem } from './Ui';
 import type { Participante, Turma } from '../../lib/painel';
 import { servicoAlunos } from '../../lib/alunos';
+import { servicoFotoPadronizada } from '../../lib/fotoPadronizada';
+import { useCampos } from '../../hooks/useCampos';
 
 interface Props {
   edicaoId: number;
@@ -28,7 +31,7 @@ interface Props {
 }
 
 const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir, situacaoAcesso, aoMudarAcesso }) => {
-  const [campos, setCampos] = useState({
+  const { campos, aoAlterarCampo } = useCampos({
     nome: aluno?.nome ?? '',
     login: aluno?.login ?? '',
     turma_id: String(aluno?.turma_id ?? turmas[0]?.id ?? ''),
@@ -49,30 +52,22 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
   }, [foto]);
   useEffect(
     () => () => {
-      if (!salvou.current) servicoAlunos.descartarFotoNaoSalva(fotoNaTela.current, fotoOriginal);
+      if (!salvou.current) servicoFotoPadronizada.descartarNaoSalva(fotoNaTela.current, fotoOriginal);
     },
     [fotoOriginal],
   );
 
   /** Troca a foto da tela; a anterior, se foi enviada agora e não salva, vai embora */
   const trocarFoto = (nova: string | null) => {
-    servicoAlunos.descartarFotoNaoSalva(foto, fotoOriginal);
+    servicoFotoPadronizada.descartarNaoSalva(foto, fotoOriginal);
     setFoto(nova);
   };
 
-  const aoAlterarCampo = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setCampos((anterior) => ({ ...anterior, [name]: value }));
-  };
-
-  const escolherFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const arquivo = e.target.files?.[0];
-    e.target.value = ''; // deixa escolher o mesmo arquivo de novo
-    if (!arquivo) return;
+  const escolherFoto = async (arquivo: File) => {
     setEnviandoFoto(true);
     setMensagem(null);
     try {
-      trocarFoto(await servicoAlunos.enviarFoto(arquivo));
+      trocarFoto(await servicoFotoPadronizada.enviar(arquivo));
     } catch (erro) {
       setMensagem({ tipo: 'erro', texto: erro instanceof Error ? erro.message : 'Não foi possível enviar a foto.' });
     } finally {
@@ -98,7 +93,7 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
       return;
     }
     salvou.current = true;
-    if (aluno && aluno.foto !== foto) await servicoAlunos.apagarFoto(aluno.foto); // trocou a foto: apaga a velha
+    if (aluno && aluno.foto !== foto) await servicoFotoPadronizada.apagar(aluno.foto); // trocou a foto: apaga a velha
     onConcluir(aluno ? `${campos.nome.trim()} atualizado.` : `${campos.nome.trim()} cadastrado.`);
   };
 
@@ -112,8 +107,8 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
       return;
     }
     salvou.current = true;
-    await servicoAlunos.apagarFoto(aluno.foto);
-    servicoAlunos.descartarFotoNaoSalva(foto, fotoOriginal);
+    await servicoFotoPadronizada.apagar(aluno.foto);
+    servicoFotoPadronizada.descartarNaoSalva(foto, fotoOriginal);
     onConcluir(`${aluno.nome} removido.`);
   };
 
@@ -133,12 +128,12 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
       <div className="flex items-center gap-4">
         <Avatar foto={foto} nome={campos.nome || 'aluno'} tamanho="lg" />
         <div className="flex flex-wrap gap-2">
-          <label
-            className={`inline-flex cursor-pointer items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus-within:ring-2 focus-within:ring-favela-green-500 ${enviandoFoto ? 'pointer-events-none opacity-50' : ''}`}
-          >
-            {enviandoFoto ? 'Enviando...' : foto ? 'Trocar foto' : 'Adicionar foto'}
-            <input type="file" accept="image/*" onChange={escolherFoto} className="sr-only" />
-          </label>
+          <EscolherFoto
+            variante="botao"
+            ocupado={enviandoFoto}
+            rotulo={enviandoFoto ? 'Enviando...' : foto ? 'Trocar foto' : 'Adicionar foto'}
+            aoEscolher={escolherFoto}
+          />
           {foto && (
             <Botao variante="perigo" disabled={enviandoFoto} onClick={() => trocarFoto(null)}>
               Tirar foto
@@ -210,7 +205,7 @@ const FormularioAluno: React.FC<Props> = ({ edicaoId, turmas, aluno, onConcluir,
           onChange={aoAlterarCampo}
           rows={2}
           maxLength={500}
-          className={classeCampo}
+          className={classeTextoLongo}
         />
       </div>
 

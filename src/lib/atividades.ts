@@ -11,7 +11,7 @@
  * As regras (quem vê, quem envia, prazo, numeração, quem avaliou) ficam no banco:
  * migration 20260925110000_atividades.sql. Aqui só se lê, grava e resume.
  */
-import { codigoDoErro } from './banco';
+import { CODIGO_REGRA_DO_BANCO, codigoDoErro, mensagemDaRegraDoBanco } from './banco';
 import type { RegrasDeEntrega } from './entregas';
 import { servicoSessao } from './sessao';
 import { supabase } from './supabase';
@@ -184,7 +184,7 @@ export class ServicoAtividades {
         : await supabase.from('atividades').insert({ ...campos, turma_id: alvo.turmaId });
     if (!error) return null;
     console.error('[atividades] falha ao salvar a atividade', error.code);
-    if (error.code === '22023') return 'O prazo precisa ser depois de agora.';
+    if (error.code === CODIGO_REGRA_DO_BANCO) return 'O prazo precisa ser depois de agora.';
     if (error.code === '23514') return 'Confira os campos: título até 120 letras e enunciado preenchido.';
     return 'Não foi possível salvar a atividade.';
   }
@@ -220,7 +220,7 @@ export class ServicoAtividades {
       .select('id');
     if (error) {
       console.error('[atividades] falha ao avaliar', codigoDoErro(error));
-      return error.code === '22023' ? error.message : 'Não foi possível salvar a correção.';
+      return mensagemDaRegraDoBanco(error, 'Não foi possível salvar a correção.');
     }
     return data.length ? null : 'Você não pode corrigir esta entrega.';
   }

@@ -23,6 +23,8 @@ import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Lightbox, { type FotoLightbox } from '../components/Lightbox';
+import CabecalhoDaPagina from '../components/CabecalhoDaPagina';
+import { cascata, surgirDeBaixo } from '../components/animacoes';
 import type { ArtigoCientifico, Premio } from '../types';
 
 /**
@@ -80,24 +82,6 @@ const Reconhecimentos: React.FC = () => {
   ];
 
   // ============================================
-  // ANIMAÇÕES
-  // ============================================
-
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6 },
-  };
-
-  const staggerContainer = {
-    animate: {
-      transition: {
-        staggerChildren: 0.15,
-      },
-    },
-  };
-
-  // ============================================
   // RENDERIZAÇÃO DO COMPONENTE
   // ============================================
 
@@ -105,31 +89,20 @@ const Reconhecimentos: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Navbar />
 
-      {/* Header da Página */}
-      <div className="bg-[#2d2a5f] pt-32 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            {/* text-3xl no celular: "RECONHECIMENTOS" é uma palavra só e, em
-                text-4xl, passava da largura da tela (rolagem lateral) */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">RECONHECIMENTOS</h1>
-            <p className="text-xl text-white/80 max-w-3xl mx-auto">
-              Artigos científicos e prêmios que destacam nosso impacto social
-            </p>
-          </motion.div>
-        </div>
-      </div>
+      {/* text-3xl no celular: "RECONHECIMENTOS" é uma palavra só e, em
+          text-4xl, passava da largura da tela (rolagem lateral) */}
+      <CabecalhoDaPagina
+        titulo="RECONHECIMENTOS"
+        subtitulo="Artigos científicos e prêmios que destacam nosso impacto social"
+        classeTamanhoTitulo="text-3xl sm:text-4xl md:text-5xl"
+      />
 
       {/* Conteúdo Principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* ============================================
             SEÇÃO 1: ARTIGOS CIENTÍFICOS
             ============================================ */}
-        <motion.section {...fadeInUp} className="mb-20">
+        <motion.section {...surgirDeBaixo} className="mb-20">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">📚 Artigo Científico</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -138,7 +111,7 @@ const Reconhecimentos: React.FC = () => {
           </div>
 
           <motion.div
-            variants={staggerContainer}
+            variants={cascata(0.15)}
             initial="initial"
             animate="animate"
             className="grid grid-cols-1 gap-8 max-w-4xl mx-auto"
@@ -146,7 +119,7 @@ const Reconhecimentos: React.FC = () => {
             {artigos.map((artigo) => (
               <motion.div
                 key={artigo.id}
-                variants={fadeInUp}
+                variants={surgirDeBaixo}
                 whileHover={{ scale: 1.02, y: -5 }}
                 className="bg-white rounded-2xl shadow-xl p-8 border-2 border-transparent hover:border-favela-green-500 transition-all duration-300"
               >
@@ -191,7 +164,7 @@ const Reconhecimentos: React.FC = () => {
         {/* ============================================
             SEÇÃO 2: PRÊMIOS
             ============================================ */}
-        <motion.section {...fadeInUp} transition={{ delay: 0.3 }}>
+        <motion.section {...surgirDeBaixo} transition={{ delay: 0.3 }}>
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">🏆 Prêmio Ser Humano 2023</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -199,11 +172,11 @@ const Reconhecimentos: React.FC = () => {
             </p>
           </div>
 
-          <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-12">
+          <motion.div variants={cascata(0.15)} initial="initial" animate="animate" className="space-y-12">
             {premios.map((premio) => (
               <motion.div
                 key={premio.id}
-                variants={fadeInUp}
+                variants={surgirDeBaixo}
                 className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-xl p-8 md:p-12"
               >
                 {/* Informações do Prêmio */}

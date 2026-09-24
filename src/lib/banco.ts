@@ -4,12 +4,21 @@
  */
 import { FunctionsHttpError } from '@supabase/supabase-js';
 
+import { excecaoDeNegocio, excecaoDeSistema, type ResultadoOperacao } from '../types';
 import { supabase } from './supabase';
 
 type ErroDoBanco = { code?: string; message?: string } | null | undefined;
 
 /** Código do erro do banco (só o código vai para o log: o detalhe pode trazer dados) */
 export const codigoDoErro = (erro: unknown) => (erro as ErroDoBanco)?.code;
+
+/** Código que os triggers usam para recusar por regra de negócio, com o texto pronto para a tela */
+export const CODIGO_REGRA_DO_BANCO = '22023';
+
+/** Texto do trigger quando o banco recusou por regra (22023); senão, o padrão */
+export function mensagemDaRegraDoBanco(erro: ErroDoBanco, padrao: string): string {
+  return erro?.code === CODIGO_REGRA_DO_BANCO && erro.message ? erro.message : padrao;
+}
 
 /** Cadastros com nome único: traduz duplicidade e valor fora do padrão */
 export function mensagemDeErroDeCadastro(
@@ -23,7 +32,7 @@ export function mensagemDeErroDeCadastro(
 }
 
 /** Texto de erro que a Edge Function devolveu ({ erro }), ou o padrão */
-export async function mensagemDaFuncao(erro: unknown, padrao: string): Promise<string> {
+async function mensagemDaFuncao(erro: unknown, padrao: string): Promise<string> {
   if (erro instanceof FunctionsHttpError) {
     try {
       const corpo = await erro.context.json();
@@ -36,9 +45,22 @@ export async function mensagemDaFuncao(erro: unknown, padrao: string): Promise<s
 }
 
 /** A Edge Function respondeu com erro de sistema (5xx) ou nem respondeu? */
-export function erroDeSistemaNaFuncao(erro: unknown): boolean {
+function erroDeSistemaNaFuncao(erro: unknown): boolean {
   if (erro instanceof FunctionsHttpError) return (erro.context as Response).status >= 500;
   return true; // rede ou relay: falha técnica
+}
+
+/** Erro da Edge Function no status padrão: 4xx = exceção de negócio; 5xx ou sem resposta = de sistema */
+export async function resultadoDaFuncao(erro: unknown, padrao: string): Promise<ResultadoOperacao> {
+  const mensagem = await mensagemDaFuncao(erro, padrao);
+  return erroDeSistemaNaFuncao(erro) ? excecaoDeSistema(mensagem) : excecaoDeNegocio(mensagem);
+}
+
+/** Rota de Edge Function que devolve { url } (link de download curto); erro vira exceção com o texto */
+export async function linkDaFuncao(rota: string, corpo: Record<string, unknown>, padrao: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke(rota, { body: corpo });
+  if (error) throw new Error(await mensagemDaFuncao(error, padrao));
+  return (data as { url: string }).url;
 }
 
 /**

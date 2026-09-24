@@ -17,8 +17,20 @@ export const CHAVE_PUBLICAVEL_SUPABASE = import.meta.env.VITE_SUPABASE_PUBLISHAB
 /** Bucket público das fotos dos alunos (dashboard e páginas de turmas) */
 export const BUCKET_FOTOS_ALUNOS = 'fotos-alunos';
 
+/**
+ * Começo da URL pública de toda foto desse bucket (null sem a URL do projeto).
+ * Uma foto só é "nossa" se começar exatamente assim: vale para mostrar no site
+ * e para apagar do Storage.
+ */
+export const PREFIXO_FOTOS_PUBLICAS = URL_SUPABASE
+  ? `${URL_SUPABASE}/storage/v1/object/public/${BUCKET_FOTOS_ALUNOS}/`
+  : null;
+
 /** Bucket privado das entregas antigas (antes do Google Drive) */
 export const BUCKET_ENTREGAS_ANTIGAS = 'entregas';
 
 /** Validade, em segundos, do link de download de uma entrega (igual à da Edge Function) */
 export const VALIDADE_LINK_DOWNLOAD_S = 120;
+
+/** Maior arquivo aceito no envio ao Drive, entrega ou atestado (igual ao da Edge Function e do Apps Script) */
+export const TAMANHO_MAXIMO_ARQUIVO = 10 * 1024 * 1024;

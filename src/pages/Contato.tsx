@@ -22,6 +22,8 @@
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import CabecalhoDaPagina from '../components/CabecalhoDaPagina';
+import { cascata, surgirDeBaixo } from '../components/animacoes';
 import { LinksRedesSociais } from '../components/RedesSociais';
 import type { ContatoInfo } from '../types';
 // E-mail, telefone e endereço vêm da fonte única (src/data/contato.ts)
@@ -66,24 +68,6 @@ const Contato: React.FC = () => {
   ];
 
   // ============================================
-  // ANIMAÇÕES
-  // ============================================
-
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6 },
-  };
-
-  const staggerContainer = {
-    animate: {
-      transition: {
-        staggerChildren: 0.15,
-      },
-    },
-  };
-
-  // ============================================
   // RENDERIZAÇÃO DO COMPONENTE
   // ============================================
 
@@ -91,29 +75,16 @@ const Contato: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Navbar />
 
-      {/* Header da Página */}
-      <div className="bg-[#2d2a5f] pt-32 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">CONTATO</h1>
-            <p className="text-xl text-white/80 max-w-3xl mx-auto">Entre em contato conosco</p>
-          </motion.div>
-        </div>
-      </div>
+      <CabecalhoDaPagina titulo="CONTATO" subtitulo="Entre em contato conosco" />
 
       {/* Conteúdo Principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* ============================================
             SEÇÃO 1: INFORMAÇÕES DE CONTATO
             ============================================ */}
-        <motion.section {...fadeInUp} className="mb-16">
+        <motion.section {...surgirDeBaixo} className="mb-16">
           <motion.div
-            variants={staggerContainer}
+            variants={cascata(0.15)}
             initial="initial"
             animate="animate"
             className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto"
@@ -121,7 +92,7 @@ const Contato: React.FC = () => {
             {informacoesContato.map((info, index) => (
               <motion.div
                 key={index}
-                variants={fadeInUp}
+                variants={surgirDeBaixo}
                 whileHover={{ scale: 1.05, y: -5 }}
                 className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-transparent hover:border-favela-green-500 transition-all duration-300"
               >
@@ -147,7 +118,7 @@ const Contato: React.FC = () => {
         {/* ============================================
             SEÇÃO 2: OBRAS PAVONIANAS
             ============================================ */}
-        <motion.section {...fadeInUp} transition={{ delay: 0.2 }} className="mb-16">
+        <motion.section {...surgirDeBaixo} transition={{ delay: 0.2 }} className="mb-16">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">OBRAS PAVONIANAS</h2>
             <p className="text-lg text-gray-600">Instituição parceira do projeto FavelaWare</p>
@@ -170,7 +141,7 @@ const Contato: React.FC = () => {
         {/* ============================================
             SEÇÃO 3: ENDEREÇO E MAPA
             ============================================ */}
-        <motion.section {...fadeInUp} transition={{ delay: 0.4 }}>
+        <motion.section {...surgirDeBaixo} transition={{ delay: 0.4 }}>
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">📍 ENDEREÇO</h2>
             <p className="text-lg text-gray-600 mb-2">{endereco}</p>
@@ -213,7 +184,7 @@ const Contato: React.FC = () => {
         {/* ============================================
             SEÇÃO 4: REDES SOCIAIS (OPCIONAL)
             ============================================ */}
-        <motion.section {...fadeInUp} transition={{ delay: 0.6 }} className="mt-20">
+        <motion.section {...surgirDeBaixo} transition={{ delay: 0.6 }} className="mt-20">
           <div className="text-center max-w-3xl mx-auto bg-gradient-to-r from-favela-green-50 to-gray-50 rounded-2xl shadow-xl p-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">💬 Siga-nos nas Redes Sociais</h2>
             <p className="text-lg text-gray-700 mb-6">Fique por dentro das novidades e acompanhe nosso trabalho</p>

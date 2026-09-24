@@ -37,30 +37,24 @@ import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import {
   base64,
   clienteDoUsuario,
-  conteudoBateComTipo,
   drive,
+  lerArquivoDoFormulario,
   nomeDePasta,
   nomeParaDownload,
   paginaDeTexto,
   respostaDeDownload,
-  TAMANHO_MAXIMO_ARQUIVO as TAMANHO_MAXIMO,
+  TIPOS_DE_ARQUIVO,
 } from '../_shared/drive.ts';
-import { cabecalhosCors, clienteAdmin, criarResposta } from '../_shared/http.ts';
+import {
+  cabecalhosCors,
+  clienteAdmin,
+  CODIGO_REGRA_DO_BANCO,
+  criarResposta,
+  lerJson,
+  servir,
+  UUID_VALIDO,
+} from '../_shared/http.ts';
 
-const TIPOS: Record<string, string> = {
-  'application/pdf': 'pdf',
-  'image/png': 'png',
-  'image/jpeg': 'jpg',
-  'image/webp': 'webp',
-  'text/plain': 'txt',
-  'application/zip': 'zip',
-  'application/x-zip-compressed': 'zip',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
-};
-/** Folga do formulário multipart sobre o arquivo */
-const MARGEM_DO_FORMULARIO = 1024 * 1024;
 /** Mesmos limites do banco, conferidos antes do Drive */
 const TAMANHO_MAXIMO_COMENTARIO = 10000;
 const TAMANHO_MAXIMO_LINK = 2000;
@@ -103,29 +97,19 @@ interface PedidoDeEnvio {
 
 /** Etapa 0: lê e confere o formulário (tamanho, tipo pelo conteúdo e textos). Devolve o pedido ou a recusa. */
 async function lerPedidoDeEnvio(req: Request): Promise<PedidoDeEnvio | Response> {
-  // Pedido grande demais é recusado antes de ser lido
-  const tamanhoDoPedido = Number(req.headers.get('Content-Length') ?? '0');
-  if (!tamanhoDoPedido || tamanhoDoPedido > TAMANHO_MAXIMO + MARGEM_DO_FORMULARIO) {
-    return resposta(413, { erro: 'O arquivo precisa ter até 10 MB.' });
-  }
-
-  let form: FormData;
-  try {
-    form = await req.formData();
-  } catch {
-    return resposta(400, { erro: 'Pedido inválido.' });
-  }
+  // Tamanho, tipo e conteúdo do arquivo (um .exe chamado de .pdf não passa)
+  const lido = await lerArquivoDoFormulario(req, TIPOS_DE_ARQUIVO, resposta, {
+    tamanho: 'O arquivo precisa ter até 10 MB.',
+    tipo: 'Tipo de arquivo não aceito. Use PDF, imagem, ZIP, TXT ou Office.',
+    conteudo:
+      'O conteúdo do arquivo não bate com o tipo. Envie o arquivo original (PDF, imagem, ZIP, TXT ou Office).',
+  });
+  if (lido instanceof Response) return lido;
+  const { form, arquivo, bytes, ext } = lido;
   const atividadeId = Number(form.get('atividade_id'));
   const comentario = String(form.get('comentario') ?? '').trim();
   const link = String(form.get('link') ?? '').trim();
-  const arquivo = form.get('arquivo');
   if (!Number.isInteger(atividadeId) || atividadeId <= 0) return resposta(400, { erro: 'Atividade inválida.' });
-  if (!(arquivo instanceof File)) return resposta(400, { erro: 'Arquivo não recebido.' });
-  const ext = TIPOS[arquivo.type];
-  if (!ext) return resposta(400, { erro: 'Tipo de arquivo não aceito. Use PDF, imagem, ZIP, TXT ou Office.' });
-  if (arquivo.size < 1 || arquivo.size > TAMANHO_MAXIMO) {
-    return resposta(400, { erro: 'O arquivo precisa ter até 10 MB.' });
-  }
   if (link && !/^https:\/\/\S+$/i.test(link)) return resposta(400, { erro: 'O link precisa começar com https://' });
   // Os mesmos limites do banco, conferidos ANTES do Drive (senão o registro falharia
   // depois do upload e sobraria arquivo na lixeira do Drive)
@@ -134,14 +118,6 @@ async function lerPedidoDeEnvio(req: Request): Promise<PedidoDeEnvio | Response>
   }
   if (link.length > TAMANHO_MAXIMO_LINK) return resposta(400, { erro: 'O link é longo demais.' });
   if (/\u0000/.test(comentario + link)) return resposta(400, { erro: 'O texto tem caracteres inválidos.' });
-
-  // O conteúdo precisa ser do tipo declarado (um .exe chamado de .pdf não passa)
-  const bytes = new Uint8Array(await arquivo.arrayBuffer());
-  if (!conteudoBateComTipo(bytes, arquivo.type)) {
-    return resposta(400, {
-      erro: 'O conteúdo do arquivo não bate com o tipo. Envie o arquivo original (PDF, imagem, ZIP, TXT ou Office).',
-    });
-  }
   return { atividadeId, comentario, link, arquivo, bytes, ext, nome: nomeParaDownload(arquivo.name, ext, 'entrega') };
 }
 
@@ -209,7 +185,7 @@ async function enviar(req: Request): Promise<Response> {
   if (erroReserva || !reserva) {
     console.log('[entregas-drive] envio recusado', erroReserva?.code);
     if (erroReserva?.code === '42501') return resposta(403, { erro: 'Você não pode enviar arquivo para esta atividade.' });
-    if (erroReserva?.code === '22023') return resposta(409, { erro: erroReserva.message });
+    if (erroReserva?.code === CODIGO_REGRA_DO_BANCO) return resposta(409, { erro: erroReserva.message });
     return resposta(500, { erro: 'Não foi possível conferir a entrega agora. Tente de novo.' });
   }
   console.log('[entregas-drive] reservado', { atividadeId, arquivo: reserva.arquivo_id });
@@ -261,7 +237,7 @@ async function enviar(req: Request): Promise<Response> {
     console.error('[entregas-drive] falha ao registrar a entrega; limpando', erroEntrega.code);
     await descartar(reserva.arquivo_id, driveId);
     return resposta(409, {
-      erro: erroEntrega.code === '22023' ? erroEntrega.message : 'Não foi possível registrar a entrega. Tente de novo.',
+      erro: erroEntrega.code === CODIGO_REGRA_DO_BANCO ? erroEntrega.message : 'Não foi possível registrar a entrega. Tente de novo.',
     });
   }
   console.log('[entregas-drive] registrado', { arquivo: reserva.arquivo_id });
@@ -271,14 +247,10 @@ async function enviar(req: Request): Promise<Response> {
 async function gerarLink(req: Request): Promise<Response> {
   const usuario = (await clienteDoUsuario(req))?.cliente;
   if (!usuario) return resposta(401, { erro: 'Faça login novamente.' });
-  let corpo: { arquivo_id?: unknown };
-  try {
-    corpo = await req.json();
-  } catch {
-    return resposta(400, { erro: 'Pedido inválido.' });
-  }
+  const corpo = await lerJson(req);
+  if (!corpo) return resposta(400, { erro: 'Pedido inválido.' });
   const id = typeof corpo.arquivo_id === 'string' ? corpo.arquivo_id : '';
-  if (!/^[0-9a-f-]{36}$/.test(id)) return resposta(400, { erro: 'Arquivo inválido.' });
+  if (!UUID_VALIDO.test(id)) return resposta(400, { erro: 'Arquivo inválido.' });
 
   // Se a RLS devolver a linha, quem pediu pode ver o arquivo
   const { data } = await usuario.from('arquivos_entrega').select('id').eq('id', id).maybeSingle();
@@ -300,20 +272,11 @@ async function baixar(url: URL): Promise<Response> {
     .not('drive_id', 'is', null)
     .maybeSingle();
   if (!arquivo) return paginaDeTexto(CORS, 404, 'Arquivo não encontrado.');
-  return respostaDeDownload(arquivo, TIPOS, CORS, 'entregas-drive', 'entrega');
+  return respostaDeDownload(arquivo, TIPOS_DE_ARQUIVO, CORS, 'entregas-drive', 'entrega');
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
-  const url = new URL(req.url);
-  const rota = url.pathname.split('/').pop();
-  try {
-    if (req.method === 'POST' && rota === 'enviar') return await enviar(req);
-    if (req.method === 'POST' && rota === 'link') return await gerarLink(req);
-    if (req.method === 'GET' && rota === 'baixar') return await baixar(url);
-    return resposta(404, { erro: 'Rota não encontrada.' });
-  } catch (e) {
-    console.error('[entregas-drive] erro inesperado', String(e));
-    return resposta(500, { erro: 'Erro inesperado. Tente de novo.' });
-  }
+servir('entregas-drive', CORS, {
+  'POST enviar': (req) => enviar(req),
+  'POST link': (req) => gerarLink(req),
+  'GET baixar': (_req, url) => baixar(url),
 });

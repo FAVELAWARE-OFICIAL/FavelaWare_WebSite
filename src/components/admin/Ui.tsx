@@ -60,6 +60,9 @@ export const Vazio: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 /** Atalhos com o nome antigo (usados nas páginas) */
 export const classeCampo = campo;
 
+/** Caixa de texto longo: tamanho fixo (a pessoa não arrasta o canto para mudar) */
+export const classeTextoLongo = `${campo} resize-none`;
+
 export const classeRotulo = texto.rotulo;
 
 const VARIANTES = {

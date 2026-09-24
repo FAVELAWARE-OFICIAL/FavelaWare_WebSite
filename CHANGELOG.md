@@ -12,6 +12,14 @@ Código no padrão das 10 regras de `docs/boas-praticas.md`.
 - Política de senha: no mínimo 8 caracteres, com letra maiúscula, letra minúscula, número e caractere especial, com a lista de requisitos marcando enquanto a pessoa digita (primeiro acesso, convite, "Meu perfil" e senha padrão dos alunos). O login passa a exigir 8 caracteres.
 - Edições encerradas: as edições 1, 2 e 3 ficam só para consulta, e o banco recusa qualquer mudança de presença ou aula nelas. O gestor encerra as próximas pelo botão "Encerrar edição"; reabrir só pelo SQL do Supabase.
 - Tela de dados da bolsa do instrutor refeita: ocupa a tela inteira, sem rolagem, em 4 etapas com painel da marca.
+- Justificativa na falta (J): na chamada dos alunos e no ponto do instrutor abre uma janela para o motivo e o atestado opcional, guardado no Drive em `<Nome>/atestado`. Só o gestor abre o atestado.
+- Entregas de atividade no Drive vão para a pasta do aluno, em `<Nome>/atividade`.
+- Solicitações viram conversa no estilo WhatsApp: o aluno abre o pedido pela área dele (tipo escrito por ele) e troca mensagens com a coordenação, cada balão com a foto e o nome de quem escreveu. O gestor atende pela conversa: "Iniciar atendimento" (ou já responder, que inicia no próprio banco), e para concluir escreve a devolutiva e clica em Aprovar ou Recusar. Para mudar uma devolutiva, reabre (ela volta na caixa para ajustar) e conclui de novo; também dá para voltar para aberto. A lista e o quadro Aberto, Em andamento e Concluído (no lugar da aba "Mudança de horário") juntam todas as edições. O gestor não registra mais pedido, e quem concluiu é carimbado pelo banco.
+- Papel parceiro: só leitura da Visão geral (todas as edições), dos Alunos e da Chamada, sem dado pessoal (login, observação, justificativa, atestado e o registro original da planilha ficam de fora). Parceiro não vê nem responde solicitações. "Ver como" ganhou a opção Parceiro e agora recarrega a área ao trocar de papel.
+- Foto padronizada: a foto de aluno ou instrutor tem o fundo tirado no navegador e entra no círculo verde do site. Sem foto, aparece `sem-foto.webp`.
+- Site público mostra a edição nova direto do banco: turmas e alunos cadastrados em Turmas, e os instrutores da edição aberta em "Equipe" na página Sobre.
+- Perfil refeito: cartão com foto, nome, papel e acesso, e as áreas "Meus dados" e "Segurança" usando a tela toda, no tema claro e no escuro. O medidor de senha ficou com as cores do design system.
+- `public/.htaccess` para hospedar em Apache/LiteSpeed (Hostinger): endereços da SPA, cache dos arquivos e cabeçalhos básicos de segurança.
 - Tela explicando o que falta quando uma página não abre (por exemplo, `.env.local` sem as chaves do Supabase), no lugar da tela branca.
 
 ### Corrigido
@@ -24,6 +32,20 @@ Código no padrão das 10 regras de `docs/boas-praticas.md`.
 - Meu Ponto confere no banco o dia escolhido quando ele é mais antigo que o histórico carregado.
 - Foto de aluno enviada e não salva (trocada, tirada ou formulário fechado) é apagada do Storage.
 - Primeiro acesso usa a data local no limite da data de nascimento, como o "Meu perfil".
+- Instrutor só é vinculado a turma de edição aberta; turma encerrada aparece marcada e só dá para desvincular.
+- Na área do instrutor, as turmas de edição encerrada saem da chamada. O histórico continua com o gestor.
+- O aviso de edição encerrada saiu da Chamada do gestor. A presença continua travada.
+- Caixas de texto do portal não mudam mais de tamanho ao arrastar o canto.
+- Edge Functions `convidar-professor` e `acessos-alunos` respondem com CORS e status mesmo em erro inesperado.
+- Foto com endereço de outro site nunca apaga arquivo do nosso Storage.
+- Lista de turmas do site ordena as edições pelo número (a 10ª depois da 9ª).
+- Tamanho do atestado aparece com vírgula ("1,5 MB"), como na entrega.
+- "Ver como Instrutor" não quebra mais quando a edição mais recente está encerrada (vincula à aberta mais recente).
+- A conta do "Ver como" não aparece na equipe da página Sobre.
+- O site público recebe do banco só o nome curto dos alunos ("Maria Lima"), sem o id; antes o nome completo saía para qualquer visitante.
+- Avatar sem nome mostra "?" em vez de um círculo vazio.
+- Se o papel da conta não puder ser conferido, a área do gestor abre só com o mínimo (menu de parceiro) em vez do menu completo; o banco protege os dados de qualquer jeito.
+- Edge Functions respondem 400 ("Pedido inválido") para corpo JSON que não é objeto, em vez de 500.
 
 ### Alterado
 
@@ -37,7 +59,9 @@ Código no padrão das 10 regras de `docs/boas-praticas.md`.
 
 ### Removido
 
+- Encaminhamento de solicitação a parceiro e mensagem interna: ficaram poucas horas no banco (migrations 20260930107000 e 108000, sem uso real) e saíram na 20260930109000, que apaga as mensagens internas.
 - 13 tipos, 5 funções e componentes sem uso (incluindo `MacroTimeline` e o gráfico de contagem).
+- Código repetido em dois ou mais lugares virou peça única: erros das Edge Functions, limites e tipos de arquivo, imagens da marca, iniciais, LinkedIn, formulários (`useCampos`, `EscolherFoto`, `CamposDeNovaSenha`), telas de acesso, transição das áreas, cabeçalho e cartão de pessoa do site, leitura de arquivo e roteamento das Edge Functions, gravação no Drive do Apps Script.
 
 ### Adicionado
 

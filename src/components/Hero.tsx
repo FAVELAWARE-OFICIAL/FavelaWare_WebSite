@@ -19,6 +19,7 @@ import { motion } from 'framer-motion';
 // Link do React Router que aceita animações do Framer Motion
 import { MotionLink } from './MotionLink';
 import { estatisticasDoProjeto } from '../data/sobre';
+import { FUNDO_DA_MARCA, LOGO } from '../data/imagens';
 
 const Hero = () => {
   return (
@@ -28,7 +29,7 @@ const Hero = () => {
       style={{
         // Banner oficial do FavelaWare (foto da comunidade + código binário).
         // Sem blend com gradiente: o blend "overlay" lavava a imagem e sumia com a textura.
-        backgroundImage: "url('/imgs/backgrounds/fundo.webp')",
+        backgroundImage: `url('${FUNDO_DA_MARCA}')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -79,7 +80,7 @@ const Hero = () => {
             >
               {/* Logo do FavelaWare */}
               <motion.img
-                src="/imgs/logo/logo.png"
+                src={LOGO}
                 alt="FavelaWare Logo"
                 className="w-80 h-80 object-contain"
                 initial={{ opacity: 0, scale: 0.5, rotate: -10 }}

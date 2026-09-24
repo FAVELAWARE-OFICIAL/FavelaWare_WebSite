@@ -14,6 +14,7 @@
 import { Component, type ReactNode } from 'react';
 
 import { ErroDeConfiguracao } from '../config';
+import { LOGO } from '../data/imagens';
 
 interface Estado {
   erro: Error | null;
@@ -38,7 +39,7 @@ class LimiteDeErro extends Component<{ children: ReactNode }, Estado> {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4 py-12">
         <div role="alert" className="w-full max-w-lg rounded-2xl bg-white p-8 text-center shadow-xl md:p-10">
-          <img src="/imgs/logo/logo.png" alt="Logo FavelaWare" className="mx-auto mb-6 w-40 object-contain" />
+          <img src={LOGO} alt="Logo FavelaWare" className="mx-auto mb-6 w-40 object-contain" />
           {faltaConfiguracao ? (
             <>
               <h1 className="mb-3 text-2xl font-bold text-gray-900">Falta configurar o Supabase</h1>

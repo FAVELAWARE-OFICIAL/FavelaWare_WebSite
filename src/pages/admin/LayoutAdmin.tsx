@@ -9,13 +9,17 @@
  * É aqui que a edição escolhida é carregada do Supabase. As páginas filhas
  * (renderizadas no <Outlet>) recebem dados, contas, filtros e funções de
  * recarregar pelo useAdmin() — ver contexto.ts.
+ *
+ * O parceiro usa esta mesma área, só para ver (somenteLeitura): Visão geral
+ * (todas as edições), Alunos e Chamada. Solicitações não são com ele.
+ * O menu e as abas mostram só essas páginas; o resto volta para a Visão geral.
+ * Quem garante que ele não grava nada é o banco (RLS).
  */
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useOutlet } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Navigate, useLocation, useOutlet } from 'react-router-dom';
 
 import RotaProtegida from '../../components/RotaProtegida';
-import Moldura, { Carregando } from '../../components/admin/Moldura';
+import Moldura, { TransicaoDaArea } from '../../components/admin/Moldura';
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
 import type { ItemMenu } from '../../components/admin/MenuLateral';
 import AbasDeRota, { ABAS_ALUNOS_E_CHAMADAS, ABAS_PROFESSORES } from '../../components/admin/AbasDeRota';
@@ -37,7 +41,8 @@ import {
 import { servicoEdicoes, type Edicao } from '../../lib/edicoes';
 import { servicoCache } from '../../lib/cache';
 import { chaveTurmas, servicoTurmas } from '../../lib/turmas';
-import { chaveSolicitacoes, servicoSolicitacoes } from '../../lib/solicitacoes';
+import { CHAVE_SOLICITACOES, servicoSolicitacoes } from '../../lib/solicitacoes';
+import { servicoSessao } from '../../lib/sessao';
 import { CHAVE_EQUIPE, servicoEquipe } from '../../lib/equipe';
 import { CHAVE_MATERIAL, servicoMaterial } from '../../lib/material';
 import { CHAVE_ACESSOS, servicoAcessos } from '../../lib/acessos';
@@ -71,14 +76,17 @@ const SECOES_COM_ABAS = [
   { rotulo: 'Instrutores', abas: ABAS_PROFESSORES },
 ];
 
-// Transição entre páginas: o conteúdo entra subindo de leve e sai suave.
-// Com "reduzir movimento" no sistema, o MotionConfig do App tira o deslocamento.
-const TRANSICAO = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -6, transition: { duration: 0.15 } }, // a antiga sai rápido
-  transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
-} as const;
+/** O que o parceiro abre (o menu, as abas e o endereço seguem esta lista) */
+const ROTAS_DO_PARCEIRO = ['/dashboard', '/dashboard/alunos', '/dashboard/chamada', '/dashboard/perfil'];
+const doParceiro = (caminho: string) => ROTAS_DO_PARCEIRO.includes(caminho);
+const ITENS_MENU_PARCEIRO = ITENS_MENU.filter((i) => doParceiro(i.caminho)).map((i) => ({
+  ...i,
+  ativoEm: i.ativoEm?.filter(doParceiro),
+}));
+const SECOES_COM_ABAS_PARCEIRO = SECOES_COM_ABAS.map((s) => ({
+  ...s,
+  abas: s.abas.filter((a) => doParceiro(a.caminho)),
+})).filter((s) => s.abas.length > 1);
 
 // Código de todas as páginas do menu: baixado junto com os dados, durante a
 // pintura do carregamento. Trocar de página nunca espera arquivo (nem fica em branco).
@@ -98,28 +106,42 @@ const preCarregarPaginas = () =>
 /**
  * Tudo que as páginas da edição vão mostrar, de uma vez: os dados da edição e,
  * no cache, as turmas com contagem, as solicitações e a equipe. Quando a pintura
- * do carregamento termina, qualquer página abre pronta.
+ * do carregamento termina, qualquer página abre pronta. O parceiro só carrega o
+ * que ele vê (e o banco não entregaria o resto).
  */
-async function carregarTudo(edicaoId: number): Promise<DadosDaEdicao> {
+async function carregarTudo(edicaoId: number, somenteLeitura: boolean): Promise<DadosDaEdicao> {
   const [dados] = await Promise.all([
-    servicoPainel.carregarDadosDaEdicao(edicaoId),
+    servicoPainel.carregarDadosDaEdicao(edicaoId, somenteLeitura),
     preCarregarPaginas(),
-    servicoCache.buscar(chaveTurmas(edicaoId), () => servicoTurmas.carregarDaEdicao(edicaoId), true),
-    servicoCache.buscar(chaveSolicitacoes(edicaoId), () => servicoSolicitacoes.carregar(edicaoId), true),
-    servicoCache.buscar(CHAVE_EQUIPE, () => servicoEquipe.carregar()),
-    servicoCache.buscar(CHAVE_MATERIAL, () => servicoMaterial.carregarTrilhas()),
-    servicoCache.buscar(CHAVE_ACESSOS, () => servicoAcessos.carregar(), true),
+    ...(somenteLeitura
+      ? []
+      : [
+          servicoCache.buscar(CHAVE_SOLICITACOES, () => servicoSolicitacoes.carregar(), true),
+          servicoCache.buscar(chaveTurmas(edicaoId), () => servicoTurmas.carregarDaEdicao(edicaoId), true),
+          servicoCache.buscar(CHAVE_EQUIPE, () => servicoEquipe.carregar()),
+          servicoCache.buscar(CHAVE_MATERIAL, () => servicoMaterial.carregarTrilhas()),
+          servicoCache.buscar(CHAVE_ACESSOS, () => servicoAcessos.carregar(), true),
+        ]),
   ]);
   return dados;
 }
 
 const LayoutAdmin: React.FC = () => (
-  <RotaProtegida papeis={['gestor']}>
+  <RotaProtegida papeis={['gestor', 'parceiro']}>
     <AreaDoGestor />
   </RotaProtegida>
 );
 
 const AreaDoGestor: React.FC = () => {
+  // Parceiro? (o perfil já está em cache: a guarda da rota acabou de ler)
+  const [somenteLeitura, setSomenteLeitura] = useState<boolean | null>(null);
+  useEffect(() => {
+    servicoSessao
+      .contaLogada()
+      .then((l) => setSomenteLeitura(l ? servicoSessao.somenteLeitura(l.perfil) : false))
+      .catch(() => setSomenteLeitura(true)); // sem saber o papel, mostra o mínimo (o banco protege os dados)
+  }, []);
+
   const [edicoes, setEdicoes] = useState<Edicao[]>([]);
   const [edicaoId, setEdicaoId] = useState<number | null>(null);
   const [dados, setDados] = useState<DadosDaEdicao | null>(null);
@@ -152,28 +174,28 @@ const AreaDoGestor: React.FC = () => {
 
   // Dados da edição escolhida: recarrega ao trocar e limpa os filtros
   useEffect(() => {
-    if (edicaoId === null) return;
+    if (edicaoId === null || somenteLeitura === null) return;
     let ativo = true;
     setCarregando(true);
     setErro(null);
     setFiltros(FILTROS_INICIAIS);
     gravarPreferencia('admin:edicao', String(edicaoId));
-    carregarTudo(edicaoId)
+    carregarTudo(edicaoId, somenteLeitura)
       .then((d) => ativo && setDados(d))
       .catch(() => ativo && setErro('Não foi possível carregar os dados desta edição.'))
       .finally(() => ativo && setCarregando(false));
     return () => {
       ativo = false;
     };
-  }, [edicaoId]);
+  }, [edicaoId, somenteLeitura]);
 
   // Depois de cadastrar/corrigir algo: busca de novo sem piscar a tela de carregamento
   const recarregarDados = useCallback(async () => {
     if (edicaoId === null) return;
     // Alunos mudaram: as contagens da aba Edições e turmas também (atualiza por trás)
     servicoCache.esquecer(chaveTurmas(edicaoId));
-    setDados(await servicoPainel.carregarDadosDaEdicao(edicaoId));
-  }, [edicaoId]);
+    setDados(await servicoPainel.carregarDadosDaEdicao(edicaoId, Boolean(somenteLeitura)));
+  }, [edicaoId, somenteLeitura]);
 
   // Correção de uma célula: troca só aquela presença, e as contas são refeitas na hora
   const atualizarPresencaNaTela = useCallback((aulaId: number, participanteId: number, presenca: Presenca | null) => {
@@ -187,8 +209,9 @@ const AreaDoGestor: React.FC = () => {
   const painel = useMemo(() => (dados ? montarPainel(dados, filtros) : null), [dados, filtros]);
   const edicao = edicoes.find((e) => e.id === edicaoId);
   const contexto: ContextoAdmin | null =
-    edicao && dados && painel
+    edicao && dados && painel && somenteLeitura !== null
       ? {
+          somenteLeitura,
           edicao,
           edicoes,
           dados,
@@ -202,7 +225,9 @@ const AreaDoGestor: React.FC = () => {
       : null;
 
   const { pathname } = useLocation();
-  const secao = SECOES_COM_ABAS.find((s) => s.abas.some((a) => a.caminho === pathname));
+  const secao = (somenteLeitura ? SECOES_COM_ABAS_PARCEIRO : SECOES_COM_ABAS).find((s) =>
+    s.abas.some((a) => a.caminho === pathname),
+  );
   // useOutlet guarda a página em uma variável: na saída, a página antiga continua
   // na tela enquanto some (senão ela trocaria pela nova antes de terminar a transição)
   const pagina = useOutlet(contexto);
@@ -228,8 +253,15 @@ const AreaDoGestor: React.FC = () => {
     </>
   );
 
+  // Parceiro num endereço que não é dele: volta para a Visão geral
+  if (somenteLeitura && !doParceiro(pathname)) return <Navigate to="/dashboard" replace />;
+
   return (
-    <Moldura itens={ITENS_MENU} subtitulo="Área do gestor" acoesTopo={seletorDeEdicao}>
+    <Moldura
+      itens={somenteLeitura === false ? ITENS_MENU : ITENS_MENU_PARCEIRO}
+      subtitulo={somenteLeitura === false ? 'Área do gestor' : somenteLeitura ? 'Área do parceiro' : ''}
+      acoesTopo={seletorDeEdicao}
+    >
       {erro && (
         <div role="alert" className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800">
           {erro}
@@ -239,25 +271,12 @@ const AreaDoGestor: React.FC = () => {
       {/* Abas da seção (paradas: só o conteúdo de baixo faz a transição) */}
       {secao && !mostrarCarregando && !carregando && <AbasDeRota abas={secao.abas} rotulo={secao.rotulo} />}
 
-      {/* Carregamento sai em fade e a página entra; trocar de página também é suave.
-          flex-1: o carregamento ocupa a área toda e fica no centro exato. */}
-      <AnimatePresence mode="wait" initial={false}>
-        {mostrarCarregando ? (
-          <motion.div
-            key="carregando"
-            className="flex flex-1 flex-col"
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <Carregando texto="Carregando dados da edição" />
-          </motion.div>
-        ) : !carregando && contexto ? (
-          <motion.div key={pathname} className="flex flex-1 flex-col" {...TRANSICAO}>
-            {/* As páginas já foram pré-carregadas: a espera do Suspense é imperceptível */}
-            <Suspense fallback={<Carregando texto="Abrindo página" />}>{pagina}</Suspense>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <TransicaoDaArea
+        carregando={mostrarCarregando}
+        pronta={!carregando && contexto !== null}
+        texto="Carregando dados da edição"
+        pagina={pagina}
+      />
     </Moldura>
   );
 };

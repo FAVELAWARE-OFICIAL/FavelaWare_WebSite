@@ -1,8 +1,9 @@
 /** Nova trilha, editar trilha, novo material ou editar material (dentro de uma <Janela>) */
 import { useState } from 'react';
 
-import { Aviso, Botao, classeCampo, classeRotulo, type Mensagem } from '../admin/Ui';
+import { Aviso, Botao, classeCampo, classeTextoLongo, classeRotulo, type Mensagem } from '../admin/Ui';
 import { espaco } from '../admin/designSystem';
+import { useCampos } from '../../hooks/useCampos';
 import { servicoMaterial, type TrilhaDoPortal } from '../../lib/material';
 import type { JanelaAberta } from './tipos';
 
@@ -11,7 +12,7 @@ const FormularioDeTrilhaOuMaterial: React.FC<{
   trilhas: TrilhaDoPortal[];
   aoSalvar: (mensagem: string) => Promise<void>;
 }> = ({ alvo, trilhas, aoSalvar }) => {
-  const [campos, setCampos] = useState(() =>
+  const { campos, aoAlterarCampo } = useCampos(() =>
     alvo.tipo === 'trilha'
       ? { nome: alvo.trilha?.nome ?? '', titulo: '', descricao: alvo.trilha?.descricao ?? '', url: '', trilha_id: '' }
       : {
@@ -24,11 +25,6 @@ const FormularioDeTrilhaOuMaterial: React.FC<{
   );
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<Mensagem>(null);
-
-  const aoAlterarCampo = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setCampos((anterior) => ({ ...anterior, [name]: value }));
-  };
 
   const aoEnviar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -81,7 +77,7 @@ const FormularioDeTrilhaOuMaterial: React.FC<{
               onChange={aoAlterarCampo}
               rows={2}
               maxLength={300}
-              className={classeCampo}
+              className={classeTextoLongo}
               placeholder="Ex: Versionamento de código e trabalho em equipe"
             />
           </div>
@@ -147,7 +143,7 @@ const FormularioDeTrilhaOuMaterial: React.FC<{
               onChange={aoAlterarCampo}
               rows={2}
               maxLength={300}
-              className={classeCampo}
+              className={classeTextoLongo}
               placeholder="Ex: Pasta no Google Drive com os exercícios"
             />
           </div>

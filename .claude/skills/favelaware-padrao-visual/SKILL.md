@@ -15,6 +15,7 @@ abra o arquivo de referência da tabela abaixo e copie o que já existe.
 | Página interna com lista      | `src/pages/ComoFazemos.tsx` (os dados moram em `src/data/trilhas.ts`, não no JSX) |
 | Formulário                    | `src/pages/Login.tsx` (form completo com envio)                             |
 | Grade de cards clicáveis      | `src/pages/Turmas.tsx`                                                      |
+| Foto redonda + nome (equipe, alunos) | `src/components/CartaoDePessoa.tsx` (foto padrão, cargo, organização, LinkedIn) |
 | Foto ampliada                 | `src/components/Lightbox.tsx` (Esc, foco preso e devolvido, scroll travado) |
 | Link com animação             | `src/components/MotionLink.tsx` (hover trava se o pai re-renderizar durante ele — ver cabeçalho) |
 | Ícone de marca / rede social  | `src/components/RedesSociais.tsx` (`<LinksRedesSociais fundo="roxo" \| "claro">`) |
@@ -89,16 +90,8 @@ dimensione só pela largura (`w-64 object-contain`), nunca `w-24 h-24`.
 <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
   <Navbar />
 
-  {/* Header roxo — o pt-32 compensa a navbar fixa de h-20 */}
-  <div className="bg-[#2d2a5f] pt-32 pb-16">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }} className="text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">TÍTULO</h1>
-        <p className="text-xl text-white/80 max-w-3xl mx-auto">Subtítulo</p>
-      </motion.div>
-    </div>
-  </div>
+  {/* Header roxo: src/components/CabecalhoDaPagina.tsx (selo e children opcionais) */}
+  <CabecalhoDaPagina titulo="TÍTULO" subtitulo="Subtítulo" />
 
   {/* Conteúdo */}
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -152,8 +145,8 @@ mas sempre com um caminho de volta para `/`.
 />
 ```
 
-Variante sólida da marca (verde com texto roxo):
-`bg-[#8bc53f] hover:bg-[#7ab52f] text-[#2d2a5f] font-bold py-4 px-8 rounded-xl shadow-md hover:shadow-xl`.
+Variante sólida da marca (verde com texto roxo): `classeBotaoDestaque` de
+`src/components/estilosDoSite.ts`.
 
 ## Cards
 
@@ -165,22 +158,11 @@ dentro de `<Link>`) ganha borda `border-2 border-transparent hover:border-favela
 
 ## Movimento (Framer Motion)
 
-Declare estas duas constantes no topo do componente — é o vocabulário repetido em todas as páginas:
+Importe o vocabulário de `src/components/animacoes.ts` (não redeclare na página):
+`surgirDeBaixo` e `cascata(intervalo)` (0.15 em lista curta, 0.05 em grade grande).
 
-```tsx
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6 },
-};
-
-const staggerContainer = {
-  animate: { transition: { staggerChildren: 0.15 } },
-};
-```
-
-Seção: `<motion.section {...fadeInUp}>`. Lista: container com `variants={staggerContainer}`,
-`initial="initial"`, `animate="animate"`, e cada filho com `variants={fadeInUp}`.
+Seção: `<motion.section {...surgirDeBaixo}>`. Lista: container com `variants={cascata(0.15)}`,
+`initial="initial"`, `animate="animate"`, e cada filho com `variants={surgirDeBaixo}`.
 
 ## Regras duras
 

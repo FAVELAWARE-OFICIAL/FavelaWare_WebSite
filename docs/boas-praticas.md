@@ -22,7 +22,7 @@ senão perde o `this`.
 `supabase/functions/_shared/http.ts`). Toda operação que pode falhar por regra de negócio ou por falha
 técnica devolve o status: login, senha, convite, acessos dos alunos, envio de entrega e as respostas das
 Edge Functions (4xx = exceção de negócio, 5xx = de sistema). Estados de domínio gravados no banco
-(solicitação pendente/aprovada, tentativa aguardando/concluída, presença) não são status de
+(solicitação aberta/em andamento/concluída, tentativa aguardando/concluída, presença) não são status de
 processamento e ficam como estão.
 
 ---

@@ -23,10 +23,14 @@ import Footer from '../components/Footer';
 import { MotionLink } from '../components/MotionLink';
 import { equipeEdicaoIII } from '../data/hallDaFama';
 import { parceiros } from '../data/parceiros';
+import { useEquipeDaEdicaoAtual } from '../hooks/useEquipeDaEdicaoAtual';
 import { cronograma, idealizadores, propositos } from '../data/sobre';
-import { LinkLinkedin } from '../components/RedesSociais';
+import CartaoDePessoa from '../components/CartaoDePessoa';
+import { classeBotaoDestaque } from '../components/estilosDoSite';
 
 const Sobre = () => {
+  // Instrutores da edição em andamento: aparecem sozinhos quando o gestor os vincula às turmas
+  const equipeAtual = useEquipeDaEdicaoAtual();
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -204,36 +208,50 @@ const Sobre = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
             {idealizadores.map((pessoa, index) => (
-              <motion.div
+              <CartaoDePessoa
                 key={index}
-                className="flex flex-col items-center text-center"
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -10 }}
-              >
-                {/* Foto da pessoa. O verde do container aparece nas bordas do
-                    recorte circular, então combina com o fundo verde da própria foto. */}
-                <div className="w-32 h-32 bg-[#8bc53f] rounded-full mb-4 overflow-hidden">
-                  <img
-                    src={pessoa.foto}
-                    alt={`Foto de ${pessoa.nome}`}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <p className="text-sm font-bold text-[#8bc53f] mb-1">{pessoa.cargo}</p>
-                <p className="text-base font-bold text-[#2d2a5f]">{pessoa.nome}</p>
-                <p className="text-sm text-pink-500 font-semibold">{pessoa.organizacao}</p>
-                {pessoa.linkedin && <LinkLinkedin nome={pessoa.nome} url={pessoa.linkedin} />}
-              </motion.div>
+                nome={pessoa.nome}
+                foto={pessoa.foto}
+                cargo={pessoa.cargo}
+                organizacao={pessoa.organizacao}
+                linkedin={pessoa.linkedin}
+                atraso={index * 0.1}
+                semMoldura
+              />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Equipe da edição atual */}
+      {/* Equipe da edição em andamento (instrutores, direto do banco) */}
+      {equipeAtual && (
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.h2
+              className="text-3xl md:text-4xl font-black text-[#2d2a5f] text-center mb-12"
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              {equipeAtual.titulo}
+            </motion.h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
+              {equipeAtual.instrutores.map((pessoa, index) => (
+                <CartaoDePessoa
+                  key={`${pessoa.nome}-${index}`}
+                  nome={pessoa.nome}
+                  foto={pessoa.foto}
+                  cargo="Instrutor(a)"
+                  linkedin={pessoa.linkedin}
+                  atraso={(index % 5) * 0.1}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Equipe da edição III */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.h2
@@ -247,37 +265,21 @@ const Sobre = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
             {equipeEdicaoIII.map((pessoa, index) => (
-              <motion.div
+              <CartaoDePessoa
                 key={pessoa.nome}
-                className="flex flex-col items-center text-center"
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: (index % 5) * 0.1 }}
-                whileHover={{ y: -10 }}
-              >
-                <div className="w-32 h-32 bg-[#8bc53f] rounded-full mb-4 overflow-hidden shadow-lg ring-4 ring-white">
-                  <img
-                    src={pessoa.foto}
-                    alt={`Foto de ${pessoa.nome}`}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <p className="text-sm font-bold text-[#8bc53f] mb-1">{pessoa.cargo}</p>
-                <p className="text-base font-bold text-[#2d2a5f]">{pessoa.nome}</p>
-                <p className="text-sm text-pink-500 font-semibold">{pessoa.organizacao}</p>
-                {pessoa.linkedin && <LinkLinkedin nome={pessoa.nome} url={pessoa.linkedin} />}
-              </motion.div>
+                nome={pessoa.nome}
+                foto={pessoa.foto}
+                cargo={pessoa.cargo}
+                organizacao={pessoa.organizacao}
+                linkedin={pessoa.linkedin}
+                atraso={(index % 5) * 0.1}
+              />
             ))}
           </div>
 
           {/* Atalho para as equipes anteriores */}
           <div className="text-center mt-12">
-            <Link
-              to="/hall-da-fama"
-              className="inline-block bg-[#8bc53f] hover:bg-[#7ab52f] text-[#2d2a5f] font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-md hover:shadow-xl"
-            >
+            <Link to="/hall-da-fama" className={classeBotaoDestaque}>
               VER AS EQUIPES ANTERIORES
             </Link>
           </div>

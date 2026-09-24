@@ -13,7 +13,8 @@ import { excecaoDeNegocio, excecaoDeSistema, sucesso, type ResultadoOperacao } f
 import { servicoCache } from './cache';
 import { definirLembrarDeMim, supabase } from './supabase';
 
-export type Papel = 'aluno' | 'professor' | 'gestor';
+/** parceiro: empresas e instituições que acompanham o curso, só leitura na área do gestor */
+export type Papel = 'aluno' | 'professor' | 'gestor' | 'parceiro';
 
 export interface MeuPerfil {
   papel: Papel | null;
@@ -23,7 +24,7 @@ export interface MeuPerfil {
   participanteId: number | null;
   /** Aluno que ainda não fez o primeiro acesso (trocar senha + completar dados) */
   precisaTrocarSenha: boolean;
-  /** Conta que pode "ver como" gestor, professor ou aluno */
+  /** Conta que pode "ver como" gestor, professor, aluno ou parceiro */
   podeAlternarPapel: boolean;
 }
 
@@ -47,8 +48,22 @@ const PERFIL_VAZIO: MeuPerfil = {
 // A Edge Function acessos-alunos usa o mesmo domínio.
 const DOMINIO_ALUNO = 'aluno.favelaware.invalid';
 
+/** Nome de cada papel na tela (perfil e "Ver como"), na ordem do menu */
+export const NOME_DO_PAPEL: Record<Papel, string> = {
+  gestor: 'Gestor',
+  professor: 'Instrutor',
+  aluno: 'Aluno',
+  parceiro: 'Parceiro',
+};
+
 /** Área de cada papel */
-const AREA_DO_PAPEL: Record<Papel, string> = { gestor: '/dashboard', professor: '/professor', aluno: '/aluno' };
+const AREA_DO_PAPEL: Record<Papel, string> = {
+  gestor: '/dashboard',
+  professor: '/professor',
+  aluno: '/aluno',
+  // O parceiro usa a área do gestor, só para ver (ver somenteLeitura)
+  parceiro: '/dashboard',
+};
 
 /**
  * Credencial errada e e-mail inexistente dão a MESMA mensagem de propósito:
@@ -152,13 +167,20 @@ export class ServicoSessao {
     return Boolean(perfil.participanteId || perfil.podeAlternarPapel);
   }
 
+  /** Parceiro só vê: nada de cadastrar, corrigir ou responder (o banco também recusa) */
+  somenteLeitura(perfil: MeuPerfil): boolean {
+    return perfil.papel === 'parceiro';
+  }
+
   /**
    * Para onde a pessoa vai depois de entrar (null = ainda não tem área):
-   * gestor -> /dashboard; professor -> /professor; aluno da turma -> /aluno
+   * gestor e parceiro -> /dashboard; professor -> /professor; aluno da turma -> /aluno
    * (ou /primeiro-acesso, se ainda não trocou a senha padrão).
    */
   destinoDoPerfil(perfil: MeuPerfil): string | null {
-    if (perfil.papel === 'gestor' || perfil.papel === 'professor') return AREA_DO_PAPEL[perfil.papel];
+    if (perfil.papel === 'gestor' || perfil.papel === 'professor' || perfil.papel === 'parceiro') {
+      return AREA_DO_PAPEL[perfil.papel];
+    }
     if (perfil.papel === 'aluno' && this.alunoTemArea(perfil)) {
       return perfil.precisaTrocarSenha ? '/primeiro-acesso' : AREA_DO_PAPEL.aluno;
     }
@@ -218,7 +240,7 @@ export class ServicoSessao {
   }
 
   /**
-   * Troca o papel da conta autorizada ("ver como" gestor, professor ou aluno) e
+   * Troca o papel da conta autorizada ("ver como" gestor, professor, aluno ou parceiro) e
    * devolve para onde ir. O banco confere a permissão (função alternar_papel).
    */
   async alternarPapel(papel: Papel): Promise<{ resultado: ResultadoOperacao; destino: string | null }> {

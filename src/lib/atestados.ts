@@ -8,8 +8,10 @@
  * Function "atestados" (pastas pelo nome da pessoa); no banco fica a referência.
  * Atestado é dado de saúde: só o gestor baixa.
  */
-import { excecaoDeNegocio, excecaoDeSistema, sucesso, type ResultadoOperacao } from '../types';
-import { erroDeSistemaNaFuncao, mensagemDaFuncao } from './banco';
+import { TAMANHO_MAXIMO_ARQUIVO } from '../config';
+import { sucesso, type ResultadoOperacao } from '../types';
+import { linkDaFuncao, resultadoDaFuncao } from './banco';
+import { FORMATOS } from './entregas';
 import { supabase } from './supabase';
 
 /** O que vai junto de uma falta justificada */
@@ -20,9 +22,8 @@ export interface Justificativa {
 }
 
 export const TAMANHO_MAXIMO_JUSTIFICATIVA = 1000;
-export const TAMANHO_MAXIMO_ATESTADO = 10 * 1024 * 1024;
 /** PDF ou foto (os mesmos tipos da Edge Function e da tabela) */
-export const TIPOS_DE_ATESTADO = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+export const TIPOS_DE_ATESTADO = [...FORMATOS.pdf.tipos, ...FORMATOS.imagem.tipos];
 
 /** De quem é o atestado: um aluno da chamada ou um instrutor (vazio = quem está logado) */
 export type DonoDoAtestado = { participanteId: number } | { professorId?: string };
@@ -36,7 +37,7 @@ export class ServicoAtestados {
     }
     if (arquivo) {
       if (!TIPOS_DE_ATESTADO.includes(arquivo.type)) return 'Envie o atestado em PDF ou foto (PNG, JPG ou WebP).';
-      if (arquivo.size > TAMANHO_MAXIMO_ATESTADO) return 'O atestado passa de 10 MB.';
+      if (arquivo.size > TAMANHO_MAXIMO_ARQUIVO) return 'O atestado passa de 10 MB.';
     }
     return null;
   }
@@ -51,15 +52,12 @@ export class ServicoAtestados {
     const { data, error } = await supabase.functions.invoke('atestados/enviar', { body: form });
     if (!error) return { resultado: sucesso(), atestadoId: (data as { atestado_id: string }).atestado_id };
     console.error('[atestados] falha ao enviar', error.message);
-    const mensagem = await mensagemDaFuncao(error, 'Não foi possível enviar o atestado. Tente de novo.');
-    return { resultado: erroDeSistemaNaFuncao(error) ? excecaoDeSistema(mensagem) : excecaoDeNegocio(mensagem) };
+    return { resultado: await resultadoDaFuncao(error, 'Não foi possível enviar o atestado. Tente de novo.') };
   }
 
   /** Gestor: link de download do atestado (vale 2 minutos) */
-  async linkParaBaixar(atestadoId: string): Promise<string> {
-    const { data, error } = await supabase.functions.invoke('atestados/link', { body: { atestado_id: atestadoId } });
-    if (error) throw new Error(await mensagemDaFuncao(error, 'Não foi possível baixar o atestado.'));
-    return (data as { url: string }).url;
+  linkParaBaixar(atestadoId: string): Promise<string> {
+    return linkDaFuncao('atestados/link', { atestado_id: atestadoId }, 'Não foi possível baixar o atestado.');
   }
 }
 

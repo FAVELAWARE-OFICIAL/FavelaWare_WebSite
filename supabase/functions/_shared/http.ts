@@ -69,3 +69,48 @@ export async function recusaSeNaoForGestor(
   if (perfil?.papel !== 'gestor') return { http: 403, erro: proibido };
   return null;
 }
+
+/** Código que os gatilhos do banco usam para recusar por regra de negócio (o texto vem pronto para a tela) */
+export const CODIGO_REGRA_DO_BANCO = '22023';
+
+/** Id no formato UUID (atestado, arquivo, conta) */
+export const UUID_VALIDO = /^[0-9a-f-]{36}$/;
+
+/** Corpo JSON do pedido como objeto; null se não for JSON ou não for um objeto (a função responde 400) */
+export async function lerJson(req: Request): Promise<Record<string, unknown> | null> {
+  try {
+    const corpo = await req.json();
+    return corpo && typeof corpo === 'object' && !Array.isArray(corpo) ? (corpo as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+type Atender = (req: Request, url: URL) => Promise<Response>;
+
+/**
+ * Deno.serve comum às funções: responde o OPTIONS do CORS, escolhe a rota e
+ * transforma erro inesperado em 500 com CORS e status (nunca sai sem cabeçalho).
+ * `rotas`: "POST enviar" (método + último pedaço do caminho) ou só "POST"
+ * (função de uma rota só; outro método recebe 405).
+ */
+export function servir(origem: string, cors: Record<string, string>, rotas: Record<string, Atender>): void {
+  const resposta = criarResposta(cors);
+  Deno.serve(async (req) => {
+    if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+    const url = new URL(req.url);
+    // Object.hasOwn: um método estranho (ex.: "constructor") nunca acha função do protótipo
+    const chave = [`${req.method} ${url.pathname.split('/').pop()}`, req.method].find((c) => Object.hasOwn(rotas, c));
+    const atender = chave ? rotas[chave] : undefined;
+    try {
+      if (atender) return await atender(req, url);
+      const rotaUnica = Object.keys(rotas).some((chave) => !chave.includes(' '));
+      return rotaUnica
+        ? resposta(405, { erro: 'Método não permitido' })
+        : resposta(404, { erro: 'Rota não encontrada.' });
+    } catch (e) {
+      console.error(`[${origem}] erro inesperado`, String(e));
+      return resposta(500, { erro: 'Erro inesperado. Tente de novo.' });
+    }
+  });
+}

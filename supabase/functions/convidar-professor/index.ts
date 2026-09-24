@@ -11,7 +11,7 @@
  *
  * Corpo: { "nome": "Maria", "email": "maria@exemplo.com", "turmas": [5], "redirecionar_para": "https://.../definir-senha" }
  */
-import { cabecalhosCors, clienteAdmin, criarResposta, recusaSeNaoForGestor } from '../_shared/http.ts';
+import { cabecalhosCors, clienteAdmin, criarResposta, lerJson, recusaSeNaoForGestor, servir } from '../_shared/http.ts';
 
 const CORS = cabecalhosCors('POST, OPTIONS');
 const resposta = criarResposta(CORS);
@@ -20,10 +20,7 @@ const resposta = criarResposta(CORS);
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TAMANHO_MAXIMO_NOME = 120;
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
-  if (req.method !== 'POST') return resposta(405, { erro: 'Método não permitido' });
-
+async function convidar(req: Request): Promise<Response> {
   const admin = clienteAdmin();
 
   // 1. Quem chamou? (o token do gestor vem no cabeçalho Authorization)
@@ -31,12 +28,8 @@ Deno.serve(async (req) => {
   if (recusa) return resposta(recusa.http, { erro: recusa.erro });
 
   // 2. Valida o pedido
-  let corpo: { nome?: unknown; email?: unknown; turmas?: unknown; redirecionar_para?: unknown };
-  try {
-    corpo = await req.json();
-  } catch {
-    return resposta(400, { erro: 'Pedido inválido.' });
-  }
+  const corpo = await lerJson(req);
+  if (!corpo) return resposta(400, { erro: 'Pedido inválido.' });
   const nome = typeof corpo.nome === 'string' ? corpo.nome.trim() : '';
   const email = typeof corpo.email === 'string' ? corpo.email.trim().toLowerCase() : '';
   const turmas = Array.isArray(corpo.turmas) ? corpo.turmas.filter((t): t is number => Number.isInteger(t)) : [];
@@ -72,4 +65,6 @@ Deno.serve(async (req) => {
   }
 
   return resposta(201, { id: convite.user.id });
-});
+}
+
+servir('convidar-professor', CORS, { POST: convidar });

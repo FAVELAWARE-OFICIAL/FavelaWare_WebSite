@@ -10,12 +10,11 @@
  * durante o carregamento: a página só aparece quando está pronta (nunca tela
  * em branco) e entra suave.
  */
-import { Suspense, useEffect, useState } from 'react';
-import { useLocation, useOutlet } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { useOutlet } from 'react-router-dom';
 
 import RotaProtegida from '../../components/RotaProtegida';
-import Moldura, { Carregando } from '../../components/admin/Moldura';
+import Moldura, { TransicaoDaArea } from '../../components/admin/Moldura';
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
 import type { ItemMenu } from '../../components/admin/MenuLateral';
 import { IconeChamada, IconeMaterial, IconePonto } from '../../components/admin/Icones';
@@ -37,7 +36,6 @@ const ITENS_MENU_PROFESSOR: ItemMenu[] = [
 ];
 
 const AreaDoProfessor: React.FC = () => {
-  const { pathname } = useLocation();
   const pagina = useOutlet();
   const [pronta, setPronta] = useState(false);
   const [souProfessor, setSouProfessor] = useState(false);
@@ -61,29 +59,7 @@ const AreaDoProfessor: React.FC = () => {
 
   return (
     <Moldura itens={souProfessor ? ITENS_MENU_PROFESSOR : ITENS_MENU} subtitulo="Área do instrutor">
-      <AnimatePresence mode="wait" initial={false}>
-        {mostrarCarregando || !pronta ? (
-          <motion.div
-            key="carregando"
-            className="flex flex-1 flex-col"
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <Carregando texto="Abrindo a chamada" />
-          </motion.div>
-        ) : (
-          <motion.div
-            key={pathname}
-            className="flex flex-1 flex-col"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6, transition: { duration: 0.15 } }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <Suspense fallback={<Carregando texto="Abrindo a chamada" />}>{pagina}</Suspense>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <TransicaoDaArea carregando={mostrarCarregando || !pronta} pronta texto="Abrindo a chamada" pagina={pagina} />
     </Moldura>
   );
 };

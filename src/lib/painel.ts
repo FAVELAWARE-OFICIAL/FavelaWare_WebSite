@@ -47,17 +47,11 @@ export interface Presenca {
   atestado_id: string | null;
 }
 
-export interface MudancaHorario {
-  participante_id: number;
-  horario: string | null;
-}
-
 export interface DadosDaEdicao {
   turmas: Turma[];
   participantes: Participante[];
   aulas: Aula[];
   presencas: Presenca[];
-  mudancasHorario: MudancaHorario[];
 }
 
 /**
@@ -70,51 +64,59 @@ const TAMANHO_PAGINA = 1000;
 export class ServicoPainel {
   /**
    * Tudo de uma edição, em uma rodada só: as consultas saem ao mesmo tempo.
-   * Presenças e mudanças de horário são filtradas pela edição no próprio banco
-   * (junção com aulas/participantes), sem mandar listas de ids na URL.
+   * As presenças são filtradas pela edição no próprio banco (junção com
+   * aulas), sem mandar listas de ids na URL.
+   *
+   * Parceiro (somenteLeitura): alunos e presenças vêm das funções do banco feitas
+   * para ele, sem dado pessoal (login, observação, justificativa e atestado vazios).
    */
-  async carregarDadosDaEdicao(edicaoId: number): Promise<DadosDaEdicao> {
-    const [turmas, participantes, aulas, presencas, mudancas] = await Promise.all([
+  async carregarDadosDaEdicao(edicaoId: number, somenteLeitura = false): Promise<DadosDaEdicao> {
+    const [turmas, participantes, aulas, presencas] = await Promise.all([
       supabase.from('turmas').select('id, nome').eq('edicao_id', edicaoId).order('nome'),
-      supabase
-        .from('participantes')
-        .select('id, turma_id, funcao, nome, login, observacao, foto')
-        .eq('edicao_id', edicaoId)
-        .order('nome'),
+      somenteLeitura
+        ? supabase.rpc('participantes_do_parceiro', { p_edicao_id: edicaoId })
+        : supabase
+            .from('participantes')
+            .select('id, turma_id, funcao, nome, login, observacao, foto')
+            .eq('edicao_id', edicaoId)
+            .order('nome'),
       supabase.from('aulas').select('id, turma_id, data, ordem, descricao').eq('edicao_id', edicaoId).order('ordem'),
-      // "aulas!inner()" só filtra pela edição: não devolve nenhuma coluna de aulas
-      this.buscarTudo<Presenca>(
-        (de, ate) =>
-          supabase
-            .from('presencas')
-            .select(
-              'participante_id, aula_id, situacao, registro_original, justificativa, atestado_id, aulas!inner()',
-              {
-                count: de === 0 ? 'exact' : undefined,
-              },
-            )
-            .eq('aulas.edicao_id', edicaoId)
-            .order('aula_id')
-            .order('participante_id')
-            .range(de, ate) as unknown as PromiseLike<{
-            data: Presenca[] | null;
-            error: unknown;
-            count: number | null;
-          }>,
+      this.buscarTudo<Presenca>((de, ate) =>
+        somenteLeitura
+          ? (supabase
+              .rpc('presencas_do_parceiro', { p_edicao_id: edicaoId }, { count: de === 0 ? 'exact' : undefined })
+              .range(de, ate) as unknown as PromiseLike<{
+              data: Presenca[] | null;
+              error: unknown;
+              count: number | null;
+            }>)
+          : // "aulas!inner()" só filtra pela edição: não devolve nenhuma coluna de aulas
+            (supabase
+              .from('presencas')
+              .select(
+                'participante_id, aula_id, situacao, registro_original, justificativa, atestado_id, aulas!inner()',
+                {
+                  count: de === 0 ? 'exact' : undefined,
+                },
+              )
+              .eq('aulas.edicao_id', edicaoId)
+              .order('aula_id')
+              .order('participante_id')
+              .range(de, ate) as unknown as PromiseLike<{
+              data: Presenca[] | null;
+              error: unknown;
+              count: number | null;
+            }>),
       ),
-      supabase
-        .from('mudancas_horario')
-        .select('participante_id, horario, participantes!inner()')
-        .eq('participantes.edicao_id', edicaoId),
     ]);
-    for (const r of [turmas, participantes, aulas, mudancas]) if (r.error) throw r.error;
+    for (const r of [turmas, participantes, aulas]) if (r.error) throw r.error;
 
     return {
       turmas: turmas.data!,
       participantes: participantes.data! as Participante[],
       aulas: aulas.data!,
-      presencas,
-      mudancasHorario: mudancas.data! as MudancaHorario[],
+      // Do parceiro vêm sem justificativa e atestado: completa com vazio
+      presencas: somenteLeitura ? presencas.map((p) => ({ ...p, justificativa: null, atestado_id: null })) : presencas,
     };
   }
 

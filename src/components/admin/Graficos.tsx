@@ -29,17 +29,16 @@ import {
   YAxis,
 } from 'recharts';
 import { Cartao } from './Ui';
-import { META_FREQUENCIA, corDaFrequencia } from '../../lib/painel';
+import { META_FREQUENCIA, corDaFrequencia, formatarPercentual } from '../../lib/painel';
 
 // Cores das séries: verde e roxo da marca primeiro, depois tons de apoio
 export const CORES_SERIES = ['#8bc53f', '#2d2a5f', '#2563eb', '#db2777', '#f59e0b'];
 
 const COR_EIXO = '#6b7280';
 const COR_GRADE = '#eef0f3';
-const paraPercentual = (valor: number) => `${Math.round(valor * 100)}%`;
 const eixoPercentual = {
   domain: [0, 1] as [number, number],
-  tickFormatter: paraPercentual,
+  tickFormatter: formatarPercentual,
   width: 44,
   ticks: [0, 0.25, 0.5, 0.75, 1],
 };
@@ -125,7 +124,7 @@ export const GraficoPresencaNoTempo: React.FC<{ pontos: Ponto[]; turmas: string[
               linhas={payload.map((item) => ({
                 cor: item.color,
                 texto: `${item.name}: ${(item.payload as Ponto)[`${item.name}__detalhe`] ?? ''}`,
-                destaque: paraPercentual(Number(item.value)),
+                destaque: formatarPercentual(Number(item.value)),
               }))}
             />
           ) : null
@@ -170,7 +169,7 @@ export const GraficoDistribuicao: React.FC<{
           return active && b ? (
             <CaixaDica
               titulo={b.rotulo}
-              linhas={[{ cor: b.cor, texto: `${b.valor} aluno(s)`, destaque: paraPercentual(b.parte) }]}
+              linhas={[{ cor: b.cor, texto: `${b.valor} aluno(s)`, destaque: formatarPercentual(b.parte) }]}
             />
           ) : null;
         }}
@@ -196,7 +195,7 @@ export const GraficoDistribuicao: React.FC<{
               >
                 {b.valor}{' '}
                 <tspan fill={COR_EIXO} fontWeight={400}>
-                  · {paraPercentual(b.parte)}
+                  · {formatarPercentual(b.parte)}
                 </tspan>
               </text>
             );
@@ -222,7 +221,7 @@ export const GraficoBarrasPercentual: React.FC<{
   const dados = barras.map((b) => ({
     ...b,
     barra: b.valor ?? 0,
-    textoDoRotulo: b.valor === null ? 'sem dados' : paraPercentual(b.valor),
+    textoDoRotulo: b.valor === null ? 'sem dados' : formatarPercentual(b.valor),
   }));
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -253,7 +252,7 @@ export const GraficoBarrasPercentual: React.FC<{
                 linhas={[
                   b.valor === null
                     ? { cor: corDa(null), texto: 'Sem aulas no período' }
-                    : { cor: corDa(b.valor), texto: b.detalhe ?? 'Percentual', destaque: paraPercentual(b.valor) },
+                    : { cor: corDa(b.valor), texto: b.detalhe ?? 'Percentual', destaque: formatarPercentual(b.valor) },
                 ]}
               />
             );

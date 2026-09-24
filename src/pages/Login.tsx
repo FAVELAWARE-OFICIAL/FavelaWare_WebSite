@@ -29,12 +29,13 @@ import { Link, useNavigate } from 'react-router-dom';
 // E-mail oficial (fonte única em src/data/contato.ts)
 import { email } from '../data/contato';
 
-import { classeCampoDeAcesso } from '../components/estilosDeAcesso';
+import { classeBotaoDeAcesso, classeCampoDeAcesso } from '../components/estilosDeAcesso';
 
 // Sessão (entrar e descobrir a área de cada papel)
 import { servicoSessao } from '../lib/sessao';
 import { TAMANHO_MINIMO_SENHA } from '../lib/senha';
 import { StatusProcessamento } from '../types';
+import { FUNDO_DA_MARCA, LOGO } from '../data/imagens';
 
 /**
  * COMPONENTE LOGIN
@@ -158,7 +159,7 @@ const Login: React.FC = () => {
         style={{
           // Banner oficial do FavelaWare: foto da comunidade com código binário.
           // É o mesmo fundo do Hero da home, usado aqui em opacidade cheia.
-          backgroundImage: "url('/imgs/backgrounds/fundo.webp')",
+          backgroundImage: `url('${FUNDO_DA_MARCA}')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
@@ -170,7 +171,7 @@ const Login: React.FC = () => {
         {/* Conteúdo do painel (z-10 deixa por cima da textura) */}
         <div className="relative z-10 flex flex-col justify-center items-start p-12 xl:p-16 w-full">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-            <img src="/imgs/logo/logo.png" alt="Logo FavelaWare" className="w-64 object-contain mb-8 drop-shadow-2xl" />
+            <img src={LOGO} alt="Logo FavelaWare" className="w-64 object-contain mb-8 drop-shadow-2xl" />
 
             {/* Texto branco com sombra: o painel agora é uma foto, então a sombra
                 garante contraste independente do trecho da imagem que ficar atrás */}
@@ -200,7 +201,7 @@ const Login: React.FC = () => {
         <motion.div {...fadeInUp} className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 md:p-10">
           {/* Logo pequeno: aparece só no celular, já que o painel verde está escondido */}
           <div className="lg:hidden text-center mb-6">
-            <img src="/imgs/logo/logo.png" alt="Logo FavelaWare" className="w-40 object-contain mx-auto" />
+            <img src={LOGO} alt="Logo FavelaWare" className="w-40 object-contain mx-auto" />
           </div>
 
           {/* Título do card */}
@@ -306,11 +307,7 @@ const Login: React.FC = () => {
               disabled={carregando}
               whileHover={{ scale: carregando ? 1 : 1.02 }}
               whileTap={{ scale: carregando ? 1 : 0.98 }}
-              className={`w-full py-4 px-6 rounded-lg font-bold text-white text-lg shadow-lg transition-all ${
-                carregando
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-favela-green-600 to-favela-blue-600 hover:shadow-xl'
-              }`}
+              className={classeBotaoDeAcesso(carregando)}
             >
               {carregando ? (
                 <span className="flex items-center justify-center">

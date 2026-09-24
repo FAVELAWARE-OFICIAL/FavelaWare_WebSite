@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('./supabase', () => import('../testes/supabaseFalso'));
 
 import { consultaFalha, removerDoStorage } from '../testes/supabaseFalso';
-import { servicoAlunos } from './alunos';
 import { servicoAtestados } from './atestados';
 import { servicoEdicoes } from './edicoes';
+import { servicoFotoPadronizada } from './fotoPadronizada';
 import { servicoMaterial } from './material';
 import { mensagemDeErroDeCadastro } from './banco';
 import { validarDados, type DadosInstrutor } from './dadosInstrutor';
@@ -13,6 +13,8 @@ import { SEM_REGRAS, servicoEntregas } from './entregas';
 import { QUANTIDADE_NO_HISTORICO, servicoPonto, type Ponto } from './ponto';
 import { senhaForte, servicoSenha } from './senha';
 import { servicoSessao, type MeuPerfil } from './sessao';
+import { servicoSitePublico } from './sitePublico';
+import { servicoSolicitacoes } from './solicitacoes';
 
 const perfil = (mudancas: Partial<MeuPerfil>): MeuPerfil => ({
   papel: null,
@@ -25,6 +27,12 @@ const perfil = (mudancas: Partial<MeuPerfil>): MeuPerfil => ({
 });
 
 describe('sessão: área de cada papel', () => {
+  it('parceiro usa a área do gestor, só para ver', () => {
+    expect(servicoSessao.destinoDoPerfil(perfil({ papel: 'parceiro' }))).toBe('/dashboard');
+    expect(servicoSessao.somenteLeitura(perfil({ papel: 'parceiro' }))).toBe(true);
+    expect(servicoSessao.somenteLeitura(perfil({ papel: 'gestor' }))).toBe(false);
+  });
+
   it('gestor e professor vão para a área deles', () => {
     expect(servicoSessao.destinoDoPerfil(perfil({ papel: 'gestor' }))).toBe('/dashboard');
     expect(servicoSessao.destinoDoPerfil(perfil({ papel: 'professor' }))).toBe('/professor');
@@ -133,22 +141,31 @@ describe('entregas: conferência antes de enviar', () => {
   });
 });
 
-describe('fotos do aluno enviadas e não salvas', () => {
+describe('fotos enviadas e não salvas', () => {
   const original = 'http://localhost:54321/storage/v1/object/public/fotos-alunos/original.webp';
   const nova = 'http://localhost:54321/storage/v1/object/public/fotos-alunos/nova.webp';
 
   it('apaga a foto enviada agora e nunca a que o aluno já tinha', async () => {
     removerDoStorage.mockClear();
-    await servicoAlunos.descartarFotoNaoSalva(original, original);
-    await servicoAlunos.descartarFotoNaoSalva(null, original);
+    await servicoFotoPadronizada.descartarNaoSalva(original, original);
+    await servicoFotoPadronizada.descartarNaoSalva(null, original);
     expect(removerDoStorage).not.toHaveBeenCalled();
-    await servicoAlunos.descartarFotoNaoSalva(nova, original);
+    await servicoFotoPadronizada.descartarNaoSalva(nova, original);
     expect(removerDoStorage).toHaveBeenCalledWith(['nova.webp']);
   });
 
   it('foto do site (em /imgs) nunca vai para o Storage', async () => {
     removerDoStorage.mockClear();
-    await servicoAlunos.descartarFotoNaoSalva('/imgs/team/ana.webp', null);
+    await servicoFotoPadronizada.descartarNaoSalva('/imgs/team/ana.webp', null);
+    expect(removerDoStorage).not.toHaveBeenCalled();
+  });
+
+  it('URL de outro endereço com o mesmo caminho nunca apaga nada do nosso bucket', async () => {
+    removerDoStorage.mockClear();
+    await servicoFotoPadronizada.descartarNaoSalva(
+      'https://outro.exemplo/storage/v1/object/public/fotos-alunos/x.webp',
+      null,
+    );
     expect(removerDoStorage).not.toHaveBeenCalled();
   });
 });
@@ -237,5 +254,60 @@ describe('dados do instrutor', () => {
       validarDados({ ...validos, linkedin: 'facebook.com/maria' }, '2026-09-24', ['telefone', 'email', 'linkedin'])
         ?.campo,
     ).toBe('linkedin');
+  });
+});
+
+describe('solicitações', () => {
+  it('em aberto: aberta ou em andamento; concluída: aprovada ou recusada', () => {
+    expect(servicoSolicitacoes.emAberto({ status: 'pendente' })).toBe(true);
+    expect(servicoSolicitacoes.emAberto({ status: 'em_andamento' })).toBe(true);
+    expect(servicoSolicitacoes.emAberto({ status: 'aprovada' })).toBe(false);
+    expect(servicoSolicitacoes.emAberto({ status: 'recusada' })).toBe(false);
+  });
+
+  it('o aluno escreve o tipo do pedido (obrigatório, até 80 caracteres)', async () => {
+    expect(await servicoSolicitacoes.enviarMinha('  ', 'Preciso mudar')).toBe('Escreva o tipo do pedido.');
+    expect(await servicoSolicitacoes.enviarMinha('x'.repeat(81), 'Preciso mudar')).toBe(
+      'O tipo passa de 80 caracteres.',
+    );
+    expect(await servicoSolicitacoes.enviarMinha('Mudança de turno', ' ')).toBe('Descreva o que você precisa.');
+  });
+
+  it('mensagem vazia não vai para o banco', async () => {
+    expect(await servicoSolicitacoes.enviarMensagem(1, '   ')).toBe('Escreva a mensagem.');
+  });
+});
+
+describe('site público', () => {
+  const doArquivo = [
+    {
+      slug: 't1',
+      nome: 'Turma 1',
+      edicao: '3ª Edição',
+      periodo: '2025',
+      atual: true,
+      alunos: [{ participanteId: 7, nome: 'Ana', foto: '/imgs/a.webp' }],
+    },
+  ];
+
+  it('foto atual do dashboard por cima da do arquivo', () => {
+    const [turma] = servicoSitePublico.juntarTurmas(doArquivo, new Map([[7, null]]), []);
+    expect(turma.alunos[0].foto).toBeUndefined();
+  });
+
+  it('com edição nova em andamento no banco, a do arquivo deixa de ser a atual', () => {
+    const nova = {
+      slug: 'edicao-4-turma-1',
+      nome: 'Turma 1',
+      edicao: '4ª Edição',
+      periodo: '2026',
+      atual: true,
+      alunos: [],
+    };
+    const turmas = servicoSitePublico.juntarTurmas(doArquivo, new Map(), [nova]);
+    expect(turmas.map((t) => [t.edicao, t.atual])).toEqual([
+      ['4ª Edição', true],
+      ['3ª Edição', false],
+    ]);
   });
 });

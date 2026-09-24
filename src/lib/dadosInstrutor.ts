@@ -11,7 +11,7 @@
  * cache do navegador. Quem garante que só o dono e o gestor leem é o RLS da
  * tabela dados_instrutores.
  */
-import { emailValido } from '../utils/texto';
+import { emailValido, perfilLinkedinValido } from '../utils/texto';
 import { codigoDoErro } from './banco';
 import { supabase } from './supabase';
 
@@ -160,10 +160,7 @@ function normalizarLinkedin(valor: string | null): string | null | undefined {
   const completo = /^https?:\/\//i.test(texto) ? texto.replace(/^https?:/i, 'https:') : `https://${texto}`;
   // Esquema e domínio em minúsculas ("HTTPS://www.LinkedIn.com/in/..." também vale)
   const semBusca = completo.split(/[?#]/)[0].replace(/^https:\/\/[^/]+/i, (inicio) => inicio.toLowerCase());
-  return /^https:\/\/([a-z]{2,3}\.)?linkedin\.com\/in\/[A-Za-z0-9%_-]{2,100}\/?$/.test(semBusca) &&
-    semBusca.length <= 200
-    ? semBusca
-    : undefined;
+  return perfilLinkedinValido(semBusca) ? semBusca : undefined;
 }
 
 /** Data mais recente aceita no nascimento (14 anos atrás), no formato aaaa-mm-dd */

@@ -16,15 +16,10 @@ import type { Tentativa } from '../../lib/atividades';
 import { servicoEntregas } from '../../lib/entregas';
 import { baixarPorLink } from '../../utils/arquivos';
 import { formatarDataHora } from '../../utils/datas';
+import { iniciaisDoNome } from '../../utils/texto';
 
 const Avatar: React.FC<{ nome: string; tom: 'aluno' | 'professor' }> = ({ nome, tom }) => {
-  const iniciais =
-    nome
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((p) => p[0]!.toUpperCase())
-      .join('') || '?';
+  const iniciais = iniciaisDoNome(nome);
   return (
     <span
       aria-hidden="true"

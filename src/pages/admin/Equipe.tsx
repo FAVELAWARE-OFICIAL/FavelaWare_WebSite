@@ -8,8 +8,11 @@
  * podem ser de edições diferentes: o mesmo instrutor participa de várias.
  * Também consulta os dados do RPA que cada instrutor preencheu.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Avatar from '../../components/admin/Avatar';
+import EscolherFoto from '../../components/admin/EscolherFoto';
 
+import { useCampos } from '../../hooks/useCampos';
 import { useDadosEmCache } from '../../hooks/useDadosEmCache';
 import { StatusProcessamento } from '../../types';
 import { formatarDia } from '../../utils/datas';
@@ -23,8 +26,14 @@ import type { TurmaComEdicao } from '../../lib/turmas';
 import { foco, selo, texto } from '../../components/admin/designSystem';
 import Janela from '../../components/admin/Janela';
 import { servicoDadosInstrutor, textoParaRpa, type DadosInstrutorDaEquipe } from '../../lib/dadosInstrutor';
+import { FOTO_PADRAO_DE_PESSOA } from '../../data/imagens';
 
-/** Botões de turma que ligam/desligam (usados no cadastro e na lista) */
+/**
+ * Botões de turma que ligam/desligam (usados no cadastro e na lista).
+ * Só turma de edição aberta recebe instrutor; um vínculo antigo com turma de
+ * edição encerrada aparece marcado, e só dá para tirar. A turma de
+ * demonstração não entra (é do "Ver como").
+ */
 const SeletorDeTurmas: React.FC<{
   turmas: TurmaComEdicao[];
   escolhidas: number[];
@@ -32,26 +41,29 @@ const SeletorDeTurmas: React.FC<{
   desabilitado?: boolean;
 }> = ({ turmas, escolhidas, aoAlternar, desabilitado }) => (
   <div className="flex flex-wrap gap-2">
-    {turmas.map((t) => {
-      const ativa = escolhidas.includes(t.id);
-      return (
-        <button
-          key={t.id}
-          type="button"
-          onClick={() => aoAlternar(t.id)}
-          disabled={desabilitado}
-          aria-pressed={ativa}
-          className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${foco} disabled:opacity-50 ${
-            ativa
-              ? 'border-favela-green-600 bg-favela-green-50 text-favela-green-800'
-              : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
-          }`}
-        >
-          {ativa ? '✓ ' : ''}
-          {t.nome} <span className="text-gray-400">· {t.edicao}</span>
-        </button>
-      );
-    })}
+    {turmas
+      .filter((t) => !t.demonstracao && (!t.edicaoEncerrada || escolhidas.includes(t.id)))
+      .map((t) => {
+        const ativa = escolhidas.includes(t.id);
+        return (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => aoAlternar(t.id)}
+            disabled={desabilitado}
+            aria-pressed={ativa}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${foco} disabled:opacity-50 ${
+              ativa
+                ? 'border-favela-green-600 bg-favela-green-50 text-favela-green-800'
+                : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
+            }`}
+          >
+            {ativa ? '✓ ' : ''}
+            {t.nome} <span className="text-gray-400">· {t.edicao}</span>
+            {t.edicaoEncerrada && <span className="text-gray-400"> · encerrada</span>}
+          </button>
+        );
+      })}
   </div>
 );
 
@@ -60,7 +72,11 @@ const Equipe: React.FC = () => {
   const { dados, erro, recarregar: recarregarEquipe } = useDadosEmCache(CHAVE_EQUIPE, () => servicoEquipe.carregar());
   const turmas = dados?.turmas ?? [];
   const professores = dados?.professores;
-  const [campos, setCampos] = useState({ nome: '', email: '', turmas: [] as number[] });
+  const { campos, setCampos, aoAlterarCampo } = useCampos({ nome: '', email: '', turmas: [] as number[] });
+  // Foto escolhida no cadastro: só sobe depois que o convite der certo (nada fica órfão)
+  const [fotoNova, setFotoNova] = useState<File | null>(null);
+  const previa = useMemo(() => (fotoNova ? URL.createObjectURL(fotoNova) : null), [fotoNova]);
+  useEffect(() => () => void (previa && URL.revokeObjectURL(previa)), [previa]);
   const [enviando, setEnviando] = useState(false);
   const [ocupado, setOcupado] = useState<string | null>(null); // professor sendo alterado
   const [mensagem, setMensagem] = useState<Mensagem>(null);
@@ -120,11 +136,6 @@ const Equipe: React.FC = () => {
   const recarregar = () =>
     recarregarEquipe().catch(() => setMensagem({ tipo: 'erro', texto: 'Não foi possível carregar a equipe.' }));
 
-  const aoAlterarCampo = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCampos((anterior) => ({ ...anterior, [name]: value }));
-  };
-
   const aoEnviar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMensagem(null);
@@ -133,18 +144,47 @@ const Equipe: React.FC = () => {
       return;
     }
     setEnviando(true);
-    const resultado = await servicoEquipe.convidar(campos.nome.trim(), campos.email.trim(), campos.turmas);
-    setEnviando(false);
+    const { resultado, professorId } = await servicoEquipe.convidar(
+      campos.nome.trim(),
+      campos.email.trim(),
+      campos.turmas,
+    );
     if (resultado.status !== StatusProcessamento.Sucesso) {
+      setEnviando(false);
       setMensagem({ tipo: 'erro', texto: resultado.mensagem! });
       return;
     }
+    let avisoDaFoto = '';
+    if (fotoNova && professorId) {
+      try {
+        await servicoEquipe.trocarFoto(professorId, fotoNova, null);
+      } catch (erro) {
+        avisoDaFoto = ` A foto não foi salva (${(erro as Error).message}): use "Trocar foto" na lista.`;
+      }
+    }
+    setEnviando(false);
     setMensagem({
-      tipo: 'sucesso',
-      texto: `Convite enviado para ${campos.email.trim()}. O instrutor define a senha pelo link do e-mail.`,
+      tipo: avisoDaFoto ? 'erro' : 'sucesso',
+      texto: `Convite enviado para ${campos.email.trim()}. O instrutor define a senha pelo link do e-mail.${avisoDaFoto}`,
     });
     setCampos({ nome: '', email: '', turmas: [] });
+    setFotoNova(null);
     recarregar();
+  };
+
+  /** Troca a foto de um instrutor da lista (o site recorta e põe no círculo verde) */
+  const trocarFotoDe = async (professor: Professor, arquivo: File) => {
+    setOcupado(professor.id);
+    setMensagem(null);
+    try {
+      await servicoEquipe.trocarFoto(professor.id, arquivo, professor.foto);
+      await recarregarEquipe();
+      setMensagem({ tipo: 'sucesso', texto: `Foto de ${professor.nome ?? 'instrutor'} atualizada.` });
+    } catch (erro) {
+      setMensagem({ tipo: 'erro', texto: (erro as Error).message || 'Não foi possível salvar a foto.' });
+    } finally {
+      setOcupado(null);
+    }
   };
 
   const alternarVinculo = async (professor: Professor, turmaId: number) => {
@@ -241,6 +281,25 @@ const Equipe: React.FC = () => {
                 }
               />
             </fieldset>
+            <div className="flex items-center gap-4">
+              <img
+                src={previa ?? FOTO_PADRAO_DE_PESSOA}
+                alt=""
+                className="h-16 w-16 shrink-0 rounded-full bg-favela-green-500 object-cover ring-1 ring-gray-200"
+              />
+              <div>
+                <EscolherFoto
+                  variante="botao-compacto"
+                  ocupado={enviando}
+                  rotulo={fotoNova ? 'Trocar foto' : 'Adicionar foto'}
+                  aoEscolher={setFotoNova}
+                />
+                <p className={`mt-1 ${texto.apoio}`}>
+                  Opcional. Pode ter qualquer fundo: o site recorta e põe no círculo verde, como a equipe da página
+                  Sobre.
+                </p>
+              </div>
+            </div>
             <button
               type="submit"
               disabled={enviando}
@@ -265,24 +324,36 @@ const Equipe: React.FC = () => {
                 {professores.map((p) => (
                   <li key={p.id} className="py-4">
                     <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-medium text-gray-900">{p.nome ?? 'Sem nome'}</p>
-                        <p className={`truncate ${texto.apoio}`}>{p.email}</p>
-                        <div className="mt-1.5">
-                          {preencheram?.has(p.id) ? (
-                            <button
-                              type="button"
-                              onClick={() => abrirRpa(p.id, p.nome ?? p.email ?? 'Instrutor')}
-                              aria-label={`Ver dados do RPA de ${p.nome ?? p.email ?? 'instrutor'}`}
-                              className={`${selo.base} ${selo.sucesso} hover:underline ${foco}`}
-                            >
-                              ✓ Dados do RPA · ver
-                            </button>
-                          ) : preencheram ? (
-                            <span className={`${selo.base} ${selo.atencao}`}>Dados do RPA pendentes</span>
-                          ) : erroRpa ? (
-                            <span className={`${selo.base} ${selo.erro}`}>Dados do RPA indisponíveis</span>
-                          ) : null}
+                      <div className="flex min-w-0 items-start gap-3">
+                        <div className="flex shrink-0 flex-col items-center gap-1">
+                          <Avatar foto={p.foto} nome={p.nome ?? 'instrutor'} tamanho="lg" />
+                          <EscolherFoto
+                            variante="link"
+                            ocupado={ocupado === p.id}
+                            rotulo={ocupado === p.id ? 'Salvando…' : p.foto ? 'Trocar foto' : 'Pôr foto'}
+                            rotuloAcessivel={`Foto de ${p.nome ?? 'instrutor'}`}
+                            aoEscolher={(arquivo) => trocarFotoDe(p, arquivo)}
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900">{p.nome ?? 'Sem nome'}</p>
+                          <p className={`truncate ${texto.apoio}`}>{p.email}</p>
+                          <div className="mt-1.5">
+                            {preencheram?.has(p.id) ? (
+                              <button
+                                type="button"
+                                onClick={() => abrirRpa(p.id, p.nome ?? p.email ?? 'Instrutor')}
+                                aria-label={`Ver dados do RPA de ${p.nome ?? p.email ?? 'instrutor'}`}
+                                className={`${selo.base} ${selo.sucesso} hover:underline ${foco}`}
+                              >
+                                ✓ Dados do RPA · ver
+                              </button>
+                            ) : preencheram ? (
+                              <span className={`${selo.base} ${selo.atencao}`}>Dados do RPA pendentes</span>
+                            ) : erroRpa ? (
+                              <span className={`${selo.base} ${selo.erro}`}>Dados do RPA indisponíveis</span>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
                       <button

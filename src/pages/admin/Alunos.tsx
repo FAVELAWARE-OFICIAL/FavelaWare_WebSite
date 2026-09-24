@@ -60,15 +60,16 @@ const BarraFrequencia: React.FC<{ frequencia: number | null }> = ({ frequencia }
 };
 
 const Alunos: React.FC = () => {
-  const { edicao, dados, painel, recarregarDados } = useAdmin();
+  const { edicao, dados, painel, recarregarDados, somenteLeitura } = useAdmin();
   const [ordem, setOrdem] = useState<{ campo: Coluna; crescente: boolean }>({ campo: 'nome', crescente: true });
   // undefined = janela fechada; null = cadastro novo; Participante = edição
   const [emEdicao, setEmEdicao] = useState<Participante | null | undefined>(undefined);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
   const [janelaAcessos, setJanelaAcessos] = useState(false);
-  // Quem já tem login no sistema (vem pronto do cache; o layout carrega na abertura)
+  // Quem já tem login no sistema (vem pronto do cache; o layout carrega na abertura).
+  // O parceiro não vê acesso nem login dos alunos.
   const { dados: acessos, recarregar: recarregarAcessos } = useDadosEmCache(CHAVE_ACESSOS, () =>
-    servicoAcessos.carregar(),
+    somenteLeitura ? Promise.resolve<Record<number, SituacaoDoAcesso>>({}) : servicoAcessos.carregar(),
   );
   const situacao = (id: number): SituacaoDoAcesso => acessos?.[id] ?? 'sem-acesso';
   // Criar acesso pode gerar o login do aluno: atualiza as duas listas
@@ -103,11 +104,14 @@ const Alunos: React.FC = () => {
     await recarregarDados();
   };
 
-  const botaoEditar = (a: AlunoDoPainel) => (
-    <Botao onClick={() => setEmEdicao(a)} tamanho="pequeno" aria-label={`Editar ${a.nome}`}>
-      Editar
-    </Botao>
-  );
+  // Parceiro só vê: sem editar e sem a situação do acesso
+  const botaoEditar = (a: AlunoDoPainel) =>
+    somenteLeitura ? null : (
+      <Botao onClick={() => setEmEdicao(a)} tamanho="pequeno" aria-label={`Editar ${a.nome}`}>
+        Editar
+      </Botao>
+    );
+  const seloDoAcesso = (a: AlunoDoPainel) => (somenteLeitura ? null : <SeloAcesso situacao={situacao(a.id)} />);
 
   return (
     <>
@@ -142,23 +146,27 @@ const Alunos: React.FC = () => {
             <span className={`${texto.apoio} pb-2`}>
               {ordenados.length} aluno{ordenados.length === 1 ? '' : 's'}
             </span>
-            <Botao
-              onClick={() => {
-                setMensagem(null);
-                setJanelaAcessos(true);
-              }}
-            >
-              Acessos
-            </Botao>
-            <Botao
-              variante="primario"
-              onClick={() => {
-                setMensagem(null);
-                setEmEdicao(null);
-              }}
-            >
-              + Novo aluno
-            </Botao>
+            {!somenteLeitura && (
+              <>
+                <Botao
+                  onClick={() => {
+                    setMensagem(null);
+                    setJanelaAcessos(true);
+                  }}
+                >
+                  Acessos
+                </Botao>
+                <Botao
+                  variante="primario"
+                  onClick={() => {
+                    setMensagem(null);
+                    setEmEdicao(null);
+                  }}
+                >
+                  + Novo aluno
+                </Botao>
+              </>
+            )}
           </>
         }
       />
@@ -166,7 +174,7 @@ const Alunos: React.FC = () => {
       {!ordenados.length ? (
         <Vazio>
           {painel.alunos.length === 0 && !dados.participantes.some((p) => p.funcao === 'aluno')
-            ? 'Esta edição ainda não tem alunos. Clique em "Novo aluno" para cadastrar.'
+            ? `Esta edição ainda não tem alunos.${somenteLeitura ? '' : ' Clique em "Novo aluno" para cadastrar.'}`
             : 'Nenhum aluno com os filtros atuais.'}
         </Vazio>
       ) : (
@@ -180,9 +188,7 @@ const Alunos: React.FC = () => {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-gray-900">{a.nome}</p>
                     <p className={`truncate ${texto.apoio}`}>{[a.turma, a.login].filter(Boolean).join(' · ')}</p>
-                    <div className="mt-1">
-                      <SeloAcesso situacao={situacao(a.id)} />
-                    </div>
+                    <div className="mt-1 empty:hidden">{seloDoAcesso(a)}</div>
                   </div>
                   {botaoEditar(a)}
                 </div>
@@ -240,7 +246,7 @@ const Alunos: React.FC = () => {
                           <p className="font-medium text-gray-900">{a.nome}</p>
                           <p className={`flex flex-wrap items-center gap-2 ${texto.apoio}`}>
                             {a.login}
-                            <SeloAcesso situacao={situacao(a.id)} />
+                            {seloDoAcesso(a)}
                           </p>
                         </div>
                       </div>

@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { IconeAlerta, IconeClipe, IconeEnviarArquivo, IconeLink, IconeRelogio } from '../admin/Icones';
 import Janela from '../admin/Janela';
-import { Aviso, Botao, classeCampo, classeRotulo, type Mensagem } from '../admin/Ui';
+import { Aviso, Botao, classeCampo, classeRotulo, classeTextoLongo, type Mensagem } from '../admin/Ui';
 import { estado, foco, selo, texto } from '../admin/designSystem';
 import HistoricoDeTentativas from './HistoricoDeTentativas';
 import {
@@ -31,11 +31,12 @@ import {
   ROTULO_TIPO_LINK,
   servicoEntregas,
   tiposAceitos,
-  TAMANHO_MAXIMO_ARQUIVO,
   type EtapaEnvio,
   type Formato,
 } from '../../lib/entregas';
+import { TAMANHO_MAXIMO_ARQUIVO } from '../../config';
 import { StatusProcessamento } from '../../types';
+import { tamanhoLegivel } from '../../utils/arquivos';
 import { formatarDataHora } from '../../utils/datas';
 
 export const COR_SITUACAO: Record<Situacao, string> = {
@@ -61,11 +62,6 @@ function quantoFalta(prazo: string): string {
   const dias = Math.floor(horas / 24);
   return dias === 1 ? 'falta 1 dia' : `faltam ${dias} dias`;
 }
-
-const tamanhoLegivel = (bytes: number) =>
-  bytes < 1024 * 1024
-    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
-    : `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB`;
 
 // ============================================
 // JANELA DA ATIVIDADE
@@ -312,7 +308,7 @@ const JanelaDaAtividade: React.FC<PropsJanela> = ({ atividade, participanteId, d
                 placeholder="Conte o que você fez, ou escreva a sua resposta aqui."
                 onChange={(e) => setComentario(e.target.value)}
                 disabled={ocupado}
-                className={`${classeCampo} resize-y`}
+                className={classeTextoLongo}
               />
             </div>
 

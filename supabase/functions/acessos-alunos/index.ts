@@ -20,7 +20,9 @@ import {
   cabecalhosCors,
   clienteAdmin,
   criarResposta,
+  lerJson,
   recusaSeNaoForGestor,
+  servir,
 } from '../_shared/http.ts';
 
 /** O mesmo domínio de src/lib/sessao.ts (DOMINIO_ALUNO) */
@@ -53,7 +55,7 @@ interface Ignorado {
 function loginDoNome(nome: string): string {
   const partes = nome
     .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z\s]/g, ' ')
     .split(/\s+/)
@@ -149,10 +151,7 @@ class ServicoAcessos {
   }
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
-  if (req.method !== 'POST') return resposta(405, { erro: 'Método não permitido' });
-
+async function gerenciarAcessos(req: Request): Promise<Response> {
   const admin = clienteAdmin();
 
   // 1. Só gestor
@@ -160,12 +159,8 @@ Deno.serve(async (req) => {
   if (recusa) return resposta(recusa.http, { erro: recusa.erro });
 
   // 2. Pedido
-  let corpo: { acao?: unknown; participantes?: unknown; senha?: unknown };
-  try {
-    corpo = await req.json();
-  } catch {
-    return resposta(400, { erro: 'Pedido inválido.' });
-  }
+  const corpo = await lerJson(req);
+  if (!corpo) return resposta(400, { erro: 'Pedido inválido.' });
   const acao = corpo.acao === 'redefinir' ? 'redefinir' : corpo.acao === 'criar' ? 'criar' : null;
   const ids = Array.isArray(corpo.participantes)
     ? corpo.participantes.filter((i): i is number => Number.isInteger(i))
@@ -215,4 +210,6 @@ Deno.serve(async (req) => {
   }
 
   return resposta(200, { criados: servico.criados, redefinidos: servico.redefinidos, ignorados: servico.ignorados });
-});
+}
+
+servir('acessos-alunos', CORS, { POST: gerenciarAcessos });

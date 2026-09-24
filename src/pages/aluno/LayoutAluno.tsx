@@ -10,15 +10,14 @@
  * O material e as atividades são carregados aqui, durante o carregamento: a
  * página das trilhas abre pronta.
  */
-import { Suspense, useEffect, useState } from 'react';
-import { useLocation, useOutlet } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { useOutlet } from 'react-router-dom';
 
 import RotaProtegida from '../../components/RotaProtegida';
-import Moldura, { Carregando } from '../../components/admin/Moldura';
+import Moldura, { TransicaoDaArea } from '../../components/admin/Moldura';
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
 import type { ItemMenu } from '../../components/admin/MenuLateral';
-import { IconeMaterial } from '../../components/admin/Icones';
+import { IconeMaterial, IconeSolicitacoes } from '../../components/admin/Icones';
 import { CHAVE_ATIVIDADES_ALUNO, servicoAtividades } from '../../lib/atividades';
 import { servicoCache } from '../../lib/cache';
 import { CHAVE_MATERIAL, servicoMaterial } from '../../lib/material';
@@ -26,10 +25,10 @@ import { CHAVE_MATERIAL, servicoMaterial } from '../../lib/material';
 const ITENS_MENU: ItemMenu[] = [
   // Materiais e atividades juntos, em abas dentro de cada trilha
   { caminho: '/aluno', rotulo: 'Trilhas', Icone: IconeMaterial },
+  { caminho: '/aluno/solicitacoes', rotulo: 'Solicitações', Icone: IconeSolicitacoes },
 ];
 
 const AreaDoAluno: React.FC = () => {
-  const { pathname } = useLocation();
   const pagina = useOutlet();
   const [pronta, setPronta] = useState(false);
   const mostrarCarregando = useCarregamentoCompleto(!pronta, 0);
@@ -38,6 +37,7 @@ const AreaDoAluno: React.FC = () => {
   useEffect(() => {
     Promise.all([
       import('./TrilhasAluno'),
+      import('./SolicitacoesAluno'),
       import('../Perfil'),
       servicoCache.buscar(CHAVE_MATERIAL, () => servicoMaterial.carregarTrilhas(), true),
       servicoCache.buscar(CHAVE_ATIVIDADES_ALUNO, () => servicoAtividades.carregarDoAluno(), true),
@@ -48,29 +48,7 @@ const AreaDoAluno: React.FC = () => {
 
   return (
     <Moldura itens={ITENS_MENU} subtitulo="Área do aluno">
-      <AnimatePresence mode="wait" initial={false}>
-        {mostrarCarregando || !pronta ? (
-          <motion.div
-            key="carregando"
-            className="flex flex-1 flex-col"
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <Carregando texto="Abrindo as trilhas" />
-          </motion.div>
-        ) : (
-          <motion.div
-            key={pathname}
-            className="flex flex-1 flex-col"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6, transition: { duration: 0.15 } }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <Suspense fallback={<Carregando texto="Abrindo as trilhas" />}>{pagina}</Suspense>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <TransicaoDaArea carregando={mostrarCarregando || !pronta} pronta texto="Abrindo as trilhas" pagina={pagina} />
     </Moldura>
   );
 };

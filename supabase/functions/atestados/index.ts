@@ -26,25 +26,15 @@
 import {
   base64,
   clienteDoUsuario,
-  conteudoBateComTipo,
   drive,
+  lerArquivoDoFormulario,
   nomeDePasta,
   nomeParaDownload,
   paginaDeTexto,
   respostaDeDownload,
-  TAMANHO_MAXIMO_ARQUIVO,
+  TIPOS_DE_ATESTADO,
 } from '../_shared/drive.ts';
-import { cabecalhosCors, clienteAdmin, criarResposta } from '../_shared/http.ts';
-
-/** Atestado: PDF ou foto (os mesmos tipos da tabela atestados) */
-const TIPOS: Record<string, string> = {
-  'application/pdf': 'pdf',
-  'image/png': 'png',
-  'image/jpeg': 'jpg',
-  'image/webp': 'webp',
-};
-/** Folga do formulário multipart sobre o arquivo */
-const MARGEM_DO_FORMULARIO = 1024 * 1024;
+import { cabecalhosCors, clienteAdmin, criarResposta, lerJson, servir, UUID_VALIDO } from '../_shared/http.ts';
 
 const CORS = cabecalhosCors('GET, POST, OPTIONS');
 const resposta = criarResposta(CORS);
@@ -92,7 +82,7 @@ async function descobrirDono(
   }
 
   const professorId = String(form.get('professor_id') ?? '').trim() || usuario.usuarioId;
-  if (!/^[0-9a-f-]{36}$/.test(professorId)) return resposta(400, { erro: 'Instrutor inválido.' });
+  if (!UUID_VALIDO.test(professorId)) return resposta(400, { erro: 'Instrutor inválido.' });
   if (professorId !== usuario.usuarioId && papel !== 'gestor') {
     return resposta(403, { erro: 'Só o gestor envia atestado de outro instrutor.' });
   }
@@ -114,30 +104,14 @@ async function enviar(req: Request): Promise<Response> {
   const usuario = await clienteDoUsuario(req);
   if (!usuario) return resposta(401, { erro: 'Faça login novamente.' });
 
-  // Pedido grande demais é recusado antes de ser lido
-  const tamanhoDoPedido = Number(req.headers.get('Content-Length') ?? '0');
-  if (!tamanhoDoPedido || tamanhoDoPedido > TAMANHO_MAXIMO_ARQUIVO + MARGEM_DO_FORMULARIO) {
-    return resposta(413, { erro: 'O atestado precisa ter até 10 MB.' });
-  }
-  let form: FormData;
-  try {
-    form = await req.formData();
-  } catch {
-    return resposta(400, { erro: 'Pedido inválido.' });
-  }
-
   // 1. O arquivo: tipo, tamanho e conteúdo (um .exe chamado de .pdf não passa)
-  const arquivo = form.get('arquivo');
-  if (!(arquivo instanceof File)) return resposta(400, { erro: 'Arquivo não recebido.' });
-  const ext = TIPOS[arquivo.type];
-  if (!ext) return resposta(400, { erro: 'Envie o atestado em PDF ou foto (PNG, JPG ou WebP).' });
-  if (arquivo.size < 1 || arquivo.size > TAMANHO_MAXIMO_ARQUIVO) {
-    return resposta(400, { erro: 'O atestado precisa ter até 10 MB.' });
-  }
-  const bytes = new Uint8Array(await arquivo.arrayBuffer());
-  if (!conteudoBateComTipo(bytes, arquivo.type)) {
-    return resposta(400, { erro: 'O conteúdo do arquivo não bate com o tipo. Envie o arquivo original.' });
-  }
+  const lido = await lerArquivoDoFormulario(req, TIPOS_DE_ATESTADO, resposta, {
+    tamanho: 'O atestado precisa ter até 10 MB.',
+    tipo: 'Envie o atestado em PDF ou foto (PNG, JPG ou WebP).',
+    conteudo: 'O conteúdo do arquivo não bate com o tipo. Envie o arquivo original.',
+  });
+  if (lido instanceof Response) return lido;
+  const { form, arquivo, bytes, ext } = lido;
 
   // 2. De quem é e se quem envia pode enviar
   const dono = await descobrirDono(form, usuario);
@@ -202,14 +176,10 @@ async function enviar(req: Request): Promise<Response> {
 async function gerarLink(req: Request): Promise<Response> {
   const usuario = await clienteDoUsuario(req);
   if (!usuario) return resposta(401, { erro: 'Faça login novamente.' });
-  let corpo: { atestado_id?: unknown };
-  try {
-    corpo = await req.json();
-  } catch {
-    return resposta(400, { erro: 'Pedido inválido.' });
-  }
+  const corpo = await lerJson(req);
+  if (!corpo) return resposta(400, { erro: 'Pedido inválido.' });
   const id = typeof corpo.atestado_id === 'string' ? corpo.atestado_id : '';
-  if (!/^[0-9a-f-]{36}$/.test(id)) return resposta(400, { erro: 'Atestado inválido.' });
+  if (!UUID_VALIDO.test(id)) return resposta(400, { erro: 'Atestado inválido.' });
 
   // A RLS só devolve o atestado ao gestor
   const { data } = await usuario.cliente.from('atestados').select('id').eq('id', id).not('drive_id', 'is', null).maybeSingle();
@@ -228,20 +198,11 @@ async function baixar(url: URL): Promise<Response> {
     .not('drive_id', 'is', null)
     .maybeSingle();
   if (!arquivo) return paginaDeTexto(CORS, 404, 'Atestado não encontrado.');
-  return respostaDeDownload(arquivo, TIPOS, CORS, 'atestados', 'atestado');
+  return respostaDeDownload(arquivo, TIPOS_DE_ATESTADO, CORS, 'atestados', 'atestado');
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
-  const url = new URL(req.url);
-  const rota = url.pathname.split('/').pop();
-  try {
-    if (req.method === 'POST' && rota === 'enviar') return await enviar(req);
-    if (req.method === 'POST' && rota === 'link') return await gerarLink(req);
-    if (req.method === 'GET' && rota === 'baixar') return await baixar(url);
-    return resposta(404, { erro: 'Rota não encontrada.' });
-  } catch (e) {
-    console.error('[atestados] erro inesperado', String(e));
-    return resposta(500, { erro: 'Erro inesperado. Tente de novo.' });
-  }
+servir('atestados', CORS, {
+  'POST enviar': (req) => enviar(req),
+  'POST link': (req) => gerarLink(req),
+  'GET baixar': (_req, url) => baixar(url),
 });

@@ -18,9 +18,10 @@ import {
   type Justificativa,
 } from '../../lib/atestados';
 import { StatusProcessamento } from '../../types';
+import { tamanhoLegivel } from '../../utils/arquivos';
 import Carregamento, { aguardarCicloCompleto } from './Carregamento';
 import Janela from './Janela';
-import { Aviso, Botao, classeCampo, classeRotulo, type Mensagem } from './Ui';
+import { Aviso, Botao, classeRotulo, classeTextoLongo, type Mensagem } from './Ui';
 import { foco, texto } from './designSystem';
 
 interface Props {
@@ -33,9 +34,6 @@ interface Props {
   aoConfirmar: (justificativa: Justificativa) => void;
   aoFechar: () => void;
 }
-
-const tamanhoLegivel = (bytes: number) =>
-  bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
 const JanelaDeJustificativa: React.FC<Props> = ({ aberta, subtitulo, dono, inicial, aoConfirmar, aoFechar }) => {
   const [textoDaJustificativa, setTextoDaJustificativa] = useState('');
@@ -113,7 +111,7 @@ const JanelaDeJustificativa: React.FC<Props> = ({ aberta, subtitulo, dono, inici
             value={textoDaJustificativa}
             onChange={(e) => setTextoDaJustificativa(e.target.value)}
             placeholder="Ex.: consulta médica, doença, luto, compromisso escolar…"
-            className={`${classeCampo} resize-none`}
+            className={classeTextoLongo}
             aria-describedby="justificativa-contador"
           />
           <p id="justificativa-contador" className={`mt-1 text-right ${texto.apoio}`}>

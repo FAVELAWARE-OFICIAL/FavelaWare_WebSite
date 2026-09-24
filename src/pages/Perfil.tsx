@@ -1,6 +1,6 @@
 /**
  * ============================================
- * MEU PERFIL (gestor, professor e aluno)
+ * MEU PERFIL (gestor, professor, aluno e parceiro, este só para ver)
  * ============================================
  *
  * Aberta pela foto na barra superior. Dois cartões:
@@ -15,15 +15,17 @@ import { Link } from 'react-router-dom';
 import Carregamento, { aguardarCicloCompleto, useCarregamentoCompleto } from '../components/admin/Carregamento';
 import { Carregando } from '../components/admin/Moldura';
 import { Aviso, Botao, Cartao, classeCampo, classeRotulo, type Mensagem } from '../components/admin/Ui';
-import { espaco, foco, texto } from '../components/admin/designSystem';
+import { espaco, foco, selo, superficie, texto } from '../components/admin/designSystem';
+import Avatar from '../components/admin/Avatar';
+import { CAPA_AZUL, CAPA_VERDE } from '../data/imagens';
+import { useCampos } from '../hooks/useCampos';
 import { servicoPerfil, type MeusDados } from '../lib/perfil';
-import RequisitosDaSenha from '../components/RequisitosDaSenha';
-import { servicoSenha, TAMANHO_MINIMO_SENHA, type EtapaSenha } from '../lib/senha';
+import CamposDeNovaSenha from '../components/CamposDeNovaSenha';
+import { servicoSenha, type EtapaSenha } from '../lib/senha';
 import { StatusProcessamento } from '../types';
 import { hoje as hojeLocal } from '../utils/datas';
 import { emailValido } from '../utils/texto';
-
-const NOME_DO_PAPEL = { gestor: 'Gestor', professor: 'Instrutor', aluno: 'Aluno' } as const;
+import { NOME_DO_PAPEL } from '../lib/sessao';
 
 const Perfil: React.FC = () => {
   const [dados, setDados] = useState<MeusDados | null>(null);
@@ -49,25 +51,54 @@ const Perfil: React.FC = () => {
   if (mostrarCarregando || !dados) return <Carregando texto="Abrindo seu perfil" />;
 
   return (
-    <div className={`grid grid-cols-1 ${espaco.grade} lg:grid-cols-2`}>
-      <MeusDadosCartao dados={dados} />
-      <TrocarSenhaCartao />
-      {dados.papel === 'professor' && (
-        <Cartao
-          titulo="Dados para o RPA"
-          descricao="CPF, identidade, INSS/PIS, endereço e os outros dados do recibo de pagamento."
-        >
-          <Link
-            to="/dados-do-instrutor"
-            className={`inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 ${foco} focus-visible:ring-offset-2`}
+    <div className="w-full">
+      <Identidade dados={dados} />
+      <div className={`grid grid-cols-1 ${espaco.grade} lg:grid-cols-2`}>
+        <MeusDadosCartao dados={dados} />
+        <TrocarSenhaCartao />
+        {dados.papel === 'professor' && (
+          <Cartao
+            titulo="Dados para o RPA"
+            descricao="CPF, identidade, INSS/PIS, endereço e os outros dados do recibo de pagamento."
+            className="lg:col-span-2"
           >
-            Ver e atualizar meus dados
-          </Link>
-        </Cartao>
-      )}
+            <Link
+              to="/dados-do-instrutor"
+              className={`inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 ${foco} focus-visible:ring-offset-2`}
+            >
+              Ver e atualizar meus dados
+            </Link>
+          </Cartao>
+        )}
+      </div>
     </div>
   );
 };
+
+// ============ 0. QUEM ESTÁ LOGADO ============
+/**
+ * Cartão de identidade: capa da marca (#programandomudanças), foto grande, nome,
+ * papel e acesso. A capa é a verde no tema claro e a azul no escuro; o resto usa
+ * as cores do design system, que têm versão no tema escuro.
+ */
+const Identidade: React.FC<{ dados: MeusDados }> = ({ dados }) => (
+  <section aria-label="Quem está logado" className={`${superficie.cartao} ${espaco.entreBlocos} overflow-hidden`}>
+    {/* Proporção da arte (4:1): a capa aparece inteira em qualquer largura */}
+    <img src={CAPA_VERDE} alt="" className="so-tema-claro aspect-[4/1] w-full bg-favela-green-500 object-cover" />
+    <img src={CAPA_AZUL} alt="" className="so-tema-escuro aspect-[4/1] w-full bg-[#1f1d5c] object-cover" />
+    <div className="flex flex-col items-center gap-3 px-5 pb-5 text-center sm:flex-row sm:items-end sm:gap-5 sm:text-left">
+      {/* A foto sobe sobre a faixa; o anel tem a cor do cartão (clara ou escura) */}
+      <span className="-mt-10 shrink-0 rounded-full bg-white p-1 shadow-md sm:-mt-12">
+        <Avatar foto={dados.foto} nome={dados.nome} tamanho="lg" />
+      </span>
+      <div className="min-w-0 flex-1 sm:pb-1">
+        <h2 className="truncate text-lg font-semibold text-gray-900">{dados.nome || 'Sem nome'}</h2>
+        <p className={`mt-0.5 truncate ${texto.apoio}`}>{dados.acesso}</p>
+      </div>
+      {dados.papel && <span className={`${selo.base} ${selo.marca} sm:mb-1`}>{NOME_DO_PAPEL[dados.papel]}</span>}
+    </div>
+  </section>
+);
 
 // ============ 1. MEUS DADOS ============
 const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
@@ -101,7 +132,10 @@ const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
   const podeEditar = ehEquipe || dados.aluno !== null;
 
   return (
-    <Cartao titulo="Meus dados">
+    <Cartao
+      titulo="Meus dados"
+      descricao={podeEditar ? 'O que aparece para a coordenação e na conversa.' : 'Só para consulta.'}
+    >
       <form onSubmit={salvar} className={espaco.formulario}>
         <div>
           <label htmlFor="perfil-nome" className={classeRotulo}>
@@ -122,7 +156,11 @@ const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
           ) : (
             <>
               <input id="perfil-nome" value={nome} readOnly className={`${classeCampo} bg-gray-50 text-gray-600`} />
-              <p className={`mt-1 ${texto.apoio}`}>É o nome da chamada. Para corrigir, fale com a coordenação.</p>
+              <p className={`mt-1 ${texto.apoio}`}>
+                {dados.papel === 'aluno'
+                  ? 'É o nome da chamada. Para corrigir, fale com a coordenação.'
+                  : 'Para corrigir, fale com a coordenação.'}
+              </p>
             </>
           )}
         </div>
@@ -137,9 +175,7 @@ const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
             readOnly
             className={`${classeCampo} bg-gray-50 text-gray-600`}
           />
-          <p className={`mt-1 ${texto.apoio}`}>
-            {dados.papel ? NOME_DO_PAPEL[dados.papel] : ''} · o acesso não muda por aqui.
-          </p>
+          <p className={`mt-1 ${texto.apoio}`}>O acesso não muda por aqui.</p>
         </div>
 
         {dados.aluno && (
@@ -248,22 +284,19 @@ const SenhaTrocada: React.FC<{ aoContinuar: () => void }> = ({ aoContinuar }) =>
 );
 
 const TrocarSenhaCartao: React.FC = () => {
-  const vazio = { atual: '', nova: '', confirmacao: '' };
-  const [campos, setCampos] = useState(vazio);
+  const vazio = { atual: '', senha: '', confirmacao: '' };
+  const { campos, setCampos, aoAlterarCampo } = useCampos(vazio);
   const [etapa, setEtapa] = useState<EtapaSenha | null>(null);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
   const [trocada, setTrocada] = useState(false);
 
-  const mudar = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setCampos((c) => ({ ...c, [e.target.name]: e.target.value }));
-
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
     setMensagem(null);
-    const problema = servicoSenha.validarNova(campos.nova, campos.confirmacao, 'A nova senha', 'As duas senhas novas');
+    const problema = servicoSenha.validarNova(campos.senha, campos.confirmacao, 'A nova senha', 'As duas senhas novas');
     if (problema) return setMensagem({ tipo: 'erro', texto: problema });
 
-    const resultado = await servicoSenha.trocar(campos.atual, campos.nova, setEtapa);
+    const resultado = await servicoSenha.trocar(campos.atual, campos.senha, setEtapa);
     await aguardarCicloCompleto(); // a pintura do carregamento termina antes do resultado
     setEtapa(null);
     if (resultado.status !== StatusProcessamento.Sucesso)
@@ -275,7 +308,7 @@ const TrocarSenhaCartao: React.FC = () => {
   const ocupado = etapa !== null;
 
   return (
-    <Cartao titulo="Trocar senha">
+    <Cartao titulo="Segurança" descricao="Troque a senha quando quiser. Os outros aparelhos saem da conta.">
       <div className="relative">
         {ocupado && (
           <Carregamento
@@ -298,46 +331,21 @@ const TrocarSenhaCartao: React.FC = () => {
                 autoComplete="current-password"
                 required
                 value={campos.atual}
-                onChange={mudar}
+                onChange={aoAlterarCampo}
                 disabled={ocupado}
                 className={classeCampo}
               />
             </div>
-            <div>
-              <label htmlFor="senha-nova" className={classeRotulo}>
-                Nova senha
-              </label>
-              <input
-                id="senha-nova"
-                name="nova"
-                aria-describedby="requisitos-senha-nova"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={TAMANHO_MINIMO_SENHA}
-                value={campos.nova}
-                onChange={mudar}
-                disabled={ocupado}
-                className={classeCampo}
-              />
-              <RequisitosDaSenha senha={campos.nova} id="requisitos-senha-nova" />
-            </div>
-            <div>
-              <label htmlFor="senha-confirmacao" className={classeRotulo}>
-                Repita a nova senha
-              </label>
-              <input
-                id="senha-confirmacao"
-                name="confirmacao"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={campos.confirmacao}
-                onChange={mudar}
-                disabled={ocupado}
-                className={classeCampo}
-              />
-            </div>
+            <CamposDeNovaSenha
+              senha={campos.senha}
+              confirmacao={campos.confirmacao}
+              aoAlterar={aoAlterarCampo}
+              rotuloDaSenha="Nova senha"
+              rotuloDaConfirmacao="Repita a nova senha"
+              estilo={{ campo: classeCampo, rotulo: classeRotulo }}
+              prefixoDoId="nova-"
+              desabilitado={ocupado}
+            />
 
             <Aviso mensagem={mensagem} className="" />
             <div>

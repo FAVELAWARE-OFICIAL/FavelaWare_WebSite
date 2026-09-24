@@ -8,9 +8,9 @@
  * cai no avatar padrão também.
  */
 import { useState } from 'react';
+import { FOTO_PADRAO_DE_PESSOA } from '../../data/imagens';
 
 // Mesmo avatar usado em src/pages/TurmaDetalhe.tsx
-export const FOTO_PADRAO = '/imgs/turmas/sem-foto.webp';
 
 const TAMANHOS = { sm: 'h-9 w-9', md: 'h-12 w-12', lg: 'h-20 w-20' };
 
@@ -22,7 +22,7 @@ const Avatar: React.FC<{ foto: string | null; nome: string; tamanho?: keyof type
   const [falhou, setFalhou] = useState(false);
   return (
     <img
-      src={foto && !falhou ? foto : FOTO_PADRAO}
+      src={foto && !falhou ? foto : FOTO_PADRAO_DE_PESSOA}
       alt={foto && !falhou ? `Foto de ${nome}` : ''}
       onError={() => setFalhou(true)}
       loading="lazy"

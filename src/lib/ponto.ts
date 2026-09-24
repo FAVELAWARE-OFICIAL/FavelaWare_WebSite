@@ -8,7 +8,8 @@
  * Quem grava é a função registrar_ponto do banco (as regras RLS valem lá dentro).
  */
 import type { Justificativa } from './atestados';
-import { codigoDoErro } from './banco';
+import { CODIGO_REGRA_DO_BANCO, codigoDoErro } from './banco';
+import { servicoEquipe, type ProfessorAtual } from './equipe';
 import { servicoSessao } from './sessao';
 import { supabase } from './supabase';
 
@@ -58,7 +59,7 @@ export interface MeusPontos {
 }
 
 export interface PontosDaEquipe {
-  professores: { id: string; nome: string | null; email: string | null; foto: string | null }[];
+  professores: ProfessorAtual[];
   pontos: Ponto[];
 }
 
@@ -124,7 +125,7 @@ export class ServicoPonto {
   /** Gestor: professores atuais e os pontos de todos num período */
   async carregarDaEquipe(de: string, ate: string): Promise<PontosDaEquipe> {
     const [professores, pontos] = await Promise.all([
-      supabase.from('perfis').select('id, nome, email, foto').eq('papel', 'professor').order('nome'),
+      servicoEquipe.listarProfessores(),
       supabase
         .from('pontos_professores')
         .select('professor_id, data, situacao, registrado_em, justificativa, atestado_id')
@@ -132,16 +133,16 @@ export class ServicoPonto {
         .lte('data', ate)
         .order('data'),
     ]);
-    if (professores.error) throw professores.error;
     if (pontos.error) throw pontos.error;
-    return { professores: professores.data, pontos: pontos.data as Ponto[] };
+    return { professores, pontos: pontos.data as Ponto[] };
   }
 
   /** Texto para o usuário a partir do erro do banco (o detalhe técnico vai para o console) */
   mensagemDoErro(erro: unknown): string {
     const codigo = codigoDoErro(erro);
     console.error('[ponto] falha ao salvar', codigo, (erro as { message?: string } | null)?.message);
-    if (codigo === '22023') return 'Esse dia ainda não chegou no horário de Brasília. Escolha hoje ou um dia anterior.';
+    if (codigo === CODIGO_REGRA_DO_BANCO)
+      return 'Esse dia ainda não chegou no horário de Brasília. Escolha hoje ou um dia anterior.';
     if (codigo === '42501') return 'Só dá para marcar o ponto de quem é instrutor.';
     return 'Não foi possível salvar o ponto. Tente de novo.';
   }

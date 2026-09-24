@@ -24,6 +24,66 @@ export const TAMANHO_MAXIMO_ARQUIVO = 10 * 1024 * 1024;
 /** Validade do link de download (igual a VALIDADE_LINK_DOWNLOAD_S em src/config.ts) */
 export const VALIDADE_LINK_S = 120;
 
+/** Tipos de arquivo aceitos nas entregas e a extensão de cada um (os mesmos do portal e do Apps Script) */
+export const TIPOS_DE_ARQUIVO: Record<string, string> = {
+  'application/pdf': 'pdf',
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+  'text/plain': 'txt',
+  'application/zip': 'zip',
+  'application/x-zip-compressed': 'zip',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+};
+
+/** Atestado: só PDF ou foto (os mesmos tipos da tabela atestados) */
+export const TIPOS_DE_ATESTADO: Record<string, string> = Object.fromEntries(
+  ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'].map((tipo) => [tipo, TIPOS_DE_ARQUIVO[tipo]]),
+);
+
+/** Folga do formulário multipart sobre o arquivo */
+const MARGEM_DO_FORMULARIO = 1024 * 1024;
+
+/** Textos de recusa de lerArquivoDoFormulario (mudam entre "arquivo" e "atestado") */
+interface TextosDoArquivo {
+  tamanho: string;
+  tipo: string;
+  conteudo: string;
+}
+
+/**
+ * Lê o formulário multipart e confere o arquivo: pedido grande demais é recusado
+ * antes de ser lido; depois o tipo pela lista, o tamanho e o conteúdo (um .exe
+ * chamado de .pdf não passa). Devolve o formulário e o arquivo, ou a recusa.
+ */
+export async function lerArquivoDoFormulario(
+  req: Request,
+  tipos: Record<string, string>,
+  resposta: (http: number, corpo: Record<string, unknown>) => Response,
+  textos: TextosDoArquivo,
+): Promise<{ form: FormData; arquivo: File; bytes: Uint8Array; ext: string } | Response> {
+  const tamanhoDoPedido = Number(req.headers.get('Content-Length') ?? '0');
+  if (!tamanhoDoPedido || tamanhoDoPedido > TAMANHO_MAXIMO_ARQUIVO + MARGEM_DO_FORMULARIO) {
+    return resposta(413, { erro: textos.tamanho });
+  }
+  let form: FormData;
+  try {
+    form = await req.formData();
+  } catch {
+    return resposta(400, { erro: 'Pedido inválido.' });
+  }
+  const arquivo = form.get('arquivo');
+  if (!(arquivo instanceof File)) return resposta(400, { erro: 'Arquivo não recebido.' });
+  const ext = tipos[arquivo.type];
+  if (!ext) return resposta(400, { erro: textos.tipo });
+  if (arquivo.size < 1 || arquivo.size > TAMANHO_MAXIMO_ARQUIVO) return resposta(400, { erro: textos.tamanho });
+  const bytes = new Uint8Array(await arquivo.arrayBuffer());
+  if (!conteudoBateComTipo(bytes, arquivo.type)) return resposta(400, { erro: textos.conteudo });
+  return { form, arquivo, bytes, ext };
+}
+
 export class DriveIndisponivel extends Error {}
 
 export class ServicoDrive {
@@ -147,7 +207,7 @@ export const drive = new ServicoDrive(
 // ============================================
 
 /** Primeiros bytes de cada tipo aceito (o tipo declarado pelo navegador não basta) */
-export function conteudoBateComTipo(b: Uint8Array, mime: string): boolean {
+function conteudoBateComTipo(b: Uint8Array, mime: string): boolean {
   const comeca = (...assinatura: number[]) => assinatura.every((x, i) => b[i] === x);
   switch (mime) {
     case 'application/pdf':
@@ -223,11 +283,7 @@ export async function respostaDeDownload(
   origem: string,
   nomeReserva = 'arquivo',
 ): Promise<Response> {
-  const pagina = (status: number, texto: string) =>
-    new Response(texto, {
-      status,
-      headers: { ...cors, 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
-    });
+  const pagina = (status: number, texto: string) => paginaDeTexto(cors, status, texto);
   try {
     const r = await drive.chamar('baixar', { id: arquivo.drive_id });
     if (!r.ok || typeof r.base64 !== 'string') return pagina(404, 'Arquivo não encontrado no Drive.');

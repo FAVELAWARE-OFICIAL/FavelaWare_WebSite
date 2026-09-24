@@ -36,6 +36,7 @@ import {
 } from '../lib/dadosInstrutor';
 import { servicoSessao } from '../lib/sessao';
 import { hoje as hojeLocal } from '../utils/datas';
+import { FUNDO_DA_MARCA, LOGO } from '../data/imagens';
 
 // Campo compacto: a etapa inteira precisa caber na tela sem rolar
 const classeCampo =
@@ -381,7 +382,7 @@ const DadosDoInstrutor: React.FC = () => {
       <aside
         className="relative hidden w-[36%] max-w-xl flex-col justify-between overflow-hidden bg-[#8bc53f] p-10 lg:flex xl:p-12"
         style={{
-          backgroundImage: "url('/imgs/backgrounds/fundo.webp')",
+          backgroundImage: `url('${FUNDO_DA_MARCA}')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
@@ -390,7 +391,7 @@ const DadosDoInstrutor: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-[#2d2a5f]/90 via-[#2d2a5f]/70 to-[#2d2a5f]/85" />
 
         <div className="relative z-10">
-          <img src="/imgs/logo/logo.png" alt="Logo FavelaWare" className="mb-8 w-44 object-contain drop-shadow-2xl" />
+          <img src={LOGO} alt="Logo FavelaWare" className="mb-8 w-44 object-contain drop-shadow-2xl" />
           <h1 className="mb-3 text-3xl font-bold leading-tight text-white drop-shadow-lg xl:text-4xl">
             {estado.jaTinha ? 'MEUS DADOS DA BOLSA' : 'DADOS DA BOLSA'}
           </h1>
@@ -460,7 +461,7 @@ const DadosDoInstrutor: React.FC = () => {
         <header className="shrink-0 border-b border-gray-200 bg-white px-4 py-2.5 sm:px-8 lg:px-12 lg:py-5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-3">
-              <img src="/imgs/logo/logo.png" alt="Logo FavelaWare" className="w-14 shrink-0 object-contain lg:hidden" />
+              <img src={LOGO} alt="Logo FavelaWare" className="w-14 shrink-0 object-contain lg:hidden" />
               <div className="min-w-0">
                 <h1 className="truncate text-base font-bold text-gray-900 lg:hidden">
                   {estado.jaTinha ? 'Meus dados da bolsa' : 'Dados da bolsa'}

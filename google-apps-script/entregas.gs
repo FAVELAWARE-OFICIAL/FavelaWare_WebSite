@@ -115,32 +115,18 @@ function enviar(dados, raiz) {
     if (!new RegExp('^\\d{1,18}-[0-9a-f-]{36}\\.' + ext + '$').test(dados.nome)) return { erro: 'pedido' };
   }
 
-  var bytes = Utilities.base64Decode(dados.base64);
-  if (bytes.length < 1 || bytes.length > TAMANHO_MAXIMO) return { erro: 'tamanho' };
-
-  // Criar pastas com trava: dois envios ao mesmo tempo não duplicam a pasta
-  var trava = LockService.getScriptLock();
-  trava.waitLock(ESPERA_DA_TRAVA_MS);
-  var pasta;
-  try {
-    pasta = dePessoa
+  return gravarNaPasta(dados, function () {
+    return dePessoa
       ? pastaFilha(pastaDaPessoa(raiz, 'Alunos', dados.pessoa), 'atividade')
       : pastaFilha(pastaFilha(raiz, 'turma_' + dados.turma), 'atividade_' + dados.atividade);
-  } finally {
-    trava.releaseLock();
-  }
-
-  var arquivo = pasta.createFile(Utilities.newBlob(bytes, dados.mime, dados.nome));
-  return { ok: true, id: arquivo.getId() };
+  });
 }
 
-// Atestado: PDF ou foto (os mesmos tipos da Edge Function "atestados")
-var TIPOS_ATESTADO = {
-  'application/pdf': 'pdf',
-  'image/png': 'png',
-  'image/jpeg': 'jpg',
-  'image/webp': 'webp'
-};
+// Atestado: PDF ou foto (os mesmos tipos da Edge Function "atestados"), tirados de TIPOS
+var TIPOS_ATESTADO = {};
+['application/pdf', 'image/png', 'image/jpeg', 'image/webp'].forEach(function (tipo) {
+  TIPOS_ATESTADO[tipo] = TIPOS[tipo];
+});
 var GRUPOS_ATESTADO = { Alunos: true, Instrutores: true };
 
 /**
@@ -155,20 +141,9 @@ function guardarAtestado(dados, raiz) {
   if (typeof dados.pessoa !== 'string' || !NOME_SEGURO.test(dados.pessoa)) return { erro: 'pedido' };
   if (!new RegExp('^[0-9a-f-]{36}\\.' + ext + '$').test(dados.nome)) return { erro: 'pedido' };
 
-  var bytes = Utilities.base64Decode(dados.base64);
-  if (bytes.length < 1 || bytes.length > TAMANHO_MAXIMO) return { erro: 'tamanho' };
-
-  var trava = LockService.getScriptLock();
-  trava.waitLock(ESPERA_DA_TRAVA_MS);
-  var pasta;
-  try {
-    pasta = pastaFilha(pastaDaPessoa(raiz, dados.grupo, dados.pessoa), 'atestado');
-  } finally {
-    trava.releaseLock();
-  }
-
-  var arquivo = pasta.createFile(Utilities.newBlob(bytes, dados.mime, dados.nome));
-  return { ok: true, id: arquivo.getId() };
+  return gravarNaPasta(dados, function () {
+    return pastaFilha(pastaDaPessoa(raiz, dados.grupo, dados.pessoa), 'atestado');
+  });
 }
 
 /** Devolve o conteúdo (base64) de um arquivo que está dentro da pasta raiz */
@@ -189,6 +164,27 @@ function lixeira(dados, raiz) {
 // ============================================
 // Ajudantes
 // ============================================
+
+/**
+ * Parte comum dos envios: decodifica, confere o tamanho, acha (ou cria) a pasta
+ * com trava (dois envios ao mesmo tempo não duplicam a pasta) e grava o arquivo.
+ */
+function gravarNaPasta(dados, obterPasta) {
+  var bytes = Utilities.base64Decode(dados.base64);
+  if (bytes.length < 1 || bytes.length > TAMANHO_MAXIMO) return { erro: 'tamanho' };
+
+  var trava = LockService.getScriptLock();
+  trava.waitLock(ESPERA_DA_TRAVA_MS);
+  var pasta;
+  try {
+    pasta = obterPasta();
+  } finally {
+    trava.releaseLock();
+  }
+
+  var arquivo = pasta.createFile(Utilities.newBlob(bytes, dados.mime, dados.nome));
+  return { ok: true, id: arquivo.getId() };
+}
 
 /**
  * Só mexe em arquivo que está dentro da pasta raiz (nunca em outro lugar do Drive):

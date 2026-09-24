@@ -7,14 +7,8 @@
  * ele troca no primeiro acesso. Criar e redefinir exige a chave secreta do
  * Supabase, então passa pela Edge Function "acessos-alunos" (roda no servidor).
  */
-import {
-  excecaoDeNegocio,
-  excecaoDeSistema,
-  sucesso,
-  type ResultadoOperacao,
-  type StatusProcessamento,
-} from '../types';
-import { erroDeSistemaNaFuncao, mensagemDaFuncao } from './banco';
+import { sucesso, type ResultadoOperacao, type StatusProcessamento } from '../types';
+import { resultadoDaFuncao } from './banco';
 import { supabase } from './supabase';
 
 export type SituacaoDoAcesso = 'sem-acesso' | 'primeiro-acesso' | 'ativo';
@@ -63,8 +57,9 @@ export class ServicoAcessos {
   ): Promise<{ resultado: ResultadoOperacao; acessos?: ResultadoDosAcessos }> {
     const { data, error } = await supabase.functions.invoke('acessos-alunos', { body: { acao, participantes, senha } });
     if (!error) return { resultado: sucesso(), acessos: data as ResultadoDosAcessos };
-    const mensagem = await mensagemDaFuncao(error, 'Não foi possível concluir agora. Tente de novo em instantes.');
-    return { resultado: erroDeSistemaNaFuncao(error) ? excecaoDeSistema(mensagem) : excecaoDeNegocio(mensagem) };
+    return {
+      resultado: await resultadoDaFuncao(error, 'Não foi possível concluir agora. Tente de novo em instantes.'),
+    };
   }
 }
 

@@ -150,9 +150,13 @@ Regras de UI na skill `.claude/skills/favelaware-padrao-visual/`.
 | Área | Rota | Papel | O que tem |
 | --- | --- | --- | --- |
 | Gestor | `/dashboard` | `gestor` | visão geral, alunos, chamada, turmas, equipe, solicitações, ponto dos instrutores, trilhas |
+| Parceiro | `/dashboard` | `parceiro` | só leitura: visão geral, alunos e chamada |
 | Instrutor | `/professor` | `professor` | chamada, ponto, trilhas |
-| Aluno | `/aluno` | `aluno` | trilhas e atividades |
+| Aluno | `/aluno` | `aluno` | trilhas, atividades e solicitações |
 | Todos | `/perfil` de cada área | qualquer | dados pessoais |
+
+Parceiro novo: convite pelo painel do Supabase (Authentication > Invite user) e, no SQL Editor,
+`update public.perfis set papel = 'parceiro', nome = '...', email = '...' where id = (select id from auth.users where email = '...');`.
 
 ```mermaid
 flowchart TD
@@ -180,11 +184,11 @@ Todas as tabelas com RLS, testadas em `supabase/testes/`.
 | --- | --- |
 | `perfis` | identidade e papel |
 | `edicoes`, `turmas`, `participantes`, `duplas` | edições, turmas e alunos |
-| `aulas`, `presencas`, `mudancas_horario` | cronograma e chamada |
+| `aulas`, `presencas`, `mudancas_horario` | cronograma e chamada (`mudancas_horario` é histórico de 2022, sem tela) |
 | `professores_turmas`, `pontos_professores`, `dados_instrutores` | instrutores, ponto e dados do RPA |
 | `trilhas`, `conteudos`, `conteudos_turma`, `materiais` | trilhas e material |
 | `atividades`, `tentativas`, `arquivos_entrega` | atividades e entregas |
-| `solicitacoes` | pedidos para o gestor |
+| `solicitacoes`, `mensagens_solicitacao` | pedidos dos alunos e a conversa com a coordenação |
 
 ## Git-flow
 

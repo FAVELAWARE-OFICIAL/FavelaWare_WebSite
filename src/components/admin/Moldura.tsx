@@ -9,16 +9,18 @@
  *
  * Não usa a Navbar nem o Footer do site: é área de trabalho.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import MenuLateral, { itemEstaAtivo, type ItemMenu } from './MenuLateral';
 import { IconeMenu } from './Icones';
-import { servicoSessao, type Papel } from '../../lib/sessao';
+import { NOME_DO_PAPEL, servicoSessao, type Papel } from '../../lib/sessao';
 import { EVENTO_PERFIL_ALTERADO } from '../../lib/perfil';
 import { StatusProcessamento } from '../../types';
 import { gravarPreferencia, lerPreferencia } from '../../utils/preferencias';
+import { iniciaisDoNome } from '../../utils/texto';
 import Carregamento from './Carregamento';
 import { foco } from './designSystem';
 import './tema-escuro.css';
@@ -109,7 +111,9 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
     setErroTroca(null);
     const { resultado, destino } = await servicoSessao.alternarPapel(papel);
     if (resultado.status === StatusProcessamento.Sucesso && destino) {
-      navigate(destino, { replace: true });
+      // Recarrega de verdade: gestor e parceiro usam o mesmo endereço, e a área
+      // precisa montar de novo com o papel novo (menu, abas, dados)
+      window.location.assign(destino);
       return;
     }
     setErroTroca(resultado.mensagem);
@@ -149,9 +153,11 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
                 onChange={(e) => verComo(e.target.value as Papel)}
                 className="w-full rounded-lg border border-white/15 bg-white/5 py-2 pl-3 pr-8 text-sm font-medium text-white focus:border-transparent focus:ring-2 focus:ring-favela-green-500 disabled:opacity-50 [&>option]:text-gray-900"
               >
-                <option value="gestor">Gestor</option>
-                <option value="professor">Instrutor</option>
-                <option value="aluno">Aluno</option>
+                {Object.entries(NOME_DO_PAPEL).map(([papel, nome]) => (
+                  <option key={papel} value={papel}>
+                    {nome}
+                  </option>
+                ))}
               </select>
               {erroTroca && (
                 <p role="alert" className="mt-1 text-xs text-red-300">
@@ -247,12 +253,7 @@ const FotoDoUsuario: React.FC<{ nome: string; foto: string | null }> = ({ nome, 
       </span>
     );
   }
-  const iniciais = nome
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]!.toUpperCase())
-    .join('');
+  const iniciais = iniciaisDoNome(nome);
   return (
     <span
       aria-label={nome}
@@ -297,5 +298,50 @@ const IconeLua: React.FC = () => (
 
 /** Carregamento das áreas restritas (com a cara do FavelaWare) */
 export const Carregando: React.FC<{ texto: string }> = ({ texto }) => <Carregamento texto={texto} />;
+
+// Transição entre páginas: o conteúdo entra subindo de leve e sai suave.
+// Com "reduzir movimento" no sistema, o MotionConfig do App tira o deslocamento.
+const TRANSICAO = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -6, transition: { duration: 0.15 } }, // a antiga sai rápido
+  transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+} as const;
+
+/**
+ * Conteúdo das áreas (gestor, instrutor, aluno): o carregamento sai em fade e a
+ * página entra; trocar de página também é suave. flex-1: o carregamento ocupa a
+ * área toda e fica no centro exato.
+ * - `carregando`: mostra a pintura do carregamento;
+ * - `pronta`: a página pode aparecer (falso sem carregar = nada ainda, ex.: erro).
+ * A `pagina` vem do useOutlet: na saída, a antiga continua na tela enquanto some.
+ */
+export const TransicaoDaArea: React.FC<{
+  carregando: boolean;
+  pronta: boolean;
+  texto: string;
+  pagina: React.ReactNode;
+}> = ({ carregando, pronta, texto, pagina }) => {
+  const { pathname } = useLocation();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      {carregando ? (
+        <motion.div
+          key="carregando"
+          className="flex flex-1 flex-col"
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+        >
+          <Carregando texto={texto} />
+        </motion.div>
+      ) : pronta ? (
+        <motion.div key={pathname} className="flex flex-1 flex-col" {...TRANSICAO}>
+          {/* As páginas já foram pré-carregadas: a espera do Suspense é imperceptível */}
+          <Suspense fallback={<Carregando texto={texto} />}>{pagina}</Suspense>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+};
 
 export default Moldura;

@@ -67,6 +67,7 @@ const TrilhasEquipe = lazy(() => import('./pages/equipe/TrilhasEquipe')); // Mat
 // Área do aluno (/aluno)
 const LayoutAluno = lazy(() => import('./pages/aluno/LayoutAluno'));
 const TrilhasAluno = lazy(() => import('./pages/aluno/TrilhasAluno')); // Materiais e atividades, por trilha
+const SolicitacoesAluno = lazy(() => import('./pages/aluno/SolicitacoesAluno')); // Pedidos do aluno à coordenação
 
 // Área do professor (/professor): também carregada sob demanda
 const LayoutProfessor = lazy(() => import('./pages/professor/LayoutProfessor'));
@@ -228,6 +229,7 @@ const App: React.FC = () => {
                 }
               >
                 <Route index element={<TrilhasAluno />} />
+                <Route path="solicitacoes" element={<SolicitacoesAluno />} />
                 {/* Endereço antigo: as atividades agora ficam nas trilhas */}
                 <Route path="atividades" element={<Navigate to="/aluno" replace />} />
                 <Route path="perfil" element={<Perfil />} />

@@ -12,7 +12,7 @@
  * papel): os dados passam pelas funções atualizar_meu_perfil e
  * atualizar_meus_dados_de_aluno, que só alteram a coluna certa.
  */
-import { codigoDoErro } from './banco';
+import { CODIGO_REGRA_DO_BANCO, codigoDoErro } from './banco';
 import { servicoSessao, type Papel } from './sessao';
 import { supabase } from './supabase';
 
@@ -24,6 +24,8 @@ export interface MeusDados {
   nome: string;
   /** Login (aluno) ou e-mail de acesso (equipe) */
   acesso: string;
+  /** Foto do perfil (aluno: a da ficha da turma); sem foto, o avatar padrão */
+  foto: string | null;
   /** Só aluno ligado a uma turma */
   aluno: { dataNascimento: string; email: string } | null;
 }
@@ -35,17 +37,19 @@ export class ServicoPerfil {
       papel: perfil.papel,
       nome: perfil.nome ?? '',
       acesso: servicoSessao.identificadorDoEmail(conta.email ?? ''),
+      foto: perfil.foto,
       aluno: null,
     };
 
     if (perfil.papel === 'aluno' && perfil.participanteId) {
       const { data, error } = await supabase
         .from('participantes')
-        .select('nome, data_nascimento, email')
+        .select('nome, data_nascimento, email, foto')
         .eq('id', perfil.participanteId)
         .single();
       if (error) throw error;
       dados.nome = data.nome;
+      dados.foto = dados.foto ?? data.foto;
       dados.aluno = { dataNascimento: data.data_nascimento ?? '', email: data.email ?? '' };
     }
     return dados;
@@ -73,7 +77,7 @@ export class ServicoPerfil {
     const codigo = codigoDoErro(erro);
     console.error('[perfil] falha ao salvar', codigo); // só o código: o detalhe traz a linha com os dados
     if (codigo === '23514') return 'Confira o e-mail e a data de nascimento.';
-    if (codigo === '22023') {
+    if (codigo === CODIGO_REGRA_DO_BANCO) {
       return deAluno ? 'Informe a data de nascimento e o e-mail.' : 'O nome precisa ter entre 2 e 80 letras.';
     }
     return 'Não foi possível salvar. Tente de novo.';

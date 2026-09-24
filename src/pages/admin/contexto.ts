@@ -12,6 +12,8 @@ import type { Edicao } from '../../lib/edicoes';
 import type { DadosDaEdicao, Filtros, Painel, Presenca } from '../../lib/painel';
 
 export interface ContextoAdmin {
+  /** Parceiro: só vê (sem cadastrar, corrigir ou responder); o banco também recusa */
+  somenteLeitura: boolean;
   edicao: Edicao;
   edicoes: Edicao[];
   dados: DadosDaEdicao;

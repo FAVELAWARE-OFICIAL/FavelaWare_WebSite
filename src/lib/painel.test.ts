@@ -57,7 +57,6 @@ const dados: DadosDaEdicao = {
       atestado_id: null,
     },
   ],
-  mudancasHorario: [],
 };
 
 describe('montarPainel: presentes por aula', () => {
