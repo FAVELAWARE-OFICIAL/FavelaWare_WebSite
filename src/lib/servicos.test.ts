@@ -4,6 +4,7 @@ vi.mock('./supabase', () => import('../testes/supabaseFalso'));
 
 import { consultaFalha, removerDoStorage } from '../testes/supabaseFalso';
 import { servicoAlunos } from './alunos';
+import { servicoAtestados } from './atestados';
 import { servicoEdicoes } from './edicoes';
 import { servicoMaterial } from './material';
 import { mensagemDeErroDeCadastro } from './banco';
@@ -75,7 +76,14 @@ describe('senha nova', () => {
 });
 
 describe('ponto: dia fora do histórico carregado', () => {
-  const ponto = (data: string): Ponto => ({ professor_id: 'p', data, situacao: 'presente', registrado_em: data });
+  const ponto = (data: string): Ponto => ({
+    professor_id: 'p',
+    data,
+    situacao: 'presente',
+    registrado_em: data,
+    justificativa: null,
+    atestado_id: null,
+  });
 
   it('histórico incompleto cobre qualquer dia', () => {
     expect(servicoPonto.diaEstaNoHistorico([ponto('2026-03-10')], '2020-01-01')).toBe(true);
@@ -161,6 +169,27 @@ describe('falha ao ler a próxima ordem', () => {
       consultaFalha.ativa = false;
       vi.restoreAllMocks();
     }
+  });
+});
+
+describe('falta justificada', () => {
+  const arquivo = (tipo: string, tamanho = 10) => new File([new Uint8Array(tamanho)], 'atestado', { type: tipo });
+
+  it('exige a justificativa e aceita o atestado em PDF ou foto', () => {
+    expect(servicoAtestados.validar('  ', null)).toBe('Escreva a justificativa da falta.');
+    expect(servicoAtestados.validar('Consulta médica', null)).toBeNull();
+    expect(servicoAtestados.validar('Consulta médica', arquivo('application/pdf'))).toBeNull();
+    expect(servicoAtestados.validar('Consulta médica', arquivo('image/jpeg'))).toBeNull();
+  });
+
+  it('recusa outro tipo, arquivo grande e texto longo', () => {
+    expect(servicoAtestados.validar('Consulta', arquivo('application/zip'))).toBe(
+      'Envie o atestado em PDF ou foto (PNG, JPG ou WebP).',
+    );
+    expect(servicoAtestados.validar('Consulta', arquivo('application/pdf', 11 * 1024 * 1024))).toBe(
+      'O atestado passa de 10 MB.',
+    );
+    expect(servicoAtestados.validar('x'.repeat(1001), null)).toBe('A justificativa passa de 1000 caracteres.');
   });
 });
 

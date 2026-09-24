@@ -10,6 +10,7 @@
  *   que cria a aula (se ainda não existir) e grava as presenças numa transação.
  * - O gestor corrige uma célula da planilha de chamada.
  */
+import type { Justificativa } from './atestados';
 import { supabase } from './supabase';
 
 /** Só estas três opções na chamada feita pelo site ("folga" é só de professor) */
@@ -47,6 +48,9 @@ export interface AlunoDaChamada {
   login: string | null;
   foto: string | null;
 }
+
+/** Justificativa de cada aluno marcado J: { id do aluno: justificativa } */
+export type JustificativasDaChamada = Record<number, Justificativa | undefined>;
 
 export interface AulaRegistrada {
   id: number;
@@ -87,31 +91,53 @@ export class ServicoChamada {
     return data as AulaRegistrada[];
   }
 
-  /** Marcações já salvas numa aula: { id do aluno: situação } */
-  async carregarMarcacoes(aulaId: number): Promise<Record<number, Marcacao>> {
-    const { data, error } = await supabase.from('presencas').select('participante_id, situacao').eq('aula_id', aulaId);
+  /** Marcações já salvas numa aula ({ id do aluno: situação }) e as justificativas dos J */
+  async carregarMarcacoes(
+    aulaId: number,
+  ): Promise<{ marcacoes: Record<number, Marcacao>; justificativas: JustificativasDaChamada }> {
+    const { data, error } = await supabase
+      .from('presencas')
+      .select('participante_id, situacao, justificativa, atestado_id')
+      .eq('aula_id', aulaId);
     if (error) throw error;
     const marcacoes: Record<number, Marcacao> = {};
+    const justificativas: JustificativasDaChamada = {};
     for (const p of data) {
       // "folga" é só de professor; aqui só entram as três opções da chamada
       if (p.situacao === 'presente' || p.situacao === 'ausente' || p.situacao === 'justificada') {
         marcacoes[p.participante_id] = p.situacao;
       }
+      if (p.situacao === 'justificada' && (p.justificativa || p.atestado_id)) {
+        justificativas[p.participante_id] = { texto: p.justificativa ?? '', atestadoId: p.atestado_id };
+      }
     }
-    return marcacoes;
+    return { marcacoes, justificativas };
   }
 
-  /** Grava a chamada do dia. Aluno sem marcação fica (ou volta a ficar) sem registro. */
+  /**
+   * Grava a chamada do dia. Aluno sem marcação fica (ou volta a ficar) sem registro.
+   * Aluno com J leva a justificativa e o atestado (o banco apaga os dois nas outras marcações).
+   */
   async salvar(
     turmaId: number,
     data: string,
     alunos: AlunoDaChamada[],
     marcacoes: Record<number, Marcacao | undefined>,
+    justificativas: JustificativasDaChamada = {},
   ): Promise<void> {
     const { error } = await supabase.rpc('registrar_chamada', {
       p_turma_id: turmaId,
       p_data: data,
-      p_registros: alunos.map((a) => ({ participante_id: a.id, situacao: marcacoes[a.id] ?? null })),
+      p_registros: alunos.map((a) => {
+        const situacao = marcacoes[a.id] ?? null;
+        const justificativa = situacao === 'justificada' ? justificativas[a.id] : undefined;
+        return {
+          participante_id: a.id,
+          situacao,
+          justificativa: justificativa?.texto ?? null,
+          atestado_id: justificativa?.atestadoId ?? null,
+        };
+      }),
     });
     if (error) throw error;
   }

@@ -8,10 +8,12 @@
  * - Clicar grava na hora; clicar de novo na marcação escolhida desmarca.
  * - Embaixo, os últimos pontos dele.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
+import JanelaDeJustificativa from '../../components/admin/JanelaDeJustificativa';
 import { Carregando } from '../../components/admin/Moldura';
+import type { Justificativa } from '../../lib/atestados';
 import { Aviso, Cartao, Vazio, classeCampo, classeRotulo, type Mensagem } from '../../components/admin/Ui';
 import { espaco, foco, selo, texto } from '../../components/admin/designSystem';
 import { useDadosEmCache } from '../../hooks/useDadosEmCache';
@@ -56,12 +58,26 @@ const MeuPonto: React.FC = () => {
     ? pontos?.find((p) => p.data === dia)?.situacao
     : (diaForaDoHistorico?.situacao ?? undefined);
 
-  const marcar = async (valor: SituacaoPonto) => {
-    const nova = marcadoNoDia === valor ? null : valor; // clicar de novo desmarca
+  // Justificativa do dia escolhido (só existe com J)
+  const pontoDoDia = noHistorico ? pontos?.find((p) => p.data === dia) : undefined;
+  const justificativaDoDia: Justificativa | null =
+    pontoDoDia?.situacao === 'justificada' && (pontoDoDia.justificativa || pontoDoDia.atestado_id)
+      ? { texto: pontoDoDia.justificativa ?? '', atestadoId: pontoDoDia.atestado_id }
+      : null;
+  const [justificandoDia, setJustificandoDia] = useState(false);
+  const fecharJustificativa = useCallback(() => setJustificandoDia(false), []);
+
+  const marcar = (valor: SituacaoPonto) => {
+    // J pede a justificativa antes de gravar (a janela grava ao confirmar)
+    if (valor === 'justificada' && marcadoNoDia !== 'justificada') return setJustificandoDia(true);
+    gravar(marcadoNoDia === valor ? null : valor); // clicar de novo desmarca
+  };
+
+  const gravar = async (nova: SituacaoPonto | null, justificativa?: Justificativa) => {
     setSalvando(nova ?? 'limpar');
     setMensagem(null);
     try {
-      await servicoPonto.registrar(dia, nova);
+      await servicoPonto.registrar(dia, nova, undefined, justificativa);
       if (!noHistorico) setDiaForaDoHistorico({ dia, situacao: nova });
     } catch (e) {
       setMensagem({ tipo: 'erro', texto: servicoPonto.mensagemDoErro(e) });
@@ -148,9 +164,42 @@ const MeuPonto: React.FC = () => {
           </div>
 
           <Aviso mensagem={mensagem} className="" />
+          {marcadoNoDia === 'justificada' && (
+            <button
+              type="button"
+              onClick={() => setJustificandoDia(true)}
+              disabled={salvando !== null}
+              className={`flex w-full items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-left hover:bg-amber-100 ${foco}`}
+            >
+              <span aria-hidden="true" className="text-lg">
+                {justificativaDoDia?.atestadoId ? '📄' : '📝'}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-amber-900">Justificativa</span>
+                <span className="block text-sm text-amber-900/80">
+                  {justificativaDoDia?.texto || 'Sem justificativa. Clique para escrever.'}
+                </span>
+                {justificativaDoDia?.atestadoId && (
+                  <span className="mt-0.5 block text-xs text-amber-800">Atestado anexado</span>
+                )}
+              </span>
+              <span className="text-xs font-semibold text-amber-900 underline">Editar</span>
+            </button>
+          )}
           {marcadoNoDia && !mensagem && (
             <p className={texto.apoio}>Clique de novo na marcação escolhida para desmarcar.</p>
           )}
+          <JanelaDeJustificativa
+            aberta={justificandoDia}
+            subtitulo={`Seu ponto · ${formatarData(dia)}`}
+            dono={{}}
+            inicial={justificativaDoDia}
+            aoConfirmar={(justificativa) => {
+              setJustificandoDia(false);
+              gravar('justificada', justificativa);
+            }}
+            aoFechar={fecharJustificativa}
+          />
         </div>
       </Cartao>
 
@@ -168,6 +217,7 @@ const MeuPonto: React.FC = () => {
                 <li key={p.data}>
                   <button
                     type="button"
+                    title={p.justificativa ?? undefined}
                     onClick={() => {
                       setDia(p.data);
                       setMensagem(null);
@@ -178,6 +228,11 @@ const MeuPonto: React.FC = () => {
                     <span>
                       <span className={`block ${texto.destaque}`}>{formatarData(p.data)}</span>
                       <span className={`block capitalize ${texto.apoio}`}>{diaDaSemana(p.data)}</span>
+                      {p.justificativa && (
+                        <span className="mt-0.5 block max-w-[14rem] truncate text-xs text-amber-800">
+                          {p.atestado_id ? '📄' : '📝'} {p.justificativa}
+                        </span>
+                      )}
                     </span>
                     <span className={`${selo.base} ${estiloSelo}`}>
                       {op.letra} · {op.rotulo}

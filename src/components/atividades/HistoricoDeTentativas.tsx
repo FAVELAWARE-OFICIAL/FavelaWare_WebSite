@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { foco, texto } from '../admin/designSystem';
 import type { Tentativa } from '../../lib/atividades';
 import { servicoEntregas } from '../../lib/entregas';
+import { baixarPorLink } from '../../utils/arquivos';
 import { formatarDataHora } from '../../utils/datas';
 
 const Avatar: React.FC<{ nome: string; tom: 'aluno' | 'professor' }> = ({ nome, tom }) => {
@@ -41,16 +42,7 @@ const BotaoArquivo: React.FC<{ tentativa: Tentativa; nome: string }> = ({ tentat
   const baixar = async () => {
     setEstado('abrindo');
     try {
-      // Baixa por aqui e salva com o nome certo: se o servidor ou o Drive falhar,
-      // o erro aparece no botão, sem tirar a pessoa do portal
-      const r = await fetch(await servicoEntregas.linkDoArquivo(tentativa));
-      if (!r.ok) throw new Error(`download ${r.status}`);
-      const endereco = URL.createObjectURL(await r.blob());
-      const a = document.createElement('a');
-      a.href = endereco;
-      a.download = nome;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(endereco), 10000);
+      await baixarPorLink(await servicoEntregas.linkDoArquivo(tentativa), nome);
       setEstado('parado');
     } catch (e) {
       console.error('[atividades] falha ao gerar o link do arquivo', e);

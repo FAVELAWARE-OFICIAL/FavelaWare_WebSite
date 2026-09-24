@@ -7,6 +7,7 @@
  * Sem localização: os professores são de confiança. O gestor vê e corrige todos.
  * Quem grava é a função registrar_ponto do banco (as regras RLS valem lá dentro).
  */
+import type { Justificativa } from './atestados';
 import { codigoDoErro } from './banco';
 import { servicoSessao } from './sessao';
 import { supabase } from './supabase';
@@ -40,6 +41,8 @@ export interface Ponto {
   data: string;
   situacao: SituacaoPonto;
   registrado_em: string;
+  justificativa: string | null;
+  atestado_id: string | null;
 }
 
 /** Quantos pontos recentes aparecem no histórico do professor */
@@ -60,12 +63,21 @@ export interface PontosDaEquipe {
 }
 
 export class ServicoPonto {
-  /** Marca (ou desmarca, com situação nula) o ponto de um dia. Sem professor = o próprio. */
-  async registrar(data: string, situacao: SituacaoPonto | null, professorId?: string): Promise<void> {
+  /**
+   * Marca (ou desmarca, com situação nula) o ponto de um dia. Sem professor = o próprio.
+   * Com J, leva a justificativa e o atestado (o banco apaga os dois nas outras marcações).
+   */
+  async registrar(
+    data: string,
+    situacao: SituacaoPonto | null,
+    professorId?: string,
+    justificativa?: Justificativa,
+  ): Promise<void> {
     const { error } = await supabase.rpc('registrar_ponto', {
       p_data: data,
       p_situacao: situacao,
       ...(professorId ? { p_professor: professorId } : {}),
+      ...(justificativa ? { p_justificativa: justificativa.texto, p_atestado: justificativa.atestadoId } : {}),
     });
     if (error) throw error;
   }
@@ -80,7 +92,7 @@ export class ServicoPonto {
 
     const { data, error } = await supabase
       .from('pontos_professores')
-      .select('professor_id, data, situacao, registrado_em')
+      .select('professor_id, data, situacao, registrado_em, justificativa, atestado_id')
       .eq('professor_id', conta.id)
       .order('data', { ascending: false })
       .limit(QUANTIDADE_NO_HISTORICO);
@@ -101,7 +113,7 @@ export class ServicoPonto {
     const { conta } = await servicoSessao.exigirContaLogada();
     const { data, error } = await supabase
       .from('pontos_professores')
-      .select('situacao')
+      .select('situacao, justificativa, atestado_id')
       .eq('professor_id', conta.id)
       .eq('data', dia)
       .maybeSingle();
@@ -115,7 +127,7 @@ export class ServicoPonto {
       supabase.from('perfis').select('id, nome, email, foto').eq('papel', 'professor').order('nome'),
       supabase
         .from('pontos_professores')
-        .select('professor_id, data, situacao, registrado_em')
+        .select('professor_id, data, situacao, registrado_em, justificativa, atestado_id')
         .gte('data', de)
         .lte('data', ate)
         .order('data'),

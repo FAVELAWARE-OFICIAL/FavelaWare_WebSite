@@ -43,6 +43,8 @@ export interface Presenca {
   aula_id: number;
   situacao: Situacao;
   registro_original: string;
+  justificativa: string | null;
+  atestado_id: string | null;
 }
 
 export interface MudancaHorario {
@@ -85,9 +87,12 @@ export class ServicoPainel {
         (de, ate) =>
           supabase
             .from('presencas')
-            .select('participante_id, aula_id, situacao, registro_original, aulas!inner()', {
-              count: de === 0 ? 'exact' : undefined,
-            })
+            .select(
+              'participante_id, aula_id, situacao, registro_original, justificativa, atestado_id, aulas!inner()',
+              {
+                count: de === 0 ? 'exact' : undefined,
+              },
+            )
             .eq('aulas.edicao_id', edicaoId)
             .order('aula_id')
             .order('participante_id')

@@ -10,6 +10,7 @@
 import { useCallback, useState } from 'react';
 
 import Carregamento, { aguardarCicloCompleto } from '../../components/admin/Carregamento';
+import DetalheDaJustificativa from '../../components/admin/DetalheDaJustificativa';
 import Janela from '../../components/admin/Janela';
 import PlanilhaDeChamada, { ESTILO_SITUACAO, LegendaSituacoes } from '../../components/admin/PlanilhaDeChamada';
 import { Aviso, BarraDeFiltros, Botao, Cartao, Vazio, type Mensagem } from '../../components/admin/Ui';
@@ -55,6 +56,9 @@ const Chamada: React.FC = () => {
               participante_id: correcao.pessoa.id,
               situacao,
               registro_original: LETRA_DA_MARCACAO[situacao],
+              // A justificativa só fica com J (o banco apaga nas outras)
+              justificativa: situacao === 'justificada' ? (correcao.presenca?.justificativa ?? null) : null,
+              atestado_id: situacao === 'justificada' ? (correcao.presenca?.atestado_id ?? null) : null,
             }
           : null,
       );
@@ -127,6 +131,10 @@ const Chamada: React.FC = () => {
                 ? `${ESTILO_SITUACAO[correcao.presenca.situacao].rotulo} (registro "${correcao.presenca.registro_original}")`
                 : 'sem registro'}
             </p>
+            <DetalheDaJustificativa
+              justificativa={correcao.presenca?.justificativa ?? null}
+              atestadoId={correcao.presenca?.atestado_id ?? null}
+            />
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {OPCOES.map((op) => {
                 const atual = correcao.presenca?.situacao === op.valor;

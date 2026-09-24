@@ -12,6 +12,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
+import DetalheDaJustificativa from '../../components/admin/DetalheDaJustificativa';
 import Janela from '../../components/admin/Janela';
 import { Carregando } from '../../components/admin/Moldura';
 import PlanilhaDeChamada, { LegendaSituacoes } from '../../components/admin/PlanilhaDeChamada';
@@ -55,10 +56,10 @@ const PresencaProfessores: React.FC = () => {
   // Grade: só os professores atuais e os dias em que algum deles tem ponto no
   // período (do mais antigo ao mais novo). O ponto de quem deixou de ser
   // professor fica guardado no banco, mas não aparece aqui.
-  const { dias, celula, totais } = useMemo(() => {
+  const { dias, celula, pontoDe, totais } = useMemo(() => {
     const atuais = new Set((dados?.professores ?? []).map((p) => p.id));
     const pontos = (dados?.pontos ?? []).filter((p) => atuais.has(p.professor_id));
-    const mapa = new Map(pontos.map((p) => [`${p.professor_id}|${p.data}`, p.situacao]));
+    const mapa = new Map(pontos.map((p) => [`${p.professor_id}|${p.data}`, p]));
     const contagem = new Map<string, Record<SituacaoPonto, number>>();
     for (const p of pontos) {
       const c = contagem.get(p.professor_id) ?? { presente: 0, ausente: 0, justificada: 0 };
@@ -67,7 +68,8 @@ const PresencaProfessores: React.FC = () => {
     }
     return {
       dias: [...new Set(pontos.map((p) => p.data))].sort(),
-      celula: (professorId: string, data: string) => mapa.get(`${professorId}|${data}`),
+      celula: (professorId: string, data: string) => mapa.get(`${professorId}|${data}`)?.situacao,
+      pontoDe: (professorId: string, data: string) => mapa.get(`${professorId}|${data}`),
       totais: (professorId: string) => contagem.get(professorId) ?? { presente: 0, ausente: 0, justificada: 0 },
     };
   }, [dados]);
@@ -273,6 +275,10 @@ const PresencaProfessores: React.FC = () => {
               <br />
               Hoje está como: {correcao.atual ? opcaoDoPonto(correcao.atual).rotulo : 'sem registro'}
             </p>
+            <DetalheDaJustificativa
+              justificativa={pontoDe(correcao.professorId, correcao.data)?.justificativa ?? null}
+              atestadoId={pontoDe(correcao.professorId, correcao.data)?.atestado_id ?? null}
+            />
             <OpcoesDePonto
               atual={correcao.atual}
               desabilitado={salvando}
