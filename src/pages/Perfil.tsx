@@ -9,13 +9,15 @@
  * O instrutor tem um terceiro: o atalho para atualizar os dados do RPA.
  */
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
-import { useCarregamentoCompleto } from '../components/admin/Carregamento';
+import Carregamento, { aguardarCicloCompleto, useCarregamentoCompleto } from '../components/admin/Carregamento';
 import { Carregando } from '../components/admin/Moldura';
 import { Aviso, Botao, Cartao, classeCampo, classeRotulo, type Mensagem } from '../components/admin/Ui';
 import { espaco, foco, texto } from '../components/admin/designSystem';
 import { servicoPerfil, type MeusDados } from '../lib/perfil';
+import RequisitosDaSenha from '../components/RequisitosDaSenha';
 import { servicoSenha, TAMANHO_MINIMO_SENHA, type EtapaSenha } from '../lib/senha';
 import { StatusProcessamento } from '../types';
 import { hoje as hojeLocal } from '../utils/datas';
@@ -192,11 +194,65 @@ const MeusDadosCartao: React.FC<{ dados: MeusDados }> = ({ dados }) => {
 };
 
 // ============ 2. TROCAR SENHA ============
+
+/** Confirmação da troca: o ✓ se desenha e a mensagem entra logo depois */
+const SenhaTrocada: React.FC<{ aoContinuar: () => void }> = ({ aoContinuar }) => (
+  <motion.div
+    role="status"
+    initial={{ opacity: 0, scale: 0.96 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.3 }}
+    className="flex flex-col items-center py-6 text-center"
+  >
+    <motion.div
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+      className="relative mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-favela-green-500 to-favela-green-600 shadow-lg shadow-favela-green-500/30"
+    >
+      {/* Onda que se espalha em volta do círculo */}
+      <motion.span
+        aria-hidden="true"
+        className="absolute inset-0 rounded-full border-2 border-favela-green-500"
+        initial={{ scale: 1, opacity: 0.6 }}
+        animate={{ scale: 1.6, opacity: 0 }}
+        transition={{ duration: 1, delay: 0.3, ease: 'easeOut' }}
+      />
+      <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" aria-hidden="true">
+        <motion.path
+          d="M5 12.5l4.5 4.5L19 7.5"
+          stroke="white"
+          strokeWidth={2.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.45, delay: 0.25, ease: 'easeOut' }}
+        />
+      </svg>
+    </motion.div>
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+      <p className="text-lg font-bold text-gray-900">Senha trocada!</p>
+      <p className={`mx-auto mt-1 max-w-xs ${texto.corpo} text-gray-600`}>
+        Nos outros aparelhos, será preciso entrar de novo.
+      </p>
+      <div className="mx-auto mt-4 flex max-w-xs items-start gap-2 rounded-lg bg-gray-50 p-3 text-left text-xs text-gray-600">
+        <span aria-hidden="true">🔒</span>
+        <span>Neste aparelho você continua conectado. Guarde a nova senha num lugar seguro.</span>
+      </div>
+      <Botao className="mt-5" onClick={aoContinuar}>
+        Concluir
+      </Botao>
+    </motion.div>
+  </motion.div>
+);
+
 const TrocarSenhaCartao: React.FC = () => {
   const vazio = { atual: '', nova: '', confirmacao: '' };
   const [campos, setCampos] = useState(vazio);
   const [etapa, setEtapa] = useState<EtapaSenha | null>(null);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
+  const [trocada, setTrocada] = useState(false);
 
   const mudar = (e: React.ChangeEvent<HTMLInputElement>) =>
     setCampos((c) => ({ ...c, [e.target.name]: e.target.value }));
@@ -208,80 +264,94 @@ const TrocarSenhaCartao: React.FC = () => {
     if (problema) return setMensagem({ tipo: 'erro', texto: problema });
 
     const resultado = await servicoSenha.trocar(campos.atual, campos.nova, setEtapa);
+    await aguardarCicloCompleto(); // a pintura do carregamento termina antes do resultado
     setEtapa(null);
     if (resultado.status !== StatusProcessamento.Sucesso)
       return setMensagem({ tipo: 'erro', texto: resultado.mensagem! });
     setCampos(vazio);
-    setMensagem({ tipo: 'sucesso', texto: 'Senha trocada. Nos outros aparelhos, será preciso entrar de novo.' });
+    setTrocada(true);
   };
 
   const ocupado = etapa !== null;
 
   return (
     <Cartao titulo="Trocar senha">
-      <form onSubmit={salvar} className={espaco.formulario}>
-        <div>
-          <label htmlFor="senha-atual" className={classeRotulo}>
-            Senha atual
-          </label>
-          <input
-            id="senha-atual"
-            name="atual"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={campos.atual}
-            onChange={mudar}
-            disabled={ocupado}
-            className={classeCampo}
+      <div className="relative">
+        {ocupado && (
+          <Carregamento
+            modo="sobreposto"
+            texto={etapa === 'conferindo' ? 'Conferindo a senha atual' : 'Salvando a nova senha'}
           />
-        </div>
-        <div>
-          <label htmlFor="senha-nova" className={classeRotulo}>
-            Nova senha
-          </label>
-          <input
-            id="senha-nova"
-            name="nova"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={TAMANHO_MINIMO_SENHA}
-            value={campos.nova}
-            onChange={mudar}
-            disabled={ocupado}
-            className={classeCampo}
-          />
-          <p className={`mt-1 ${texto.apoio}`}>Pelo menos {TAMANHO_MINIMO_SENHA} caracteres.</p>
-        </div>
-        <div>
-          <label htmlFor="senha-confirmacao" className={classeRotulo}>
-            Repita a nova senha
-          </label>
-          <input
-            id="senha-confirmacao"
-            name="confirmacao"
-            type="password"
-            autoComplete="new-password"
-            required
-            value={campos.confirmacao}
-            onChange={mudar}
-            disabled={ocupado}
-            className={classeCampo}
-          />
-        </div>
+        )}
+        {trocada ? (
+          <SenhaTrocada aoContinuar={() => setTrocada(false)} />
+        ) : (
+          <form onSubmit={salvar} className={espaco.formulario}>
+            <div>
+              <label htmlFor="senha-atual" className={classeRotulo}>
+                Senha atual
+              </label>
+              <input
+                id="senha-atual"
+                name="atual"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={campos.atual}
+                onChange={mudar}
+                disabled={ocupado}
+                className={classeCampo}
+              />
+            </div>
+            <div>
+              <label htmlFor="senha-nova" className={classeRotulo}>
+                Nova senha
+              </label>
+              <input
+                id="senha-nova"
+                name="nova"
+                aria-describedby="requisitos-senha-nova"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={TAMANHO_MINIMO_SENHA}
+                value={campos.nova}
+                onChange={mudar}
+                disabled={ocupado}
+                className={classeCampo}
+              />
+              <RequisitosDaSenha senha={campos.nova} id="requisitos-senha-nova" />
+            </div>
+            <div>
+              <label htmlFor="senha-confirmacao" className={classeRotulo}>
+                Repita a nova senha
+              </label>
+              <input
+                id="senha-confirmacao"
+                name="confirmacao"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={campos.confirmacao}
+                onChange={mudar}
+                disabled={ocupado}
+                className={classeCampo}
+              />
+            </div>
 
-        <Aviso mensagem={mensagem} className="" />
-        <div>
-          <Botao type="submit" variante="primario" disabled={ocupado}>
-            {etapa === 'conferindo'
-              ? 'Conferindo senha atual…'
-              : etapa === 'salvando'
-                ? 'Salvando nova senha…'
-                : 'Trocar senha'}
-          </Botao>
-        </div>
-      </form>
+            <Aviso mensagem={mensagem} className="" />
+            <div>
+              <Botao type="submit" variante="primario" disabled={ocupado}>
+                {etapa === 'conferindo'
+                  ? 'Conferindo senha atual…'
+                  : etapa === 'salvando'
+                    ? 'Salvando nova senha…'
+                    : 'Trocar senha'}
+              </Botao>
+            </div>
+          </form>
+        )}
+      </div>
     </Cartao>
   );
 };

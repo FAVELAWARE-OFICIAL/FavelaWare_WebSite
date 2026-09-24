@@ -6,10 +6,10 @@
  */
 import { createClient } from '@supabase/supabase-js';
 
-import { CHAVE_PUBLICAVEL_SUPABASE as chavePublicavel, URL_SUPABASE as url } from '../config';
+import { CHAVE_PUBLICAVEL_SUPABASE as chavePublicavel, ErroDeConfiguracao, URL_SUPABASE as url } from '../config';
 
 if (!url || !chavePublicavel) {
-  throw new Error('Faltam VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env.local');
+  throw new ErroDeConfiguracao('Faltam VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env.local');
 }
 
 // Marca "Lembrar de mim": com ela a sessão fica no localStorage (sobrevive a

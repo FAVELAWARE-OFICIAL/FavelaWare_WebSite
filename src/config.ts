@@ -5,6 +5,9 @@
  * nomes fixos do projeto Supabase, reunidos aqui para não se repetirem.
  */
 
+/** O .env.local não tem o que o site precisa (a tela de erro explica como resolver) */
+export class ErroDeConfiguracao extends Error {}
+
 /** URL do projeto Supabase */
 export const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 

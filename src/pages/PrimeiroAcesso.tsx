@@ -17,6 +17,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 
 import Carregamento from '../components/admin/Carregamento';
 import { classeCampoDeAcesso } from '../components/estilosDeAcesso';
+import RequisitosDaSenha from '../components/RequisitosDaSenha';
 import { servicoSenha, TAMANHO_MINIMO_SENHA as TAMANHO_MINIMO } from '../lib/senha';
 import { servicoSessao, type MeuPerfil } from '../lib/sessao';
 import { StatusProcessamento } from '../types';
@@ -95,6 +96,7 @@ const PrimeiroAcesso: React.FC = () => {
             <input
               id="senha"
               name="senha"
+              aria-describedby="requisitos-senha"
               type="password"
               autoComplete="new-password"
               required
@@ -103,9 +105,8 @@ const PrimeiroAcesso: React.FC = () => {
               onChange={aoAlterarCampo}
               className={classeCampoDeAcesso}
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Pelo menos {TAMANHO_MINIMO} caracteres, diferente da senha padrão.
-            </p>
+            <p className="mt-1 text-xs text-gray-500">Diferente da senha padrão, e com:</p>
+            <RequisitosDaSenha senha={campos.senha} id="requisitos-senha" />
           </div>
           <div>
             <label htmlFor="confirmacao" className="block text-sm font-medium text-gray-700 mb-2">

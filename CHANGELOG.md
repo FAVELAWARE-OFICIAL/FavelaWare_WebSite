@@ -7,6 +7,13 @@ dos commits (Conventional Commits) ou da label `version:*` no PR de release.
 
 Código no padrão das 10 regras de `docs/boas-praticas.md`.
 
+### Adicionado
+
+- Política de senha: no mínimo 8 caracteres, com letra maiúscula, letra minúscula, número e caractere especial, com a lista de requisitos marcando enquanto a pessoa digita (primeiro acesso, convite, "Meu perfil" e senha padrão dos alunos). O login passa a exigir 8 caracteres.
+- Edições encerradas: as edições 1, 2 e 3 ficam só para consulta, e o banco recusa qualquer mudança de presença ou aula nelas. O gestor encerra as próximas pelo botão "Encerrar edição"; reabrir só pelo SQL do Supabase.
+- Tela de dados da bolsa do instrutor refeita: ocupa a tela inteira, sem rolagem, em 4 etapas com painel da marca.
+- Tela explicando o que falta quando uma página não abre (por exemplo, `.env.local` sem as chaves do Supabase), no lugar da tela branca.
+
 ### Corrigido
 
 - Redefinir a senha de um aluno marca a troca obrigatória antes de voltar para a senha padrão; se falhar, o gestor vê o aviso em vez de "redefinido".

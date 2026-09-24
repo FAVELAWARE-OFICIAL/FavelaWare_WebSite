@@ -41,3 +41,6 @@ google-apps-script/.segredo
 
 # Documentos com dados pessoais (RPA etc.) nunca vão para o git
 DADOS PARA RPA*.pdf
+
+# Cache do Python (scripts/)
+__pycache__/

@@ -28,7 +28,7 @@ const OPCOES = [
 ] as const;
 
 const Chamada: React.FC = () => {
-  const { painel, atualizarPresencaNaTela } = useAdmin();
+  const { edicao, painel, atualizarPresencaNaTela } = useAdmin();
   const [correcao, setCorrecao] = useState<Correcao | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
@@ -81,6 +81,12 @@ const Chamada: React.FC = () => {
         <LegendaSituacoes situacoes={['presente', 'ausente', 'justificada']} />
       </div>
 
+      {edicao.encerrada && (
+        <p role="status" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+          A {edicao.nome} foi encerrada: a chamada fica só para consulta e a presença não pode mais ser alterada.
+        </p>
+      )}
+
       {!painel.turmasVisiveis.length ? (
         <Vazio>Esta edição ainda não tem turmas.</Vazio>
       ) : (
@@ -94,10 +100,14 @@ const Chamada: React.FC = () => {
                   pessoas={alunos}
                   aulas={painel.aulasDeAlunos.filter((a) => a.turma_id === t.id)}
                   celulas={painel.celulas}
-                  aoClicarCelula={(pessoa, aula, presenca) => {
-                    setMensagem(null);
-                    setCorrecao({ pessoa, aula, presenca });
-                  }}
+                  aoClicarCelula={
+                    edicao.encerrada
+                      ? undefined
+                      : (pessoa, aula, presenca) => {
+                          setMensagem(null);
+                          setCorrecao({ pessoa, aula, presenca });
+                        }
+                  }
                 />
               </Cartao>
             );

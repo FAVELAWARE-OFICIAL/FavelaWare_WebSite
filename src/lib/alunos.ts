@@ -43,7 +43,12 @@ export class ServicoAlunos {
   /** Remove o aluno e TODO o histórico de presença dele */
   async remover(id: number): Promise<string | null> {
     const { error } = await supabase.from('participantes').delete().eq('id', id);
-    return error ? 'Não foi possível remover o aluno.' : null;
+    if (!error) return null;
+    console.error('[alunos] falha ao remover', error.code, error.message);
+    // 22023: a presença do aluno é de uma edição encerrada (o banco protege o histórico)
+    return error.code === '22023'
+      ? 'Esta edição foi encerrada: o aluno e o histórico de presença dele não podem mais ser removidos.'
+      : 'Não foi possível remover o aluno.';
   }
 
   /**

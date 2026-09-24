@@ -172,42 +172,48 @@ export function nascimentoMaximo(hoje: string): string {
   return `${Number(ano) - 14}-${mes}-${dia}`;
 }
 
-/** Confere tudo antes de enviar. Devolve a primeira mensagem de erro (com o campo), ou null. */
+/**
+ * Confere antes de enviar. Devolve a primeira mensagem de erro (com o campo), ou null.
+ * `somente` limita a conferência a alguns campos (ex.: os da etapa atual do formulário).
+ */
 export function validarDados(
   dados: DadosInstrutor,
   hoje: string,
+  somente?: (keyof DadosInstrutor)[],
 ): { campo: keyof DadosInstrutor; texto: string } | null {
   const vazio = (v: string | null) => !v || !v.trim();
-  if (vazio(dados.nome_completo) || dados.nome_completo.trim().length < 3)
-    return { campo: 'nome_completo', texto: 'Informe seu nome completo.' };
-  if (!cpfValido(dados.cpf)) return { campo: 'cpf', texto: 'CPF inválido. Confira os números.' };
-  if (vazio(dados.identidade) || dados.identidade.trim().length < 3)
-    return { campo: 'identidade', texto: 'Informe sua identidade (RG).' };
-  if (!pisValido(dados.pis)) return { campo: 'pis', texto: 'INSS/PIS inválido. Confira os números.' };
-  if (!dados.data_nascimento) return { campo: 'data_nascimento', texto: 'Informe sua data de nascimento.' };
-  if (dados.data_nascimento < '1900-01-01' || dados.data_nascimento > nascimentoMaximo(hoje)) {
-    return { campo: 'data_nascimento', texto: 'Data de nascimento inválida.' };
-  }
-  if (!/^\d{10,11}$/.test(soDigitos(dados.telefone)))
-    return { campo: 'telefone', texto: 'Informe o telefone com DDD.' };
-  if (!emailValido(dados.email)) return { campo: 'email', texto: 'Informe um e-mail válido.' };
-  if (soDigitos(dados.cep).length !== 8) return { campo: 'cep', texto: 'Informe o CEP com 8 números.' };
-  if (vazio(dados.logradouro) || dados.logradouro.trim().length < 2)
-    return { campo: 'logradouro', texto: 'Informe a rua.' };
-  if (vazio(dados.numero)) return { campo: 'numero', texto: 'Informe o número (ou "s/n").' };
-  if (vazio(dados.bairro) || dados.bairro.trim().length < 2) return { campo: 'bairro', texto: 'Informe o bairro.' };
-  if (vazio(dados.cidade) || dados.cidade.trim().length < 2) return { campo: 'cidade', texto: 'Informe a cidade.' };
-  if (!UFS.includes(dados.uf)) return { campo: 'uf', texto: 'Escolha o estado (UF).' };
-  if (!(dados.estado_civil in ESTADOS_CIVIS)) return { campo: 'estado_civil', texto: 'Escolha o estado civil.' };
-  if (!(dados.cor_raca in CORES_RACAS))
-    return { campo: 'cor_raca', texto: 'Escolha a cor/raça (ou "Prefiro não declarar").' };
-  if (!(dados.grau_instrucao in GRAUS_DE_INSTRUCAO))
-    return { campo: 'grau_instrucao', texto: 'Escolha o grau de instrução.' };
-  if (normalizarLinkedin(dados.linkedin) === undefined) {
-    return {
-      campo: 'linkedin',
-      texto: 'LinkedIn inválido. Use o endereço do perfil, ex.: linkedin.com/in/seu-nome (ou deixe em branco).',
-    };
+  const curto = (v: string | null, minimo: number) => vazio(v) || v!.trim().length < minimo;
+  // Na ordem em que o erro aparece: o primeiro que falhar é o mostrado
+  const regras: [keyof DadosInstrutor, () => boolean, string][] = [
+    ['nome_completo', () => curto(dados.nome_completo, 3), 'Informe seu nome completo.'],
+    ['cpf', () => !cpfValido(dados.cpf), 'CPF inválido. Confira os números.'],
+    ['identidade', () => curto(dados.identidade, 3), 'Informe sua identidade (RG).'],
+    ['pis', () => !pisValido(dados.pis), 'INSS/PIS inválido. Confira os números.'],
+    ['data_nascimento', () => !dados.data_nascimento, 'Informe sua data de nascimento.'],
+    [
+      'data_nascimento',
+      () => dados.data_nascimento < '1900-01-01' || dados.data_nascimento > nascimentoMaximo(hoje),
+      'Data de nascimento inválida.',
+    ],
+    ['telefone', () => !/^\d{10,11}$/.test(soDigitos(dados.telefone)), 'Informe o telefone com DDD.'],
+    ['email', () => !emailValido(dados.email), 'Informe um e-mail válido.'],
+    ['cep', () => soDigitos(dados.cep).length !== 8, 'Informe o CEP com 8 números.'],
+    ['logradouro', () => curto(dados.logradouro, 2), 'Informe a rua.'],
+    ['numero', () => vazio(dados.numero), 'Informe o número (ou "s/n").'],
+    ['bairro', () => curto(dados.bairro, 2), 'Informe o bairro.'],
+    ['cidade', () => curto(dados.cidade, 2), 'Informe a cidade.'],
+    ['uf', () => !UFS.includes(dados.uf), 'Escolha o estado (UF).'],
+    ['estado_civil', () => !(dados.estado_civil in ESTADOS_CIVIS), 'Escolha o estado civil.'],
+    ['cor_raca', () => !(dados.cor_raca in CORES_RACAS), 'Escolha a cor/raça (ou "Prefiro não declarar").'],
+    ['grau_instrucao', () => !(dados.grau_instrucao in GRAUS_DE_INSTRUCAO), 'Escolha o grau de instrução.'],
+    [
+      'linkedin',
+      () => normalizarLinkedin(dados.linkedin) === undefined,
+      'LinkedIn inválido. Use o endereço do perfil, ex.: linkedin.com/in/seu-nome (ou deixe em branco).',
+    ],
+  ];
+  for (const [campo, falhou, texto] of regras) {
+    if ((!somente || somente.includes(campo)) && falhou()) return { campo, texto };
   }
   return null;
 }

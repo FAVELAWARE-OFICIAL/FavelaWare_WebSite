@@ -221,6 +221,7 @@ const AreaDoGestor: React.FC = () => {
         {edicoes.map((e) => (
           <option key={e.id} value={e.id}>
             {e.nome}
+            {e.encerrada ? ' (encerrada)' : ''}
           </option>
         ))}
       </select>

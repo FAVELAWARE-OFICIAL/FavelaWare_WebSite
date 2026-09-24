@@ -10,7 +10,7 @@ import { mensagemDeErroDeCadastro } from './banco';
 import { validarDados, type DadosInstrutor } from './dadosInstrutor';
 import { SEM_REGRAS, servicoEntregas } from './entregas';
 import { QUANTIDADE_NO_HISTORICO, servicoPonto, type Ponto } from './ponto';
-import { servicoSenha } from './senha';
+import { senhaForte, servicoSenha } from './senha';
 import { servicoSessao, type MeuPerfil } from './sessao';
 
 const perfil = (mudancas: Partial<MeuPerfil>): MeuPerfil => ({
@@ -47,12 +47,30 @@ describe('sessão: área de cada papel', () => {
 });
 
 describe('senha nova', () => {
-  it('confere tamanho e confirmação com as mensagens de cada tela', () => {
-    expect(servicoSenha.validarNova('1234567', '1234567')).toBe('A senha precisa ter pelo menos 8 caracteres.');
-    expect(servicoSenha.validarNova('12345678', '1234567x', 'A nova senha', 'As duas senhas novas')).toBe(
+  it('exige 8 caracteres com maiúscula, minúscula, número e caractere especial', () => {
+    expect(servicoSenha.validarNova('Ab1!', 'Ab1!')).toBe('A senha precisa ter: pelo menos 8 caracteres.');
+    expect(servicoSenha.validarNova('abcdefgh', 'abcdefgh')).toBe(
+      'A senha precisa ter: uma letra maiúscula, um número, um caractere especial (ex.: ! @ # $ %).',
+    );
+    expect(servicoSenha.validarNova('ABCDEFG1!', 'ABCDEFG1!')).toBe('A senha precisa ter: uma letra minúscula.');
+    expect(servicoSenha.validarNova('Favela2026', 'Favela2026')).toBe(
+      'A senha precisa ter: um caractere especial (ex.: ! @ # $ %).',
+    );
+    expect(servicoSenha.validarNova('Favela#2026', 'Favela#2026')).toBeNull();
+  });
+
+  it('confere a confirmação com o texto de cada tela', () => {
+    expect(servicoSenha.validarNova('Favela#2026', 'Favela#2025', 'A nova senha', 'As duas senhas novas')).toBe(
       'As duas senhas novas não são iguais.',
     );
-    expect(servicoSenha.validarNova('12345678', '12345678')).toBeNull();
+  });
+
+  it('aceita os símbolos do teclado que o Supabase aceita', () => {
+    for (const simbolo of ['!', '@', '#', '$', '%', '&', '*', '_', '-', '.', '?', '/', '[', '~', '`', '{']) {
+      expect(senhaForte(`Favela2026${simbolo}`)).toBe(true);
+    }
+    expect(senhaForte('Favela2026 ')).toBe(false); // espaço não conta como especial
+    expect(senhaForte('Fávela2026')).toBe(false); // letra acentuada não conta como especial
   });
 });
 
@@ -180,5 +198,15 @@ describe('dados do instrutor', () => {
     expect(validarDados({ ...validos, cpf: '111.111.111-11' }, '2026-09-24')?.campo).toBe('cpf');
     // Com CPF válido, o próximo campo conferido é o PIS (vazio aqui)
     expect(validarDados(validos, '2026-09-24')?.campo).toBe('pis');
+  });
+
+  it('confere só os campos da etapa quando pedido', () => {
+    // O PIS vazio é da etapa 1: a etapa de endereço não reclama dele
+    expect(validarDados(validos, '2026-09-24', ['cep', 'logradouro', 'numero', 'bairro', 'cidade', 'uf'])).toBeNull();
+    // LinkedIn é o último conferido no geral, mas é o primeiro problema da etapa de contato
+    expect(
+      validarDados({ ...validos, linkedin: 'facebook.com/maria' }, '2026-09-24', ['telefone', 'email', 'linkedin'])
+        ?.campo,
+    ).toBe('linkedin');
   });
 });

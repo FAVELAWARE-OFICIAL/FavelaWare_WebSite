@@ -28,6 +28,8 @@ export interface TurmaComEdicao {
   nome: string;
   edicao: string;
   ordemEdicao: number;
+  /** A edição já acabou: a chamada desta turma é só para consulta */
+  edicaoEncerrada: boolean;
 }
 
 export interface TurmaComAlunos {
@@ -46,13 +48,19 @@ export class ServicoTurmas {
    * ordem 0, então fica sempre no fim.
    */
   async carregarComEdicao(): Promise<TurmaComEdicao[]> {
-    const { data, error } = await supabase.from('turmas').select('id, nome, edicoes(nome, ordem)');
+    const { data, error } = await supabase.from('turmas').select('id, nome, edicoes(nome, ordem, encerrada)');
     if (error) throw error;
     return data
       .map((t) => {
         // A relação muitos-para-um volta como objeto
-        const edicao = t.edicoes as unknown as { nome: string; ordem: number } | null;
-        return { id: t.id, nome: t.nome, edicao: edicao?.nome ?? '', ordemEdicao: edicao?.ordem ?? 0 };
+        const edicao = t.edicoes as unknown as { nome: string; ordem: number; encerrada: boolean } | null;
+        return {
+          id: t.id,
+          nome: t.nome,
+          edicao: edicao?.nome ?? '',
+          ordemEdicao: edicao?.ordem ?? 0,
+          edicaoEncerrada: edicao?.encerrada ?? false,
+        };
       })
       .sort((a, b) => b.ordemEdicao - a.ordemEdicao || a.nome.localeCompare(b.nome, 'pt-BR'));
   }

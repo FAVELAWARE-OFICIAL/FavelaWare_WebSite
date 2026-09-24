@@ -15,10 +15,29 @@ import { supabase } from './supabase';
 export const TAMANHO_MINIMO_SENHA = 8;
 
 /**
- * O login aceita a partir de 6 porque é o mínimo do Supabase Auth: contas
- * criadas antes da regra de 8 não podem ficar trancadas para fora.
+ * Política de senha do projeto. Os conjuntos são os mesmos da configuração
+ * "Password requirements" do Supabase Auth (letras sem acento, dígitos e os
+ * símbolos do teclado), para o site nunca aceitar o que o servidor recusa.
+ * A Edge Function acessos-alunos confere a mesma regra na senha padrão.
  */
-export const TAMANHO_MINIMO_SENHA_NO_LOGIN = 6;
+export const REQUISITOS_DA_SENHA: { id: string; texto: string; atende: (senha: string) => boolean }[] = [
+  {
+    id: 'tamanho',
+    texto: `Pelo menos ${TAMANHO_MINIMO_SENHA} caracteres`,
+    atende: (s) => s.length >= TAMANHO_MINIMO_SENHA,
+  },
+  { id: 'maiuscula', texto: 'Uma letra maiúscula', atende: (s) => /[A-Z]/.test(s) },
+  { id: 'minuscula', texto: 'Uma letra minúscula', atende: (s) => /[a-z]/.test(s) },
+  { id: 'numero', texto: 'Um número', atende: (s) => /[0-9]/.test(s) },
+  {
+    id: 'especial',
+    texto: 'Um caractere especial (ex.: ! @ # $ %)',
+    atende: (s) => /[!-/:-@[-`{-~]/.test(s),
+  },
+];
+
+/** A senha cumpre toda a política? */
+export const senhaForte = (senha: string) => REQUISITOS_DA_SENHA.every((r) => r.atende(senha));
 
 export type EtapaSenha = 'conferindo' | 'salvando';
 
@@ -38,9 +57,8 @@ function traduzirErroDeSenha(
 export class ServicoSenha {
   /** Confere a nova senha antes de enviar. Devolve o problema, ou null. */
   validarNova(senha: string, confirmacao: string, rotulo = 'A senha', asDuas = 'As duas senhas'): string | null {
-    if (senha.length < TAMANHO_MINIMO_SENHA) {
-      return `${rotulo} precisa ter pelo menos ${TAMANHO_MINIMO_SENHA} caracteres.`;
-    }
+    const faltando = REQUISITOS_DA_SENHA.filter((r) => !r.atende(senha)).map((r) => r.texto.toLowerCase());
+    if (faltando.length) return `${rotulo} precisa ter: ${faltando.join(', ')}.`;
     if (senha !== confirmacao) return `${asDuas} não são iguais.`;
     return null;
   }

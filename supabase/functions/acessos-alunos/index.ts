@@ -28,6 +28,8 @@ const DOMINIO = 'aluno.favelaware.invalid';
 const LOGIN_VALIDO = /^[a-z0-9]+(\.[a-z0-9]+)*$/;
 const TAMANHO_MINIMO_SENHA = 8;
 const TAMANHO_MAXIMO_SENHA = 72; // limite do bcrypt
+/** A mesma política de src/lib/senha.ts: maiúscula, minúscula, número e caractere especial */
+const SENHA_FORTE = [/[A-Z]/, /[a-z]/, /[0-9]/, /[!-/:-@[-`{-~]/];
 const MAXIMO_DE_ALUNOS = 200;
 
 const CORS = cabecalhosCors('POST, OPTIONS');
@@ -176,6 +178,11 @@ Deno.serve(async (req) => {
   if (senha.length < TAMANHO_MINIMO_SENHA || senha.length > TAMANHO_MAXIMO_SENHA) {
     return resposta(400, {
       erro: `A senha padrão precisa ter de ${TAMANHO_MINIMO_SENHA} a ${TAMANHO_MAXIMO_SENHA} caracteres.`,
+    });
+  }
+  if (!SENHA_FORTE.every((regra) => regra.test(senha))) {
+    return resposta(400, {
+      erro: 'A senha padrão precisa ter letra maiúscula, letra minúscula, número e caractere especial.',
     });
   }
 

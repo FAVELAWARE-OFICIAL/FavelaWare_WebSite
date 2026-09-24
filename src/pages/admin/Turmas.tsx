@@ -102,6 +102,17 @@ const Turmas: React.FC = () => {
     await Promise.all([carregar(), recarregarDados()]);
   };
 
+  const encerrarEdicao = async () => {
+    const pergunta =
+      `Encerrar a ${edicao.nome}? A chamada fica só para consulta e ninguém mais altera a presença. ` +
+      'Pelo site não dá para reabrir.';
+    if (!window.confirm(pergunta)) return;
+    const erro = await servicoEdicoes.encerrar(edicao.id);
+    if (erro) return setMensagem({ tipo: 'erro', texto: erro });
+    setMensagem({ tipo: 'sucesso', texto: `${edicao.nome} encerrada.` });
+    await recarregarEdicoes(edicao.id);
+  };
+
   // Carregando: ocupa a página toda
   if (erro && turmas === undefined)
     return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar as turmas.' }} />;
@@ -118,12 +129,19 @@ const Turmas: React.FC = () => {
       {
         <Cartao
           titulo={edicao.nome}
-          descricao={`${turmas.length} turma(s) · ${turmas.reduce((s, t) => s + t.alunos, 0)} alunos`}
+          descricao={`${turmas.length} turma(s) · ${turmas.reduce((s, t) => s + t.alunos, 0)} alunos${
+            edicao.encerrada ? ' · edição encerrada: presença só para consulta' : ''
+          }`}
           acoes={
             <div className="flex flex-wrap gap-2">
               <Botao tamanho="pequeno" onClick={() => abrir({ tipo: 'renomear-edicao' }, edicao.nome)}>
                 Renomear edição
               </Botao>
+              {!edicao.encerrada && !edicao.demonstracao && (
+                <Botao tamanho="pequeno" variante="perigo" onClick={encerrarEdicao}>
+                  Encerrar edição
+                </Botao>
+              )}
               <Botao
                 tamanho="pequeno"
                 variante="primario"

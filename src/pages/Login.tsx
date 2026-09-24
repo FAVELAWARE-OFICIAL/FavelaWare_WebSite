@@ -33,7 +33,7 @@ import { classeCampoDeAcesso } from '../components/estilosDeAcesso';
 
 // Sessão (entrar e descobrir a área de cada papel)
 import { servicoSessao } from '../lib/sessao';
-import { TAMANHO_MINIMO_SENHA_NO_LOGIN } from '../lib/senha';
+import { TAMANHO_MINIMO_SENHA } from '../lib/senha';
 import { StatusProcessamento } from '../types';
 
 /**
@@ -99,10 +99,11 @@ const Login: React.FC = () => {
       return;
     }
 
-    if (campos.senha.length < TAMANHO_MINIMO_SENHA_NO_LOGIN) {
+    // Só o tamanho: a política completa vale ao criar a senha (o servidor confere a senha em si)
+    if (campos.senha.length < TAMANHO_MINIMO_SENHA) {
       setMensagem({
         tipo: 'erro',
-        texto: `A senha precisa ter pelo menos ${TAMANHO_MINIMO_SENHA_NO_LOGIN} caracteres.`,
+        texto: `A senha precisa ter pelo menos ${TAMANHO_MINIMO_SENHA} caracteres.`,
       });
       return;
     }

@@ -49,6 +49,8 @@ const FazerChamada: React.FC = () => {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
+  // Turma de edição encerrada: a chamada é só para consulta (o banco também recusa)
+  const somenteLeitura = Boolean(turmas?.find((t) => t.id === turmaId)?.edicaoEncerrada);
 
   // Turmas do professor (o banco só devolve as dele); abre a última usada
   useEffect(() => {
@@ -114,12 +116,12 @@ const FazerChamada: React.FC = () => {
   const [avisoCorrecao, setAvisoCorrecao] = useState(false);
   const jaAvisados = useRef(new Set<string>());
   useEffect(() => {
-    if (!aulaAtualId || carregando || turmaId === null) return;
+    if (!aulaAtualId || carregando || turmaId === null || somenteLeitura) return;
     const chave = `${turmaId}:${data}`;
     if (jaAvisados.current.has(chave)) return;
     jaAvisados.current.add(chave);
     setAvisoCorrecao(true);
-  }, [aulaAtualId, carregando, turmaId, data]);
+  }, [aulaAtualId, carregando, turmaId, data, somenteLeitura]);
   const fecharAviso = useCallback(() => setAvisoCorrecao(false), []);
 
   const escolherOutroDia = () => {
@@ -262,6 +264,11 @@ const FazerChamada: React.FC = () => {
       </Cartao>
 
       <Aviso mensagem={mensagem} />
+      {somenteLeitura && (
+        <p role="status" className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+          Esta turma é de uma edição encerrada: a chamada fica só para consulta.
+        </p>
+      )}
 
       {mostrarCarregando || carregando ? (
         <Carregando texto="Carregando alunos" />
@@ -272,14 +279,16 @@ const FazerChamada: React.FC = () => {
           titulo={`${alunos.length} alunos`}
           descricao={`${contagem.presente} presentes · ${contagem.ausente} ausentes · ${contagem.justificada} justificadas · ${contagem.semMarcacao} sem marcação`}
           acoes={
-            <div className="flex flex-wrap gap-2">
-              <Botao tamanho="pequeno" onClick={() => marcarTodos('presente')}>
-                Todos presentes
-              </Botao>
-              <Botao tamanho="pequeno" onClick={() => marcarTodos(undefined)}>
-                Limpar
-              </Botao>
-            </div>
+            somenteLeitura ? undefined : (
+              <div className="flex flex-wrap gap-2">
+                <Botao tamanho="pequeno" onClick={() => marcarTodos('presente')}>
+                  Todos presentes
+                </Botao>
+                <Botao tamanho="pequeno" onClick={() => marcarTodos(undefined)}>
+                  Limpar
+                </Botao>
+              </div>
+            )
           }
         >
           <ul className="-my-2 divide-y divide-gray-100">
@@ -300,6 +309,7 @@ const FazerChamada: React.FC = () => {
                         key={op.valor}
                         type="button"
                         onClick={() => marcar(aluno.id, op.valor)}
+                        disabled={somenteLeitura}
                         aria-pressed={escolhido}
                         aria-label={op.rotulo}
                         title={op.rotulo}
@@ -321,7 +331,7 @@ const FazerChamada: React.FC = () => {
       )}
 
       {/* ============ BARRA DE SALVAR (fixa no pé da tela, pela Moldura) ============ */}
-      {alunos.length > 0 && (
+      {alunos.length > 0 && !somenteLeitura && (
         <RodapeFixo>
           <div className="border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
             <div className="flex items-center justify-between gap-4">
