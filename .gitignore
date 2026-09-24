@@ -1,18 +1,43 @@
-# OS / Editor
-.DS_Store
-Thumbs.db
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.suo
-*.sw?
-
 # Logs
 logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Local artifacts
+node_modules
+dist
+dist-ssr
 *.local
 
-# Claude
-.claude/
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Configuração local do Claude Code: permissões da máquina e, às vezes, chaves
+.claude/settings.local.json
+
+# Variáveis de ambiente (segredos nunca vão para o repositório)
+.env*
+!.env.example
+
+# Listas de presença: têm e-mail, login e observações dos alunos
+*.xlsx
+
+# Estado local do Supabase CLI (link com o projeto)
+supabase/.temp
+
+# Segredo do Apps Script das entregas (copiar para as Propriedades do script e apagar)
+google-apps-script/.segredo
+
+# Documentos com dados pessoais (RPA etc.) nunca vão para o git
+DADOS PARA RPA*.pdf
