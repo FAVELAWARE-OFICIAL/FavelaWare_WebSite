@@ -3,7 +3,9 @@
 Mudanças relevantes do projeto. Versão semântica, calculada pelo workflow `versionamento` a partir
 dos commits (Conventional Commits) ou da label `version:*` no PR de release.
 
-## [1.0.0] - 2026-09-24
+Enquanto o site está em desenvolvimento, as versões ficam em 0.x (pré-lançamento). A 1.0.0 é o lançamento.
+
+## [0.1.0] - 2026-09-24
 
 Código no padrão das 10 regras de `docs/boas-praticas.md`.
 
