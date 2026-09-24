@@ -1,180 +1,254 @@
-# FavelaWare - Site Oficial
+<div align="center">
 
-Site oficial do projeto FavelaWare, uma iniciativa de formação de jovens programadores vindos de comunidades de Belo Horizonte/MG.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/imgs/logo/logo.png">
+  <img src="public/imgs/logo/logo-fundo-claro.png" alt="FavelaWare" width="220">
+</picture>
 
-## Sobre o Projeto
+# FavelaWare_WebSite
 
-O FavelaWare é focado na formação técnica e de soft skills de jovens de 15 a 24 anos, com aulas de lógica básica, low code, back end e front end, além de desenvolvimento pessoal e trabalho em equipe.
+**Site oficial e portal do FavelaWare, formação de jovens programadores das comunidades de Belo Horizonte.**
 
-## Tecnologias Utilizadas
+React + TypeScript + Vite no front, Supabase (Postgres, Auth, Edge Functions) atrás.<br/>
+Três áreas restritas: gestor, instrutor e aluno.
 
-Este projeto foi desenvolvido com tecnologias modernas de desenvolvimento web:
+[![versão](https://img.shields.io/badge/vers%C3%A3o-1.0.0-8bc53f)](CHANGELOG.md)
+[![React](https://img.shields.io/badge/React-19-2d2a5f)](#stack)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%C2%B7%20Auth%20%C2%B7%20Edge-2d2a5f)](#stack)
+[![comunidade](https://img.shields.io/badge/BH-Comunidades-8bc53f)](#sobre-o-projeto)
 
-- **TypeScript** - Superset do JavaScript com tipagem estática
-- **React.js** - Biblioteca JavaScript para criar interfaces de usuário
-- **Vite** - Ferramenta de build rápida e moderna
-- **Tailwind CSS** - Framework CSS utilitário para estilização
-- **Framer Motion** - Biblioteca de animações para React
-- **React Router** - Gerenciamento de rotas/navegação
+[Sobre](#sobre-o-projeto) · [Arquitetura](#arquitetura) · [Stack](#stack) · [Rodar](#rodar-localmente) ·
+[Portal](#portal) · [Banco](#banco-de-dados) · [Git-flow](#git-flow) · [Problemas comuns](#problemas-comuns) ·
+[Contribuir](#contribuir)
 
-## Estrutura do Projeto
-
-```
-src/
-├── components/         # Componentes reutilizáveis
-│   ├── Navbar.tsx     # Barra de navegação
-│   ├── Hero.tsx       # Seção principal da home
-│   ├── Footer.tsx     # Rodapé
-│   ├── Gallery.tsx    # Galeria de fotos
-│   ├── Partners.tsx   # Parceiros e idealizadores
-│   └── MacroTimeline.tsx  # Cronograma visual
-├── pages/             # Páginas do site
-│   ├── Home.tsx       # Página inicial
-│   ├── ComoFazemos.tsx  # Trilhas de ensino
-│   ├── Sobre.tsx      # Informações do projeto
-│   └── HallDaFama.tsx # Equipes anteriores
-├── App.tsx            # Componente principal com rotas
-├── main.tsx           # Ponto de entrada da aplicação
-├── types.ts           # Definições de tipos TypeScript
-└── index.css          # Estilos globais
-```
-
-## Conceitos Importantes (para iniciantes)
-
-### O que é React?
-React é uma ferramenta que permite criar sites de forma organizada, dividindo tudo em "componentes" (pedaços reutilizáveis de código). Pense em componentes como peças de LEGO que você pode combinar para construir algo maior.
-
-### O que é Tailwind CSS?
-Ao invés de escrever CSS tradicional, o Tailwind permite estilizar elementos usando classes prontas. Por exemplo:
-- `bg-blue-500` = fundo azul
-- `text-white` = texto branco
-- `p-4` = padding (espaçamento interno)
-
-### O que são Rotas?
-Rotas permitem ter várias "páginas" no site sem precisar recarregar. Quando você clica em um link, o React Router muda apenas o conteúdo, mantendo o resto igual.
-
-### O que é TypeScript?
-TypeScript é como JavaScript, mas com "superpoderes". Ele adiciona tipos aos dados, ajudando a prevenir erros antes mesmo de executar o código. Por exemplo:
-- `const nome: string = "FavelaWare"` - garante que nome é sempre texto
-- `const idade: number = 4` - garante que idade é sempre número
-- Interfaces definem a estrutura de objetos complexos
-- O editor mostra erros em tempo real
-
-## Como Executar o Projeto
-
-### Pré-requisitos
-- Node.js instalado (versão 16 ou superior)
-- npm ou yarn (gerenciadores de pacotes)
-
-### Instalação
-
-1. Clone o repositório:
-```bash
-git clone [URL_DO_REPOSITORIO]
-cd WebSite_Official
-```
-
-2. Instale as dependências:
-```bash
-npm install
-```
-
-3. Execute o projeto em modo desenvolvimento:
-```bash
-npm run dev
-```
-
-4. Abra o navegador em `http://localhost:5173`
-
-### Outros Comandos
-
-```bash
-npm run build    # Gera versão de produção
-npm run preview  # Visualiza a versão de produção
-npm run lint     # Verifica problemas no código
-```
-
-## Estrutura de Páginas
-
-### Home (/)
-- Hero com logo e título principal
-- Galeria de fotos do projeto
-- Parceiros e idealizadores
-- Rodapé com informações de contato
-
-### Como Fazemos (/como-fazemos)
-- Trilhas de ensino da edição atual, com cada módulo fechado (abre com um clique)
-- Dentro do módulo: o conteúdo programático e o cronograma das aulas (data, tema e instrutores)
-- Edições anteriores do projeto
-- Os dados ficam em `src/data/trilhas.ts` (o antigo `/aulas` redireciona para cá)
-
-### Sobre (/sobre)
-- Informações sobre o projeto
-- Cronograma macro
-- Idealizadores e equipe
-- Propósitos (acadêmico, social, carreira)
-- Detalhes sobre cada parceiro
-
-### Hall da Fama (/hall-da-fama)
-- Equipes de todas as edições, organizadas por edição (1ª, 2ª e 3ª)
-- Membros e suas funções
-
-## Personalização de Cores
-
-As cores do projeto estão definidas em `tailwind.config.js`:
-
-- **Verde** (`favela-green`): Cor principal (#8bc53f)
-- **Azul** (`favela-blue`): Cor secundária
-- **Roxo** (`favela-purple`): Headers e navbar (#2d2a5f)
-- **Rosa** (`favela-pink`): Destaques
-
-## Animações
-
-O projeto utiliza Framer Motion para animações suaves:
-- Animações de entrada (fade in, slide)
-- Hover effects (efeitos ao passar o mouse)
-- Transições entre páginas
-- Partículas flutuantes
-
-## Responsividade
-
-O site é totalmente responsivo, adaptando-se a:
-- Desktop (telas grandes)
-- Tablet (telas médias)
-- Mobile (celulares)
-
-Classes Tailwind responsivas usadas:
-- `md:` - A partir de tablets
-- `lg:` - A partir de desktops
-- `sm:` - A partir de celulares grandes
-
-## Contribuindo
-
-Para contribuir com o projeto:
-
-1. Leia todo o código documentado para entender a estrutura
-2. Crie uma branch para sua feature
-3. Mantenha o padrão de documentação
-4. Teste em diferentes dispositivos
-5. Submeta um pull request
-
-## Documentação do Código
-
-Todo o código está documentado em português com:
-- Explicações sobre o que cada arquivo faz
-- Comentários em funções importantes
-- Descrição de conceitos para iniciantes
-- Exemplos práticos
-
-## Licença
-
-Este projeto é parte do FavelaWare, uma iniciativa da Mundiale, Ecossistema Ânima Educação (UNA Cristiano Machado) e Obras Pavonianas com a Rede Transformar.
-
-## Contato
-
-- Email: contato@favelaware.com
-- Localização: Belo Horizonte/MG
+</div>
 
 ---
 
-Desenvolvido com dedicação para as comunidades de Belo Horizonte
+```bash
+npm install                      # 1. dependências
+cp .env.example .env.local       # 2. VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY
+npm run dev                      # 3. localhost:5173
+```
+
+```mermaid
+flowchart LR
+    A["1. feature/* a partir<br/>de develop"] --> B["2. PR para develop<br/>validate-merge-source + ci"]
+    B --> C["3. release/vX.Y.Z<br/>PR para main"]
+    C --> D["4. push na main<br/>tag + release"]
+
+    style D fill:#8bc53f,color:#2d2a5f
+```
+
+## Sobre o projeto
+
+O FavelaWare forma jovens de 15 a 24 anos vindos de comunidades de Belo Horizonte/MG em lógica,
+low code, back end e front end, com desenvolvimento pessoal e trabalho em equipe. Iniciativa da
+Mundiale, do Ecossistema Ânima Educação (UNA Cristiano Machado) e das Obras Pavonianas com a Rede
+Transformar.
+
+Um repositório, duas superfícies: o **site público**, que conta a história das edições, e o
+**portal**, onde gestores, instrutores e alunos acompanham turmas, chamada, trilhas e entregas.
+
+## Arquitetura
+
+```mermaid
+flowchart LR
+    subgraph navegador["Navegador"]
+        pub["Site público<br/>/, /sobre, /turmas, /galeria..."]
+        ges["Gestor<br/>/dashboard/*"]
+        ins["Instrutor<br/>/professor/*"]
+        alu["Aluno<br/>/aluno/*"]
+    end
+
+    subgraph spa["SPA React"]
+        rotas["React Router + lazy loading<br/>RotaProtegida por papel"]
+    end
+
+    subgraph supabase["Supabase"]
+        auth["Auth<br/>perfis e papéis"]
+        pg[("Postgres<br/>RLS em todas as tabelas")]
+        edge["Edge Functions<br/>acessos, convites, entregas"]
+    end
+
+    drive[("Google Drive da ONG<br/>via Apps Script")]
+
+    pub & ges & ins & alu --> rotas
+    rotas --> auth
+    rotas --> pg
+    rotas -->|invoke| edge --> pg
+    edge -->|"HMAC"| drive
+
+    style pg fill:#2d2a5f,color:#fff
+    style drive fill:#8bc53f,color:#2d2a5f
+```
+
+A `RotaProtegida` só organiza a navegação. Quem protege os dados são as regras RLS do banco.
+
+## Stack
+
+| Camada | Tecnologia | Para quê |
+| --- | --- | --- |
+| UI | React 19 + TypeScript 5 | framework e tipagem em todo o código |
+| Build | Vite 7 | servidor de desenvolvimento e build |
+| Estilo | Tailwind CSS 3.4 | tokens de cor `favela-*` em `tailwind.config.js` |
+| Animação | Framer Motion 12 | entradas, hover e transições |
+| Rotas | `react-router-dom` 7 | SPA com lazy loading |
+| Gráficos | Recharts 3 | visão geral do gestor |
+| Backend | Supabase: Postgres, Auth, Edge Functions | dados, identidade, convites |
+| Arquivos | Google Apps Script + Drive | entregas dos alunos |
+
+```
+src/
+├── pages/             # controladores: páginas públicas + admin/, professor/, aluno/, equipe/
+├── components/        # interface reutilizável (admin/, atividades/, trilhas/)
+├── lib/               # serviços por assunto: classe + instância (servicoSessao, servicoPonto...)
+├── hooks/             # hooks que ligam a interface aos serviços
+├── utils/             # funções usadas por 2+ módulos (datas, texto, preferências)
+├── data/              # conteúdo do site: trilhas, turmas, galeria, parceiros, sobre
+├── config.ts          # configuração (.env.local e nomes fixos do Supabase)
+├── types.ts           # status padronizado e tipos compartilhados
+└── App.tsx            # rotas
+supabase/
+├── migrations/        # schema, RLS e funções
+├── functions/         # acessos-alunos, convidar-professor, entregas-drive (+ _shared)
+└── testes/            # testes das regras RLS
+google-apps-script/    # ponte portal → Google Drive
+scripts/               # importação de planilhas e otimização de imagens
+```
+
+### Identidade visual
+
+| Token | Cor | Uso |
+| --- | --- | --- |
+| `favela-green-500` | `#8bc53f` | cor principal, a do logo |
+| roxo institucional | `#2d2a5f` | navbar, cabeçalhos, `theme-color` |
+| `favela-blue` | `#3b82f6` | apoio |
+| `favela-pink` | `#ec4899` | destaques |
+
+Regras de UI na skill `.claude/skills/favelaware-padrao-visual/`.
+
+## Rodar localmente
+
+| Requisito | Versão |
+| --- | --- |
+| Node.js | 20 ou mais novo (CI usa 22) |
+| Projeto Supabase | URL + chave publicável no `.env.local` |
+
+| Comando | O que faz |
+| --- | --- |
+| `npm run dev` | servidor de desenvolvimento em `localhost:5173` |
+| `npm run build` | build de produção em `dist/` |
+| `npm run preview` | serve o build localmente |
+| `npm run lint` / `lint:fix` | ESLint |
+| `npm run typecheck` | TypeScript sem emitir arquivos |
+| `npm run format` / `format:check` | Prettier em `src/` |
+| `npm test` | testes (Vitest) |
+
+## Portal
+
+| Área | Rota | Papel | O que tem |
+| --- | --- | --- | --- |
+| Gestor | `/dashboard` | `gestor` | visão geral, alunos, chamada, turmas, equipe, membros, solicitações, avaliações, ponto dos instrutores, trilhas |
+| Parceiro | `/dashboard` | `parceiro` | só leitura: visão geral, alunos e chamada |
+| Instrutor | `/professor` | `professor` | chamada, ponto, trilhas e, no prazo liberado, a avaliação final da turma |
+| Banca avaliadora | `/banca` | `banca` | só a avaliação do dia da banca (entra pelo link do e-mail, sem senha) |
+| Aluno | `/aluno` | `aluno` | trilhas, atividades e solicitações |
+| Todos | `/perfil` de cada área | qualquer | dados pessoais |
+
+Parceiro novo: convite pelo painel do Supabase (Authentication > Invite user) e, no SQL Editor,
+`update public.perfis set papel = 'parceiro', nome = '...', email = '...' where id = (select id from auth.users where email = '...');`.
+
+```mermaid
+flowchart TD
+    login["/login"] --> rp{"RotaProtegida<br/>papel permite?"}
+    rp -->|não| volta(["/login"])
+    rp -->|aluno sem troca de senha| pa["/primeiro-acesso"]
+    rp -->|instrutor sem dados do RPA| di["/dados-do-instrutor"]
+    rp -->|sim| pagina["Página da área"]
+
+    style volta fill:#b60205,color:#fff
+    style pagina fill:#8bc53f,color:#2d2a5f
+```
+
+| Edge Function | Quem chama | Faz |
+| --- | --- | --- |
+| `acessos-alunos` | gestor | cria ou redefine o acesso dos alunos |
+| `convidar-professor` | gestor | convida o instrutor (e liga às turmas) ou o membro da banca por e-mail |
+| `entregas-drive` | aluno e instrutor | envia e lê entregas no Drive da ONG |
+
+## Banco de dados
+
+Todas as tabelas com RLS, testadas em `supabase/testes/`.
+
+| Tabelas | Guardam |
+| --- | --- |
+| `perfis` | identidade, papel, redes, vínculo e cargo |
+| `hall_da_fama` | retrato da equipe de cada edição encerrada (lido só por `hall_da_fama_do_site`) |
+| `avaliacoes_instrutor`, `membros_banca`, `notas_banca` | avaliação final da edição e banca avaliadora |
+| `edicoes`, `turmas`, `participantes`, `duplas` | edições, turmas e alunos |
+| `aulas`, `presencas`, `mudancas_horario` | cronograma e chamada (`mudancas_horario` é histórico de 2022, sem tela) |
+| `professores_turmas`, `pontos_professores`, `dados_instrutores` | instrutores, ponto e dados do RPA |
+| `trilhas`, `conteudos`, `conteudos_turma`, `materiais` | trilhas e material |
+| `atividades`, `tentativas`, `arquivos_entrega` | atividades e entregas |
+| `solicitacoes`, `mensagens_solicitacao` | pedidos dos alunos e a conversa com a coordenação |
+
+## Git-flow
+
+```mermaid
+flowchart LR
+    feat["feature/* fix/* chore/*<br/>docs/* refactor/*"] -->|"PR: validate-merge-source + ci"| develop
+    develop -->|"branch de release"| rel["release/vX.Y.Z"]
+    rel -->|"PR + bump automático"| main
+    main -.->|"urgência"| hot["hotfix/*"]
+    hot -.->|PR| main
+    main ==>|"push = tag + release<br/>+ back-merge na develop"| develop
+
+    style main fill:#2d2a5f,color:#fff
+    style develop fill:#8bc53f,color:#2d2a5f
+```
+
+| Peça | O que faz |
+| --- | --- |
+| `validate-merge-source` | `main` só aceita `release/*` ou `hotfix/*`; título do PR em Conventional Commits |
+| `ci` | gitleaks no histórico, ESLint, TypeScript, Prettier, testes, tipos das Edge Functions e build |
+| `Dependency audit` | reprova vulnerabilidade alta ou crítica |
+| `versionamento` | bump da versão no PR de release e tag + release no merge |
+| `back-merge-main-develop` | devolve a `main` para a `develop` depois de todo merge |
+| Husky | `pre-commit` (lint-staged), `commit-msg` (commitlint), `pre-push` (nome da branch) |
+
+Os rulesets ficam em `.github/rulesets/` e são aplicados por:
+
+```bash
+bash .github/scripts/provisionar-governanca.sh
+```
+
+| Branch | Regras |
+| --- | --- |
+| `main` | sem push direto, force-push ou exclusão · PR só de `release/*` ou `hotfix/*` · aprovação do code owner · checks `validate-merge-source`, `ci` e `Dependency audit` |
+| `develop` | sem force-push ou exclusão · PR com aprovação do code owner · checks `validate-merge-source` e `ci` |
+| `release/*`, `hotfix/*` | sem force-push · PR obrigatório |
+| todas | nome no padrão git-flow |
+
+Só o time `mantenedores-site` faz bypass. Todo o resto, inclusive os donos da organização, precisa
+da aprovação do code owner definido em `.github/CODEOWNERS`. O back-merge e o versionamento
+empurram com o secret `GH_TOKEN`, um token de quem está no time.
+
+## Problemas comuns
+
+| Sintoma | O que fazer |
+| --- | --- |
+| `validate-merge-source` vermelho no PR para `main` | a branch precisa ser `release/*` ou `hotfix/*` |
+| `validate-merge-source` vermelho no PR para `develop` | use prefixo de tipo: `feature/`, `fix/`, `chore/`... |
+| `commit-msg` reprova | mensagem em Conventional Commits: `feat: ...`, `fix(portal): ...` |
+| `pre-push` barra o push | renomeie a branch com `git branch -m feature/nome` |
+| `format:check` falha no CI | rode `npm run format` e faça o commit |
+| Portal em branco após login | confira `VITE_SUPABASE_URL` e a chave publicável no `.env.local` |
+
+## Contribuir
+
+Branch a partir de `develop`, PR para `develop` com título em Conventional Commits, checks verdes.
+Release por `release/vX.Y.Z` com PR para `main`. Regras de código em
+[`docs/boas-praticas.md`](docs/boas-praticas.md).
+
+Contato: contato@favelaware.com · Belo Horizonte/MG

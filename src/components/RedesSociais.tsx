@@ -16,8 +16,8 @@ import { email, instagram } from '../data/contato';
 interface RedeSocial {
   nome: string;
   href: string;
-  rotulo: string;      // Texto lido pelo leitor de tela (o botão só tem ícone)
-  externo: boolean;    // true = abre em nova aba
+  rotulo: string; // Texto lido pelo leitor de tela (o botão só tem ícone)
+  externo: boolean; // true = abre em nova aba
   icone: React.ReactNode;
 }
 
@@ -41,7 +41,14 @@ const redesSociais: RedeSocial[] = [
     externo: false,
     // Ícone de envelope: Heroicons v2, contorno (licença MIT)
     icone: (
-      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+      <svg
+        className="w-5 h-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        aria-hidden="true"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -56,6 +63,20 @@ const redesSociais: RedeSocial[] = [
 export const IconeLinkedin: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M4 2h16a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm1.5 7.5V19h3V9.5h-3ZM7 4.75a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5ZM10.5 9.5V19h3v-5c0-1.4.9-2.1 1.9-2.1s1.6.7 1.6 2.1v5h3v-5.6c0-2.9-1.6-4.1-3.6-4.1-1.5 0-2.5.7-2.9 1.4V9.5h-3Z" />
+  </svg>
+);
+
+/** Ícone do GitHub (o gato), desenhado aqui mesmo */
+export const IconeGithub: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" />
+  </svg>
+);
+
+/** Ícone do Gmail (o "M" do envelope), desenhado aqui mesmo */
+export const IconeGmail: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M3.5 5h1.1L12 10.7 19.4 5h1.1A1.5 1.5 0 0 1 22 6.5v11a1.5 1.5 0 0 1-1.5 1.5H18V9.6l-6 4.6-6-4.6V19H3.5A1.5 1.5 0 0 1 2 17.5v-11A1.5 1.5 0 0 1 3.5 5Z" />
   </svg>
 );
 

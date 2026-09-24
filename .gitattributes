@@ -1,0 +1,34 @@
+# Padrão: finais de linha LF no repositório e na cópia de trabalho
+# (o Prettier espera LF; sem isto o Windows converte para CRLF).
+* text=auto eol=lf
+
+# Texto
+*.ts       text eol=lf
+*.tsx      text eol=lf
+*.js       text eol=lf
+*.jsx      text eol=lf
+*.mjs      text eol=lf
+*.cjs      text eol=lf
+*.json     text eol=lf
+*.css      text eol=lf
+*.md       text eol=lf
+*.html     text eol=lf
+*.yml      text eol=lf
+*.yaml     text eol=lf
+*.toml     text eol=lf
+*.sh       text eol=lf
+*.sql      text eol=lf
+*.py       text eol=lf
+*.gs       text eol=lf
+*.svg      text eol=lf
+
+# Binários: nunca converter
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.webp     binary
+*.ico      binary
+*.gif      binary
+*.woff     binary
+*.woff2    binary
+*.pdf      binary

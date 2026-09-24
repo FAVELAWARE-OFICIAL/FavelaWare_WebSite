@@ -4,7 +4,7 @@ Esta pasta contém todas as imagens do projeto organizadas por categoria.
 
 ## Estrutura
 
-- `backgrounds/` — imagens de fundo
+- `backgrounds/` — imagens de fundo (`fundo.webp` é o banner oficial; `capa-verde.webp` e `capa-azul.webp` são as capas #programandomudanças do perfil, clara e escura)
   - `fundo.webp` — **banner oficial do FavelaWare** (foto da comunidade + código binário).
     É o fundo do Hero da home e do painel da tela de login. Original tem apenas
     642×361, então esticado em tela cheia fica levemente borrado; se aparecer uma

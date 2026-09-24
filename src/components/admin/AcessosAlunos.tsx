@@ -15,10 +15,11 @@ import { useState } from 'react';
 
 import { Aviso, Botao, classeCampo, classeRotulo, type Mensagem } from './Ui';
 import { espaco, selo, texto } from './designSystem';
-import type { Participante, Turma } from '../../lib/dashboard';
-import { gerenciarAcessos, ROTULO_ACESSO, type ResultadoDosAcessos, type SituacaoDoAcesso } from '../../lib/acessos';
-
-const TAMANHO_MINIMO = 8;
+import type { Participante, Turma } from '../../lib/painel';
+import { ROTULO_ACESSO, servicoAcessos, type ResultadoDosAcessos, type SituacaoDoAcesso } from '../../lib/acessos';
+import RequisitosDaSenha from '../RequisitosDaSenha';
+import { servicoSenha, TAMANHO_MINIMO_SENHA as TAMANHO_MINIMO } from '../../lib/senha';
+import { StatusProcessamento } from '../../types';
 
 const ESTILO_SELO: Record<SituacaoDoAcesso, string> = {
   'sem-acesso': selo.neutro,
@@ -34,10 +35,13 @@ export const SeloAcesso: React.FC<{ situacao: SituacaoDoAcesso }> = ({ situacao 
 /** Campo da senha padrão (texto visível: o gestor precisa conferir o que vai passar aos alunos) */
 const CampoSenha: React.FC<{ id: string; valor: string; aoMudar: (v: string) => void }> = ({ id, valor, aoMudar }) => (
   <div>
-    <label htmlFor={id} className={classeRotulo}>Senha padrão *</label>
+    <label htmlFor={id} className={classeRotulo}>
+      Senha padrão *
+    </label>
     <input
       id={id}
       type="text"
+      aria-describedby={`${id}-requisitos`}
       autoComplete="off"
       spellCheck={false}
       minLength={TAMANHO_MINIMO}
@@ -47,8 +51,9 @@ const CampoSenha: React.FC<{ id: string; valor: string; aoMudar: (v: string) => 
       className={classeCampo}
       placeholder="Ex: Favela#2026turmaA"
     />
+    <RequisitosDaSenha senha={valor} id={`${id}-requisitos`} />
     <p className={`mt-1 ${texto.apoio}`}>
-      Mínimo de {TAMANHO_MINIMO} caracteres. Evite senhas óbvias: quem souber o login e a senha padrão entra antes do aluno.
+      Evite senhas óbvias: quem souber o login e a senha padrão entra antes do aluno.
     </p>
   </div>
 );
@@ -67,7 +72,11 @@ const ResumoDoResultado: React.FC<{ resultado: ResultadoDosAcessos }> = ({ resul
     />
     {resultado.ignorados.length > 0 && (
       <ul className={`list-disc pl-5 ${texto.corpo}`}>
-        {resultado.ignorados.map((i) => <li key={i.nome}><strong>{i.nome}</strong>: {i.motivo}</li>)}
+        {resultado.ignorados.map((i) => (
+          <li key={i.nome}>
+            <strong>{i.nome}</strong>: {i.motivo}
+          </li>
+        ))}
       </ul>
     )}
   </div>
@@ -96,32 +105,53 @@ export const AcessosDaTurma: React.FC<{
   const criar = async () => {
     setMensagem(null);
     setResultado(null);
-    if (senha.length < TAMANHO_MINIMO) return setMensagem({ tipo: 'erro', texto: `A senha padrão precisa ter pelo menos ${TAMANHO_MINIMO} caracteres.` });
+    const problema = servicoSenha.validarNova(senha, senha, 'A senha padrão');
+    if (problema) return setMensagem({ tipo: 'erro', texto: problema });
     setEnviando(true);
-    const { resultado: r, erro } = await gerenciarAcessos('criar', semAcesso.map((a) => a.id), senha);
+    const { resultado: r, acessos } = await servicoAcessos.gerenciar(
+      'criar',
+      semAcesso.map((a) => a.id),
+      senha,
+    );
     setEnviando(false);
-    if (erro) return setMensagem({ tipo: 'erro', texto: erro });
-    setResultado(r!);
+    if (r.status !== StatusProcessamento.Sucesso) return setMensagem({ tipo: 'erro', texto: r.mensagem! });
+    setResultado(acessos!);
     await onConcluir();
   };
 
   return (
     <div className={espaco.formulario}>
       <p className={texto.corpo}>
-        O aluno entra com o <strong>login</strong> (ex.: <code>maria.silva</code>) e a senha padrão. No primeiro acesso ele
-        troca a senha e informa data de nascimento e e-mail.
+        O aluno entra com o <strong>login</strong> (ex.: <code>maria.silva</code>) e a senha padrão. No primeiro acesso
+        ele troca a senha e informa data de nascimento e e-mail.
       </p>
 
       <div>
-        <label htmlFor="acessos-turma" className={classeRotulo}>Turma</label>
-        <select id="acessos-turma" value={turmaId} onChange={(e) => { setTurmaId(e.target.value); setResultado(null); }} className={classeCampo}>
-          {turmas.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+        <label htmlFor="acessos-turma" className={classeRotulo}>
+          Turma
+        </label>
+        <select
+          id="acessos-turma"
+          value={turmaId}
+          onChange={(e) => {
+            setTurmaId(e.target.value);
+            setResultado(null);
+          }}
+          className={classeCampo}
+        >
+          {turmas.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.nome}
+            </option>
+          ))}
         </select>
       </div>
 
       <div className="flex flex-wrap gap-2">
         {(['sem-acesso', 'primeiro-acesso', 'ativo'] as SituacaoDoAcesso[]).map((s) => (
-          <span key={s} className={`${selo.base} ${ESTILO_SELO[s]}`}>{contar(s)} · {ROTULO_ACESSO[s]}</span>
+          <span key={s} className={`${selo.base} ${ESTILO_SELO[s]}`}>
+            {contar(s)} · {ROTULO_ACESSO[s]}
+          </span>
         ))}
       </div>
 
@@ -158,12 +188,13 @@ export const AcessoDoAluno: React.FC<{
 
   const confirmar = async () => {
     setMensagem(null);
-    if (senha.length < TAMANHO_MINIMO) return setMensagem({ tipo: 'erro', texto: `A senha padrão precisa ter pelo menos ${TAMANHO_MINIMO} caracteres.` });
+    const problema = servicoSenha.validarNova(senha, senha, 'A senha padrão');
+    if (problema) return setMensagem({ tipo: 'erro', texto: problema });
     setEnviando(true);
-    const { resultado: r, erro } = await gerenciarAcessos(acao, [aluno.id], senha);
+    const { resultado: r, acessos } = await servicoAcessos.gerenciar(acao, [aluno.id], senha);
     setEnviando(false);
-    if (erro) return setMensagem({ tipo: 'erro', texto: erro });
-    setResultado(r!);
+    if (r.status !== StatusProcessamento.Sucesso) return setMensagem({ tipo: 'erro', texto: r.mensagem! });
+    setResultado(acessos!);
     setAberto(false);
     await onConcluir();
   };
@@ -173,12 +204,18 @@ export const AcessoDoAluno: React.FC<{
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className={texto.titulo}>Acesso ao sistema</h3>
-          <p className={texto.apoio}>Login: <code>{aluno.login ?? 'gerado do nome ao criar o acesso'}</code></p>
+          <p className={texto.apoio}>
+            Login: <code>{aluno.login ?? 'gerado do nome ao criar o acesso'}</code>
+          </p>
         </div>
         <SeloAcesso situacao={situacao} />
       </div>
 
-      {resultado && <div className="mt-3"><ResumoDoResultado resultado={resultado} /></div>}
+      {resultado && (
+        <div className="mt-3">
+          <ResumoDoResultado resultado={resultado} />
+        </div>
+      )}
 
       {aberto ? (
         <div className={`mt-3 ${espaco.formulario}`}>
@@ -192,7 +229,14 @@ export const AcessoDoAluno: React.FC<{
           </div>
         </div>
       ) : (
-        <Botao tamanho="pequeno" className="mt-3" onClick={() => { setResultado(null); setAberto(true); }}>
+        <Botao
+          tamanho="pequeno"
+          className="mt-3"
+          onClick={() => {
+            setResultado(null);
+            setAberto(true);
+          }}
+        >
           {acao === 'criar' ? 'Criar acesso' : 'Redefinir senha'}
         </Botao>
       )}

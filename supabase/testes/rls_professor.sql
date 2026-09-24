@@ -15,13 +15,18 @@ declare
   v_aluno_outro bigint;
   v_aula bigint;
   v_n bigint;
+  v_edicao bigint;
   r text := 'RELATORIO';
 begin
-  -- Turma do professor = a mais recente; "outra" = qualquer turma diferente
-  select id into v_turma_dele from public.turmas order by id desc limit 1;
-  select id into v_outra_turma from public.turmas where id <> v_turma_dele order by id limit 1;
-  select id into v_aluno_dele from public.participantes where turma_id = v_turma_dele and funcao = 'aluno' limit 1;
-  select id into v_aluno_outro from public.participantes where turma_id = v_outra_turma and funcao = 'aluno' limit 1;
+  -- Dados próprios numa edição aberta (as edições reais podem estar encerradas
+  -- ou sem alunos): a turma do professor e uma outra, com um aluno cada
+  insert into public.edicoes (nome, ordem, arquivo_origem) values ('Teste professor', 9501, 'teste') returning id into v_edicao;
+  insert into public.turmas (edicao_id, nome) values (v_edicao, 'Turma 1') returning id into v_turma_dele;
+  insert into public.turmas (edicao_id, nome) values (v_edicao, 'Turma 2') returning id into v_outra_turma;
+  insert into public.participantes (edicao_id, turma_id, funcao, nome)
+  values (v_edicao, v_turma_dele, 'aluno', 'Aluno dele') returning id into v_aluno_dele;
+  insert into public.participantes (edicao_id, turma_id, funcao, nome)
+  values (v_edicao, v_outra_turma, 'aluno', 'Aluno de outro') returning id into v_aluno_outro;
 
   -- Professor de mentira (o gatilho cria o perfil como aluno)
   insert into auth.users (id, email, aud, role) values (v_prof, 'teste-rls@exemplo.invalid', 'authenticated', 'authenticated');

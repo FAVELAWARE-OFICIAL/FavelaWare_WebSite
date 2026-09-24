@@ -8,8 +8,12 @@
  * toda chamada vem assinada (HMAC-SHA256) com um segredo que só os dois conhecem.
  * Sem a assinatura certa, nada é gravado, lido ou apagado.
  *
- * Pastas: <PASTA_RAIZ>/turma_<id>/atividade_<id>/<participante>-<uuid>.<ext>
- * (só números: nenhum nome de aluno fica no Drive).
+ * Pastas:
+ *   Entregas:  <PASTA_RAIZ>/turma_<id>/atividade_<id>/<participante>-<uuid>.<ext> (só números)
+ *   Atestados: <PASTA_RAIZ>/<Alunos|Instrutores>/<Nome (id)>/atestado/<uuid>.<ext>
+ *              (pelo nome da pessoa, a pedido da coordenação; chamado pela Edge
+ *              Function "atestados". Atestado é dado de saúde: a pasta NUNCA
+ *              pode ser compartilhada por link.)
  *
  * Professor e aluno abrem os arquivos pelo portal, que confere quem pode ver cada
  * entrega. A pasta pode ser compartilhada com pessoas convidadas por e-mail (equipe e
@@ -38,8 +42,15 @@ var TIPOS = {
   'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx'
 };
 var TAMANHO_MAXIMO = 10 * 1024 * 1024; // 10 MB
-var VALIDADE_MS = 60 * 1000;           // pedido vale 1 minuto
+// Pedido vale 1 minuto. A Edge Function entregas-drive desiste depois de
+// DRIVE_TEMPO_LIMITE_MS (padrão 60 s): os dois andam juntos. Aumentar um sem o
+// outro faz pedido lento chegar vencido aqui (ou a função desistir antes).
+var VALIDADE_MS = 60 * 1000;
+// Espera máxima pela trava das pastas: precisa caber dentro dos 60 s acima
+var ESPERA_DA_TRAVA_MS = 20 * 1000;
 var ID_DRIVE = /^[A-Za-z0-9_-]{10,200}$/;
+// Pasta de uma pessoa, "Nome (id)": sem barra nem caractere de controle, até 100 letras
+var NOME_SEGURO = /^[^\/\\\u0000-\u001f]{1,100}$/;
 
 function doPost(e) {
   try {
@@ -72,6 +83,7 @@ function doPost(e) {
       return responder({ erro: 'pasta-publica' });
     }
     if (dados.acao === 'enviar') return responder(enviar(dados, raiz));
+    if (dados.acao === 'atestado') return responder(guardarAtestado(dados, raiz));
     if (dados.acao === 'baixar') return responder(baixar(dados, raiz));
     if (dados.acao === 'lixeira') return responder(lixeira(dados, raiz));
     return responder({ erro: 'acao' });
@@ -81,28 +93,57 @@ function doPost(e) {
   }
 }
 
-/** Grava o arquivo na pasta da turma/atividade e devolve o id no Drive */
+/**
+ * Grava a atividade entregue e devolve o id no Drive:
+ * - com "pessoa" (Edge Function atual): <raiz>/Alunos/<Nome (id)>/atividade/<arquivo>,
+ *   a mesma pasta do aluno onde fica o atestado;
+ * - sem "pessoa" (Edge Function antiga, até ser publicada de novo):
+ *   <raiz>/turma_<id>/atividade_<id>/<participante>-<uuid>.<ext>.
+ */
 function enviar(dados, raiz) {
   var ext = TIPOS[dados.mime];
   if (!ext) return { erro: 'tipo' };
-  if (!/^\d{1,18}$/.test(String(dados.turma)) || !/^\d{1,18}$/.test(String(dados.atividade))) return { erro: 'pedido' };
-  if (!new RegExp('^\\d{1,18}-[0-9a-f-]{36}\\.' + ext + '$').test(dados.nome)) return { erro: 'pedido' };
-
-  var bytes = Utilities.base64Decode(dados.base64);
-  if (bytes.length < 1 || bytes.length > TAMANHO_MAXIMO) return { erro: 'tamanho' };
-
-  // Criar pastas com trava: dois envios ao mesmo tempo não duplicam a pasta
-  var trava = LockService.getScriptLock();
-  trava.waitLock(20000);
-  var pasta;
-  try {
-    pasta = pastaFilha(pastaFilha(raiz, 'turma_' + dados.turma), 'atividade_' + dados.atividade);
-  } finally {
-    trava.releaseLock();
+  var dePessoa = typeof dados.pessoa === 'string';
+  if (dePessoa) {
+    if (!NOME_SEGURO.test(dados.pessoa)) return { erro: 'pedido' };
+    // "<id da atividade> - <título> - <uuid>.<ext>"
+    if (!new RegExp('^\\d{1,18} - [^\\/\\\\\\u0000-\\u001f]{1,120} - [0-9a-f-]{36}\\.' + ext + '$').test(dados.nome)) {
+      return { erro: 'pedido' };
+    }
+  } else {
+    if (!/^\d{1,18}$/.test(String(dados.turma)) || !/^\d{1,18}$/.test(String(dados.atividade))) return { erro: 'pedido' };
+    if (!new RegExp('^\\d{1,18}-[0-9a-f-]{36}\\.' + ext + '$').test(dados.nome)) return { erro: 'pedido' };
   }
 
-  var arquivo = pasta.createFile(Utilities.newBlob(bytes, dados.mime, dados.nome));
-  return { ok: true, id: arquivo.getId() };
+  return gravarNaPasta(dados, function () {
+    return dePessoa
+      ? pastaFilha(pastaDaPessoa(raiz, 'Alunos', dados.pessoa), 'atividade')
+      : pastaFilha(pastaFilha(raiz, 'turma_' + dados.turma), 'atividade_' + dados.atividade);
+  });
+}
+
+// Atestado: PDF ou foto (os mesmos tipos da Edge Function "atestados"), tirados de TIPOS
+var TIPOS_ATESTADO = {};
+['application/pdf', 'image/png', 'image/jpeg', 'image/webp'].forEach(function (tipo) {
+  TIPOS_ATESTADO[tipo] = TIPOS[tipo];
+});
+var GRUPOS_ATESTADO = { Alunos: true, Instrutores: true };
+
+/**
+ * Guarda o atestado da falta justificada na pasta da pessoa:
+ * <raiz>/<Alunos|Instrutores>/<Nome (id)>/atestado/<uuid>.<ext>
+ * O nome da pessoa vem da Edge Function (lido do banco, não do navegador).
+ */
+function guardarAtestado(dados, raiz) {
+  var ext = TIPOS_ATESTADO[dados.mime];
+  if (!ext) return { erro: 'tipo' };
+  if (!GRUPOS_ATESTADO[dados.grupo]) return { erro: 'pedido' };
+  if (typeof dados.pessoa !== 'string' || !NOME_SEGURO.test(dados.pessoa)) return { erro: 'pedido' };
+  if (!new RegExp('^[0-9a-f-]{36}\\.' + ext + '$').test(dados.nome)) return { erro: 'pedido' };
+
+  return gravarNaPasta(dados, function () {
+    return pastaFilha(pastaDaPessoa(raiz, dados.grupo, dados.pessoa), 'atestado');
+  });
 }
 
 /** Devolve o conteúdo (base64) de um arquivo que está dentro da pasta raiz */
@@ -124,7 +165,32 @@ function lixeira(dados, raiz) {
 // Ajudantes
 // ============================================
 
-/** Só mexe em arquivo que está em raiz/turma_x/atividade_y (nunca em outro lugar do Drive) */
+/**
+ * Parte comum dos envios: decodifica, confere o tamanho, acha (ou cria) a pasta
+ * com trava (dois envios ao mesmo tempo não duplicam a pasta) e grava o arquivo.
+ */
+function gravarNaPasta(dados, obterPasta) {
+  var bytes = Utilities.base64Decode(dados.base64);
+  if (bytes.length < 1 || bytes.length > TAMANHO_MAXIMO) return { erro: 'tamanho' };
+
+  var trava = LockService.getScriptLock();
+  trava.waitLock(ESPERA_DA_TRAVA_MS);
+  var pasta;
+  try {
+    pasta = obterPasta();
+  } finally {
+    trava.releaseLock();
+  }
+
+  var arquivo = pasta.createFile(Utilities.newBlob(bytes, dados.mime, dados.nome));
+  return { ok: true, id: arquivo.getId() };
+}
+
+/**
+ * Só mexe em arquivo que está dentro da pasta raiz (nunca em outro lugar do Drive):
+ * entregas em raiz/Alunos/pessoa/atividade (e as antigas em raiz/turma_x/atividade_y)
+ * e atestados em raiz/grupo/pessoa/atestado.
+ */
 function arquivoDaRaiz(id, raiz) {
   if (typeof id !== 'string' || !ID_DRIVE.test(id)) return null;
   var arquivo;
@@ -134,17 +200,22 @@ function arquivoDaRaiz(id, raiz) {
     return null;
   }
   if (arquivo.isTrashed()) return null;
-  var raizId = raiz.getId();
-  var pais = arquivo.getParents();
-  while (pais.hasNext()) {
-    var atividade = pais.next();
-    var turmas = atividade.getParents();
-    while (turmas.hasNext()) {
-      var raizes = turmas.next().getParents();
-      while (raizes.hasNext()) if (raizes.next().getId() === raizId) return arquivo;
-    }
+  return dentroDaRaiz(arquivo.getParents(), raiz.getId(), 6) ? arquivo : null;
+}
+
+/** Alguma das pastas (ou uma acima delas, até `niveis`) é a raiz? */
+function dentroDaRaiz(pastas, raizId, niveis) {
+  if (niveis === 0) return false;
+  while (pastas.hasNext()) {
+    var pasta = pastas.next();
+    if (pasta.getId() === raizId || dentroDaRaiz(pasta.getParents(), raizId, niveis - 1)) return true;
   }
-  return null;
+  return false;
+}
+
+/** Pasta de uma pessoa: <raiz>/<Alunos|Instrutores>/<Nome (id)> (a mesma para atestado e atividade) */
+function pastaDaPessoa(raiz, grupo, pessoa) {
+  return pastaFilha(pastaFilha(raiz, grupo), pessoa);
 }
 
 function pastaFilha(pai, nome) {

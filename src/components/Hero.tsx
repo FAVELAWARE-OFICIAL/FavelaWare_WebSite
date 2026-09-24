@@ -18,6 +18,8 @@ import { motion } from 'framer-motion';
 
 // Link do React Router que aceita animações do Framer Motion
 import { MotionLink } from './MotionLink';
+import { estatisticasDoProjeto } from '../data/sobre';
+import { FUNDO_DA_MARCA, LOGO } from '../data/imagens';
 
 const Hero = () => {
   return (
@@ -27,7 +29,7 @@ const Hero = () => {
       style={{
         // Banner oficial do FavelaWare (foto da comunidade + código binário).
         // Sem blend com gradiente: o blend "overlay" lavava a imagem e sumia com a textura.
-        backgroundImage: "url('/imgs/backgrounds/fundo.webp')",
+        backgroundImage: `url('${FUNDO_DA_MARCA}')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -40,13 +42,16 @@ const Hero = () => {
 
       {/* Padrão de código no fundo */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
             repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px),
             repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)
           `,
-          backgroundSize: '50px 50px'
-        }} />
+            backgroundSize: '50px 50px',
+          }}
+        />
       </div>
 
       {/* Gradiente animado de borda */}
@@ -55,7 +60,6 @@ const Hero = () => {
       {/* Conteúdo Principal */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-
           {/* Logo e Animação */}
           <motion.div
             className="flex justify-center lg:justify-start"
@@ -76,12 +80,12 @@ const Hero = () => {
             >
               {/* Logo do FavelaWare */}
               <motion.img
-                src="/imgs/logo/logo.png"
+                src={LOGO}
                 alt="FavelaWare Logo"
                 className="w-80 h-80 object-contain"
                 initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
                 animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
               />
             </motion.div>
           </motion.div>
@@ -140,12 +144,7 @@ const Hero = () => {
                   transition={{ duration: 0.5, ease: 'easeInOut' }}
                 />
                 <span className="relative z-10">SAIBA MAIS</span>
-                <svg
-                  className="relative z-10 w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="relative z-10 w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </MotionLink>
@@ -158,11 +157,7 @@ const Hero = () => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.9 }}
             >
-              {[
-                { number: '150+', label: 'Alunos' },
-                { number: '5+', label: 'Turmas' },
-                { number: '3', label: 'Edições' },
-              ].map((stat, index) => (
+              {estatisticasDoProjeto.map((estatistica, index) => (
                 <motion.div
                   key={index}
                   className="text-center p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20"
@@ -171,15 +166,14 @@ const Hero = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1 + index * 0.1 }}
                 >
-                  <div className="text-3xl md:text-4xl font-black text-white">{stat.number}</div>
-                  <div className="text-sm md:text-base text-white/80 font-semibold">{stat.label}</div>
+                  <div className="text-3xl md:text-4xl font-black text-white">{estatistica.numero}</div>
+                  <div className="text-sm md:text-base text-white/80 font-semibold">{estatistica.rotulo}</div>
                 </motion.div>
               ))}
             </motion.div>
           </div>
         </div>
       </div>
-
     </section>
   );
 };

@@ -10,11 +10,13 @@
 import { useCallback, useState } from 'react';
 
 import Carregamento, { aguardarCicloCompleto } from '../../components/admin/Carregamento';
+import DetalheDaJustificativa from '../../components/admin/DetalheDaJustificativa';
 import Janela from '../../components/admin/Janela';
 import PlanilhaDeChamada, { ESTILO_SITUACAO, LegendaSituacoes } from '../../components/admin/PlanilhaDeChamada';
 import { Aviso, BarraDeFiltros, Botao, Cartao, Vazio, type Mensagem } from '../../components/admin/Ui';
-import { formatarData, type Aula, type Presenca } from '../../lib/dashboard';
-import { corrigirPresenca, LETRA_DA_SITUACAO } from '../../lib/gestao';
+import type { Aula, Presenca } from '../../lib/painel';
+import { LETRA_DA_MARCACAO, servicoChamada } from '../../lib/chamada';
+import { formatarData } from '../../utils/datas';
 import { useAdmin } from './contexto';
 import { foco } from '../../components/admin/designSystem';
 
@@ -27,27 +29,37 @@ const OPCOES = [
 ] as const;
 
 const Chamada: React.FC = () => {
-  const { painel, atualizarPresencaNaTela } = useAdmin();
+  const { edicao, painel, atualizarPresencaNaTela, somenteLeitura } = useAdmin();
   const [correcao, setCorrecao] = useState<Correcao | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
 
   // Enquanto grava, a janela não fecha (senão parece que a correção sumiu)
-  const fechar = useCallback(() => { if (!salvando) setCorrecao(null); }, [salvando]);
+  const fechar = useCallback(() => {
+    if (!salvando) setCorrecao(null);
+  }, [salvando]);
 
   const aplicar = async (situacao: (typeof OPCOES)[number]['valor'] | null) => {
     if (!correcao) return;
     setSalvando(true);
     try {
       // Grava e deixa a pintura do carregamento terminar (não corta no meio)
-      await corrigirPresenca(correcao.aula.id, correcao.pessoa.id, situacao);
+      await servicoChamada.corrigirPresenca(correcao.aula.id, correcao.pessoa.id, situacao);
       await aguardarCicloCompleto();
       // Gravou no banco: troca só esta célula na tela (sem baixar a edição inteira de novo)
       atualizarPresencaNaTela(
         correcao.aula.id,
         correcao.pessoa.id,
         situacao
-          ? { aula_id: correcao.aula.id, participante_id: correcao.pessoa.id, situacao, registro_original: LETRA_DA_SITUACAO[situacao] }
+          ? {
+              aula_id: correcao.aula.id,
+              participante_id: correcao.pessoa.id,
+              situacao,
+              registro_original: LETRA_DA_MARCACAO[situacao],
+              // A justificativa só fica com J (o banco apaga nas outras)
+              justificativa: situacao === 'justificada' ? (correcao.presenca?.justificativa ?? null) : null,
+              atestado_id: situacao === 'justificada' ? (correcao.presenca?.atestado_id ?? null) : null,
+            }
           : null,
       );
       setMensagem({
@@ -86,7 +98,15 @@ const Chamada: React.FC = () => {
                   pessoas={alunos}
                   aulas={painel.aulasDeAlunos.filter((a) => a.turma_id === t.id)}
                   celulas={painel.celulas}
-                  aoClicarCelula={(pessoa, aula, presenca) => { setMensagem(null); setCorrecao({ pessoa, aula, presenca }); }}
+                  aoClicarCelula={
+                    // Edição encerrada e parceiro: só consulta (o banco também recusa)
+                    edicao.encerrada || somenteLeitura
+                      ? undefined
+                      : (pessoa, aula, presenca) => {
+                          setMensagem(null);
+                          setCorrecao({ pessoa, aula, presenca });
+                        }
+                  }
                 />
               </Cartao>
             );
@@ -106,6 +126,10 @@ const Chamada: React.FC = () => {
                 ? `${ESTILO_SITUACAO[correcao.presenca.situacao].rotulo} (registro "${correcao.presenca.registro_original}")`
                 : 'sem registro'}
             </p>
+            <DetalheDaJustificativa
+              justificativa={correcao.presenca?.justificativa ?? null}
+              atestadoId={correcao.presenca?.atestado_id ?? null}
+            />
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {OPCOES.map((op) => {
                 const atual = correcao.presenca?.situacao === op.valor;
@@ -119,10 +143,13 @@ const Chamada: React.FC = () => {
                       atual ? 'border-gray-900 bg-gray-50' : 'border-gray-200 hover:border-gray-400'
                     }`}
                   >
-                    <span className={`flex h-8 w-8 items-center justify-center rounded font-bold ${ESTILO_SITUACAO[op.valor].classe}`}>
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded font-bold ${ESTILO_SITUACAO[op.valor].classe}`}
+                    >
                       {ESTILO_SITUACAO[op.valor].letra}
                     </span>
-                    {op.rotulo}{atual ? ' (atual)' : ''}
+                    {op.rotulo}
+                    {atual ? ' (atual)' : ''}
                   </button>
                 );
               })}

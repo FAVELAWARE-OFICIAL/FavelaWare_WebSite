@@ -1,0 +1,11 @@
+# Config do gitleaks (lido pelo job `ci` em .github/workflows/ci.yml).
+#
+# Sem allowlist: o .env não é versionado (ver .gitignore) e a chave
+# publicável do Supabase só existe no .env.local de cada máquina.
+#
+# NUNCA adicione aqui chaves service_role, access tokens (sbp_...) ou
+# qualquer segredo real. A resposta certa para um segredo commitado é
+# rotacioná-lo, não permiti-lo.
+
+[extend]
+useDefault = true

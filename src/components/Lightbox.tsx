@@ -103,14 +103,8 @@ const Lightbox: React.FC<LightboxProps> = ({ foto, aoFechar }) => {
             onClick={(e) => e.stopPropagation()}
             className="max-w-5xl w-full"
           >
-            <img
-              src={foto.src}
-              alt={foto.legenda}
-              className="w-full max-h-[80vh] object-contain rounded-xl"
-            />
-            <figcaption className="text-center text-white/90 font-medium mt-4">
-              {foto.legenda}
-            </figcaption>
+            <img src={foto.src} alt={foto.legenda} className="w-full max-h-[80vh] object-contain rounded-xl" />
+            <figcaption className="text-center text-white/90 font-medium mt-4">{foto.legenda}</figcaption>
           </motion.figure>
         </motion.div>
       )}

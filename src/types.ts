@@ -1,202 +1,95 @@
 /**
- * ============================================
- * TIPOS CUSTOMIZADOS (types.ts)
- * ============================================
- *
- * Este arquivo define os tipos TypeScript usados no projeto.
- * TypeScript adiciona tipagem ao JavaScript, ajudando a prevenir erros.
- *
- * Conceitos importantes:
- * - interface: define a estrutura de um objeto
- * - type: cria um tipo customizado
- * - Tipagem ajuda o editor a mostrar erros antes de executar o código
+ * Tipos compartilhados do site e da padronização de status.
+ * Tipos de um assunto só (turmas, atividades, ponto...) ficam no serviço dele, em src/lib/.
  */
 
-/**
- * TIPO: Foto da Galeria
- * Define a estrutura de cada foto exibida na galeria
- */
-export interface Photo {
-  id: number;              // Identificador único da foto
-  title: string;           // Título da foto
-  description: string;     // Descrição detalhada
-  category: string;        // Categoria (Evento, Formatura, etc)
-  image: string;           // Caminho para a imagem
+// ============================================
+// STATUS DE PROCESSAMENTO (regra 3 de docs/boas-praticas.md)
+// ============================================
+
+/** Os 5 status padronizados de qualquer processamento */
+export const StatusProcessamento = {
+  EmExecucao: 1,
+  ExcecaoNegocio: 2,
+  ExcecaoSistema: 3,
+  Sucesso: 4,
+  Cancelado: 5,
+} as const;
+
+export type StatusProcessamento = (typeof StatusProcessamento)[keyof typeof StatusProcessamento];
+
+/** Resultado de uma operação: o status e, quando não deu certo, a mensagem para a pessoa */
+export interface ResultadoOperacao {
+  status: StatusProcessamento;
+  mensagem: string | null;
 }
 
-/**
- * TIPO: Parceiro/Idealizador
- * Define a estrutura de cada parceiro do projeto
- */
-export interface Partner {
-  name: string;            // Nome do parceiro
-  logo: string;            // Emoji ou ícone
-  image?: string;          // Caminho para logo (opcional)
+export const sucesso = (): ResultadoOperacao => ({ status: StatusProcessamento.Sucesso, mensagem: null });
+
+/** Falha esperada: regra de negócio ou dado que a pessoa pode corrigir */
+export const excecaoDeNegocio = (mensagem: string): ResultadoOperacao => ({
+  status: StatusProcessamento.ExcecaoNegocio,
+  mensagem,
+});
+
+/** Falha técnica inesperada: rede, banco ou serviço fora do ar */
+export const excecaoDeSistema = (mensagem: string): ResultadoOperacao => ({
+  status: StatusProcessamento.ExcecaoSistema,
+  mensagem,
+});
+
+// ============================================
+// CONTEÚDO DO SITE PÚBLICO
+// ============================================
+
+/** Foto em destaque na página inicial (as da página Galeria ficam em src/data/galeria.ts) */
+export interface FotoEmDestaque {
+  id: number;
+  titulo: string;
+  descricao: string;
+  categoria: string;
+  imagem: string;
 }
 
-/**
- * TIPO: Parceiro Detalhado (página Sobre)
- * Versão estendida com informações completas
- */
-export interface DetailedPartner extends Partner {
-  descricao: string;       // Descrição do parceiro
-  link: string;            // Link para site
+/** Parceiro ou idealizador do projeto (fonte única: src/data/parceiros.ts) */
+export interface Parceiro {
+  nome: string;
+  /** Mostrado quando a imagem não carrega */
+  emoji: string;
+  imagem: string;
+  descricao: string;
+  /** Sem site oficial conhecido fica sem o botão "SAIBA MAIS" */
+  site?: string;
 }
 
-/**
- * TIPO: Link Social
- * Define links de redes sociais no footer
- */
-export interface SocialLink {
-  name: string;            // Nome da rede social
-  icon: string;            // Emoji ou ícone
-  href: string;            // URL do link
-  color: string;           // Classes de cor (Tailwind)
-}
-
-/**
- * TIPO: Evento do Cronograma
- * Define cada evento na timeline
- */
-export interface TimelineEvent {
-  titleTop: string;        // Título superior
-  dateTop: string;         // Data superior
-  titleBottom: string;     // Título inferior
-  dateBottom: string;      // Data inferior
-  posicao?: number;        // Posição na timeline (opcional)
-}
-
-/**
- * TIPO: Item do Cronograma (versão Sobre)
- */
-export interface CronogramaItem {
-  data: string;            // Data do evento
-  titulo: string;          // Título do evento
-  subtitulo: string;       // Subtítulo (opcional)
-  subtituloTexto: string;  // Texto do subtítulo
-  posicao: number;         // Posição na timeline
-}
-
-/**
- * TIPO: Idealizador
- * Define cada membro fundador do projeto
- */
-export interface Idealizador {
-  nome: string;            // Nome completo
-  cargo: string;           // Cargo/função
-  organizacao: string;     // Organização
-  foto?: string;           // Foto (opcional)
-}
-
-/**
- * TIPO: Propósito
- * Define os propósitos do projeto
- */
-export interface Proposito {
-  titulo: string;          // Título do propósito
-  descricao: string;       // Descrição
-  cor: string;             // Classe de cor (Tailwind)
-}
-
-/**
- * TIPO: Membro da Equipe
- * Define membros das equipes passadas
- */
-export interface TeamMember {
-  nome: string;            // Nome do membro
-  cargo: string;           // Cargo/função
-  foto: string | null;     // Foto (pode ser null)
-}
-
-/**
- * TIPO: Equipe por Ano
- * Agrupa membros por ano
- */
-export interface YearTeam {
-  ano: string;             // Ano da equipe
-  membros: TeamMember[];   // Array de membros
-}
-
-/**
- * TIPO: Tópico de Módulo
- * Tópicos ensinados em cada módulo
- */
-export type Topico = string;
-
-/**
- * TIPO: Módulo de Ensino
- * Define um módulo dentro de uma trilha
- */
-export interface Modulo {
-  nome: string;            // Nome do módulo
-  duracao: string;         // Duração (ex: "18 horas")
-  topicos: Topico[];       // Lista de tópicos
-}
-
-/**
- * TIPO: Trilha de Ensino
- * Define uma trilha completa do projeto
- */
-export interface Trilha {
-  id: number;              // ID único
-  titulo: string;          // Título da trilha
-  horas: string;           // Total de horas
-  modulos: Modulo[];       // Módulos da trilha
-}
-
-/**
- * TIPO: Edição Anterior
- * Define edições passadas do projeto
- */
-export interface EdicaoAnterior {
-  nome: string;            // Nome da edição
-  ano: string;             // Ano
-}
-
-/**
- * TIPO: Estatística do Projeto
- * Números exibidos no Hero
- */
-export interface Estatistica {
-  number: string;          // Número (ex: "150+")
-  label: string;           // Rótulo (ex: "Alunos")
-}
-
-/**
- * TIPO: Artigo Científico
- * Define artigos publicados sobre o projeto
- */
+/** Artigo científico (página Reconhecimentos) */
 export interface ArtigoCientifico {
-  id: number;              // ID único
-  titulo: string;          // Título do artigo
-  descricao: string;       // Descrição/resumo
-  doi: string;             // DOI ou link do artigo
-  ano: string;             // Ano de publicação
-  icone: string;           // Emoji ou ícone
+  id: number;
+  titulo: string;
+  descricao: string;
+  /** DOI ou link do artigo */
+  doi: string;
+  ano: string;
+  icone: string;
 }
 
-/**
- * TIPO: Prêmio/Reconhecimento
- * Define prêmios e reconhecimentos recebidos
- */
+/** Prêmio ou reconhecimento recebido */
 export interface Premio {
-  id: number;              // ID único
-  titulo: string;          // Nome do prêmio
-  descricao: string;       // Descrição do prêmio
-  ano: string;             // Ano de recebimento
-  link?: string;           // Link para mais informações (opcional)
-  imagens: string[];       // Array de caminhos de imagens
-  icone: string;           // Emoji ou ícone
+  id: number;
+  titulo: string;
+  descricao: string;
+  ano: string;
+  link?: string;
+  imagens: string[];
+  icone: string;
 }
 
-/**
- * TIPO: Informação de Contato
- * Define dados de contato (email, telefone, endereço)
- */
+/** Forma de contato (página Contato) */
 export interface ContatoInfo {
-  tipo: 'email' | 'telefone' | 'endereco'; // Tipo de contato
-  titulo: string;          // Título da seção
-  valor: string;           // Valor do contato (email, número, endereço)
-  link?: string;           // Link (mailto:, tel:, etc) - opcional
-  icone: string;           // Emoji ou ícone
+  tipo: 'email' | 'telefone' | 'endereco';
+  titulo: string;
+  valor: string;
+  /** mailto:, tel: ou mapa */
+  link?: string;
+  icone: string;
 }

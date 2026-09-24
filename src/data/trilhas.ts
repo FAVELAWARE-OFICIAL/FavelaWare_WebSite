@@ -29,7 +29,7 @@
  * Para mudar uma aula ou um tópico, edite só este arquivo.
  */
 
-export interface Aula {
+export interface AulaDoCronograma {
   data: string;
   titulo: string;
   detalhes: string[];
@@ -39,12 +39,12 @@ export interface Modulo {
   nome: string;
   duracao?: string;
   topicos: string[];
-  aulas?: Aula[];
+  aulas?: AulaDoCronograma[];
   /** Observação curta (ex.: onde está a aula de uma oficina) */
   nota?: string;
 }
 
-export interface Trilha {
+export interface TrilhaDoCurso {
   id: string;
   titulo: string;
   horas: string;
@@ -54,7 +54,7 @@ export interface Trilha {
 export interface EdicaoAnterior {
   id: string;
   nome: string;
-  trilhas: Trilha[];
+  trilhas: TrilhaDoCurso[];
 }
 
 // Tópicos de JavaScript: iguais na edição atual e na Edição II
@@ -73,61 +73,105 @@ const TOPICOS_JAVASCRIPT = [
 ];
 
 /** Edição III (atual): programa + cronograma, módulo a módulo */
-export const trilhasAtuais: Trilha[] = [
+export const trilhasAtuais: TrilhaDoCurso[] = [
   {
     id: 'cultura',
-    titulo: "1ª TRILHA: CULTURA E ENCANTAMENTO",
+    titulo: '1ª TRILHA: CULTURA E ENCANTAMENTO',
     horas: '57 HORAS',
     modulos: [
       {
-        nome: "Carreira Tech",
+        nome: 'Carreira Tech',
         topicos: [],
         aulas: [
           { data: '05/08/2025', titulo: 'Apresentação e Carreira em TI', detalhes: ['Instrutores: Ivan (AOPA).'] },
         ],
       },
       {
-        nome: "Inclusão: Mundo Digital",
+        nome: 'Inclusão: Mundo Digital',
         duracao: '18 horas',
         topicos: [
-          "Acessar computador",
-          "Onde buscar os recursos",
-          "Conceitos de hardware e software",
-          "Uso de e-mail e Ferramentas Google",
+          'Acessar computador',
+          'Onde buscar os recursos',
+          'Conceitos de hardware e software',
+          'Uso de e-mail e Ferramentas Google',
         ],
         aulas: [
           { data: '06/08/2025', titulo: 'Acessar computador', detalhes: ['Instrutores: Renato e Victor'] },
           { data: '07/08/2025', titulo: 'Onde buscar os recursos', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '12/08/2025', titulo: 'Conceitos de Hardware e Software', detalhes: ['Instrutores: Renato e Victor'] },
-          { data: '13/08/2025', titulo: 'Conceitos de Hardware e Software (Aula Prática)', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '14/08/2025', titulo: 'Uso de e-mail e Ferramentas Google', detalhes: ['Instrutores: Renato e Victor'] },
-          { data: '19/08/2025', titulo: 'Uso de e-mail e Ferramentas Google', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '12/08/2025',
+            titulo: 'Conceitos de Hardware e Software',
+            detalhes: ['Instrutores: Renato e Victor'],
+          },
+          {
+            data: '13/08/2025',
+            titulo: 'Conceitos de Hardware e Software (Aula Prática)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
+          {
+            data: '14/08/2025',
+            titulo: 'Uso de e-mail e Ferramentas Google',
+            detalhes: ['Instrutores: Renato e Victor'],
+          },
+          {
+            data: '19/08/2025',
+            titulo: 'Uso de e-mail e Ferramentas Google',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
         ],
       },
       {
-        nome: "Pensamento Lógico",
+        nome: 'Pensamento Lógico',
         duracao: '33 horas',
         topicos: [
-          "Introdução ao pensamento lógico",
-          "Resolução de problemas de modo geral",
-          "Ferramentas que possibilitem o desenvolvimento lógico",
-          "Lógica de programação e algoritmos",
-          "Correlacionando com Fluxograma",
-          "Git e GitHub",
+          'Introdução ao pensamento lógico',
+          'Resolução de problemas de modo geral',
+          'Ferramentas que possibilitem o desenvolvimento lógico',
+          'Lógica de programação e algoritmos',
+          'Correlacionando com Fluxograma',
+          'Git e GitHub',
         ],
         aulas: [
           { data: '20/08/2025', titulo: 'Introdução ao pensamento lógico', detalhes: ['Instrutores: Renato e Victor'] },
-          { data: '21/08/2025', titulo: 'Resolução de problemas de modo geral (matemática)', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '26/08/2025', titulo: 'Resolução de problemas de modo geral (dinâmica)', detalhes: ['Instrutores: Renato e Victor'] },
-          { data: '27/08/2025', titulo: 'Oficina de Currículo e LinkedIn (Mundiale)', detalhes: ['Instrutores presentes: Pedro e Diego'] },
-          { data: '28/08/2025', titulo: 'Resolução de problemas de modo geral (jogos)', detalhes: ['Instrutores: Renato e Victor'] },
-          { data: '02/09/2025', titulo: 'Ferramentas que possibilitem o desenvolvimento lógico', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '03/09/2025', titulo: 'Ferramentas que possibilitem o desenvolvimento lógico', detalhes: ['Instrutores: Renato e Victor'] },
-          { data: '04/09/2025', titulo: 'Ferramentas que possibilitem o desenvolvimento lógico', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '21/08/2025',
+            titulo: 'Resolução de problemas de modo geral (matemática)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
+          {
+            data: '26/08/2025',
+            titulo: 'Resolução de problemas de modo geral (dinâmica)',
+            detalhes: ['Instrutores: Renato e Victor'],
+          },
+          {
+            data: '27/08/2025',
+            titulo: 'Oficina de Currículo e LinkedIn (Mundiale)',
+            detalhes: ['Instrutores presentes: Pedro e Diego'],
+          },
+          {
+            data: '28/08/2025',
+            titulo: 'Resolução de problemas de modo geral (jogos)',
+            detalhes: ['Instrutores: Renato e Victor'],
+          },
+          {
+            data: '02/09/2025',
+            titulo: 'Ferramentas que possibilitem o desenvolvimento lógico',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
+          {
+            data: '03/09/2025',
+            titulo: 'Ferramentas que possibilitem o desenvolvimento lógico',
+            detalhes: ['Instrutores: Renato e Victor'],
+          },
+          {
+            data: '04/09/2025',
+            titulo: 'Ferramentas que possibilitem o desenvolvimento lógico',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
         ],
       },
       {
-        nome: "Git e GitHub",
+        nome: 'Git e GitHub',
         topicos: [],
         aulas: [
           { data: '09/09/2025', titulo: 'Git e GitHub', detalhes: ['Instrutores: Pedro e Diego'] },
@@ -140,69 +184,105 @@ export const trilhasAtuais: Trilha[] = [
   },
   {
     id: 'web',
-    titulo: "2ª TRILHA: DESENVOLVIMENTO WEB",
+    titulo: '2ª TRILHA: DESENVOLVIMENTO WEB',
     horas: '152 HORAS',
     modulos: [
       {
-        nome: "HTML",
+        nome: 'HTML',
         duracao: '33 horas',
         topicos: [
-          "O que é HTML",
-          "Cabeçalhos, parágrafos, formatação",
-          "Lista ordenada e não ordenada, imagens",
-          "Links, formulários",
-          "Desenvolvimento do desafio HTML",
-          "Exercícios Práticos",
+          'O que é HTML',
+          'Cabeçalhos, parágrafos, formatação',
+          'Lista ordenada e não ordenada, imagens',
+          'Links, formulários',
+          'Desenvolvimento do desafio HTML',
+          'Exercícios Práticos',
         ],
         aulas: [
           { data: '17/09/2025', titulo: 'O que é HTML', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '18/09/2025', titulo: 'Cabeçalhos, parágrafos, formatação', detalhes: ['Instrutores: Renato e Victor'] },
-          { data: '23/09/2025', titulo: 'Cabeçalhos, parágrafos, formatação (Prática)', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '24/09/2025', titulo: 'Lista ordenada e não ordenada, imagens', detalhes: ['Instrutores: Renato e Victor'] },
-          { data: '25/09/2025', titulo: 'Lista ordenada e não ordenada, imagens (Prática)', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '18/09/2025',
+            titulo: 'Cabeçalhos, parágrafos, formatação',
+            detalhes: ['Instrutores: Renato e Victor'],
+          },
+          {
+            data: '23/09/2025',
+            titulo: 'Cabeçalhos, parágrafos, formatação (Prática)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
+          {
+            data: '24/09/2025',
+            titulo: 'Lista ordenada e não ordenada, imagens',
+            detalhes: ['Instrutores: Renato e Victor'],
+          },
+          {
+            data: '25/09/2025',
+            titulo: 'Lista ordenada e não ordenada, imagens (Prática)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
           { data: '30/09/2025', titulo: 'Links, formulários', detalhes: ['Instrutores: Renato e Victor'] },
           { data: '01/10/2025', titulo: 'Links, formulários (Prática)', detalhes: ['Instrutores: Pedro e Diego'] },
           { data: '02/10/2025', titulo: 'Desenvolvimento desafio HTML', detalhes: ['Instrutores: Renato e Victor'] },
           { data: '07/10/2025', titulo: 'Desenvolvimento desafio HTML', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '08/10/2025', titulo: 'Oficina Softskills: Mentalidade de Crescimento e Autogestão (Mundiale)', detalhes: ['Instrutores presentes: Renato e Victor'] },
+          {
+            data: '08/10/2025',
+            titulo: 'Oficina Softskills: Mentalidade de Crescimento e Autogestão (Mundiale)',
+            detalhes: ['Instrutores presentes: Renato e Victor'],
+          },
           { data: '09/10/2025', titulo: 'Desenvolvimento desafio HTML', detalhes: ['Instrutores: Pedro e Diego'] },
         ],
       },
       {
-        nome: "Introdução Forge Chatbot e IA",
+        nome: 'Introdução Forge Chatbot e IA',
         duracao: '18 horas',
         topicos: [
-          "Introdução ao desenvolvimento de IA em ChatBot",
-          "Chatbot Analytics",
-          "Introdução a automação e web-crawlers, RPA, Diferença entre automação e automatização",
-          "Forge",
+          'Introdução ao desenvolvimento de IA em ChatBot',
+          'Chatbot Analytics',
+          'Introdução a automação e web-crawlers, RPA, Diferença entre automação e automatização',
+          'Forge',
         ],
         aulas: [
-          { data: '21/10/2025', titulo: 'Introdução ao desenvolvimento de IA em ChatBot', detalhes: ['Instrutores: Renato e Victor'] },
+          {
+            data: '21/10/2025',
+            titulo: 'Introdução ao desenvolvimento de IA em ChatBot',
+            detalhes: ['Instrutores: Renato e Victor'],
+          },
           { data: '22/10/2025', titulo: 'Chatbot Analytics', detalhes: ['Instrutores: Pedro e Diego'] },
           { data: '23/10/2025', titulo: 'Chatbot Analytics', detalhes: ['Instrutores: Renato e Victor'] },
-          { data: '28/10/2025', titulo: 'Introdução a automação e web-crawlers, RPA, Diferença entre automação e automatização', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '28/10/2025',
+            titulo: 'Introdução a automação e web-crawlers, RPA, Diferença entre automação e automatização',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
           { data: '29/10/2025', titulo: 'Forge', detalhes: ['Instrutores: Renato e Victor'] },
           { data: '30/10/2025', titulo: 'Forge', detalhes: ['Instrutores: Pedro e Diego'] },
         ],
       },
       {
-        nome: "CSS",
+        nome: 'CSS',
         duracao: '36 horas',
         topicos: [
-          "Introdução",
-          "Seletores, classes, ids, tags",
-          "Formatação, posicionamentos",
-          "Fontes, bordas, cores",
-          "Projeto - Definição e Esboço",
+          'Introdução',
+          'Seletores, classes, ids, tags',
+          'Formatação, posicionamentos',
+          'Fontes, bordas, cores',
+          'Projeto - Definição e Esboço',
         ],
         aulas: [
           { data: '05/11/2025', titulo: 'Introdução', detalhes: ['Instrutores: Renato e Emily'] },
           { data: '06/11/2025', titulo: 'Seletores, classes, ids, tags', detalhes: ['Instrutores: Pedro e Diego'] },
           { data: '11/11/2025', titulo: 'Projeto - Definição e Esboço', detalhes: ['Instrutores: Renato e Emily'] },
-          { data: '12/11/2025', titulo: 'Seletores, classes, ids, tags (Prática)', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '12/11/2025',
+            titulo: 'Seletores, classes, ids, tags (Prática)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
           { data: '13/11/2025', titulo: 'Formatação, posicionamentos', detalhes: ['Instrutores: Renato e Emily'] },
-          { data: '18/11/2025', titulo: 'Formatação, posicionamentos (Prática)', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '18/11/2025',
+            titulo: 'Formatação, posicionamentos (Prática)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
           { data: '19/11/2025', titulo: 'Fontes, bordas, cores', detalhes: ['Instrutores: Renato e Emily'] },
           { data: '20/11/2025', titulo: 'Fontes, bordas, cores (Prática)', detalhes: ['Instrutores: Pedro e Diego'] },
           { data: '25/11/2025', titulo: 'Exercícios', detalhes: ['Instrutores: Renato e Emily'] },
@@ -212,52 +292,108 @@ export const trilhasAtuais: Trilha[] = [
         ],
       },
       {
-        nome: "Lógica de Programação",
+        nome: 'Lógica de Programação',
         duracao: '25 horas',
         topicos: [
-          "Lógica de programação e algoritmos",
-          "Correlacionando com Fluxograma (Moqups e Draw.io)",
-          "Desenvolvimento do Projeto",
+          'Lógica de programação e algoritmos',
+          'Correlacionando com Fluxograma (Moqups e Draw.io)',
+          'Desenvolvimento do Projeto',
         ],
         aulas: [
-          { data: '03/12/2025', titulo: 'Lógica de programação e algoritmos', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '04/12/2025', titulo: 'Lógica de programação e algoritmos (Prática)', detalhes: ['Instrutores: Renato e Emily'] },
-          { data: '09/12/2025', titulo: 'Lógica de programação e algoritmos', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '10/12/2025', titulo: 'Lógica de programação e algoritmos (Prática)', detalhes: ['Instrutores: Renato e Emily'] },
-          { data: '11/12/2025', titulo: 'Correlacionando com Fluxograma (Moqups e Draw.io)', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '03/12/2025',
+            titulo: 'Lógica de programação e algoritmos',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
+          {
+            data: '04/12/2025',
+            titulo: 'Lógica de programação e algoritmos (Prática)',
+            detalhes: ['Instrutores: Renato e Emily'],
+          },
+          {
+            data: '09/12/2025',
+            titulo: 'Lógica de programação e algoritmos',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
+          {
+            data: '10/12/2025',
+            titulo: 'Lógica de programação e algoritmos (Prática)',
+            detalhes: ['Instrutores: Renato e Emily'],
+          },
+          {
+            data: '11/12/2025',
+            titulo: 'Correlacionando com Fluxograma (Moqups e Draw.io)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
           { data: '16/12/2025', titulo: 'Projeto', detalhes: ['Instrutores: Renato e Emily'] },
-          { data: '17/12/2025', titulo: 'Correlacionando com Fluxograma (Prática)', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '18/12/2025', titulo: 'Oficina Softskills: Trabalho em equipe (Mundiale)', detalhes: ['Instrutores presentes: Renato e Emily'] },
+          {
+            data: '17/12/2025',
+            titulo: 'Correlacionando com Fluxograma (Prática)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
+          {
+            data: '18/12/2025',
+            titulo: 'Oficina Softskills: Trabalho em equipe (Mundiale)',
+            detalhes: ['Instrutores presentes: Renato e Emily'],
+          },
         ],
       },
     ],
   },
   {
     id: 'javascript',
-    titulo: "3ª TRILHA: FUNDAMENTOS DE DESENVOLVIMENTO WEB COM JAVASCRIPT",
+    titulo: '3ª TRILHA: FUNDAMENTOS DE DESENVOLVIMENTO WEB COM JAVASCRIPT',
     horas: '',
     modulos: [
       {
-        nome: "JavaScript",
+        nome: 'JavaScript',
         duracao: '63 horas',
         topicos: TOPICOS_JAVASCRIPT,
         aulas: [
           { data: '24/02/2026', titulo: 'Variáveis, concatenação', detalhes: ['Instrutores: Miguel e Leandro'] },
-          { data: '25/02/2026', titulo: 'Operadores (aritméticos, relacionais, lógico, ternário)', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '26/02/2026', titulo: 'Estrutura Condicional (if-else)', detalhes: ['Instrutores: Miguel e Leandro'] },
-          { data: '03/03/2026', titulo: 'Estrutura Condicional (exercícios)', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '25/02/2026',
+            titulo: 'Operadores (aritméticos, relacionais, lógico, ternário)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
+          {
+            data: '26/02/2026',
+            titulo: 'Estrutura Condicional (if-else)',
+            detalhes: ['Instrutores: Miguel e Leandro'],
+          },
+          {
+            data: '03/03/2026',
+            titulo: 'Estrutura Condicional (exercícios)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
           { data: '04/03/2026', titulo: 'Projeto', detalhes: ['Instrutores: Miguel e Leandro'] },
-          { data: '05/03/2026', titulo: 'Estrutura Condicional (switch-case)', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '10/03/2026', titulo: 'Estrutura Condicional (exercícios)', detalhes: ['Instrutores: Miguel e Leandro'] },
+          {
+            data: '05/03/2026',
+            titulo: 'Estrutura Condicional (switch-case)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
+          {
+            data: '10/03/2026',
+            titulo: 'Estrutura Condicional (exercícios)',
+            detalhes: ['Instrutores: Miguel e Leandro'],
+          },
           { data: '11/03/2026', titulo: 'Array', detalhes: ['Mundiale'] },
           { data: '12/03/2026', titulo: 'Array', detalhes: ['Instrutores: Miguel e Leandro'] },
           { data: '17/03/2026', titulo: 'Array (exercícios)', detalhes: ['Instrutores: Pedro e Diego'] },
           { data: '18/03/2026', titulo: 'Estrutura de repetição (while)', detalhes: ['Instrutores: Miguel e Leandro'] },
           { data: '19/03/2026', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '24/03/2026', titulo: 'Estrutura de repetição (exercícios)', detalhes: ['Instrutores: Miguel e Leandro'] },
+          {
+            data: '24/03/2026',
+            titulo: 'Estrutura de repetição (exercícios)',
+            detalhes: ['Instrutores: Miguel e Leandro'],
+          },
           { data: '25/03/2026', titulo: 'Estrutura de repetição (do-while)', detalhes: ['Instrutores: Pedro e Diego'] },
           { data: '26/03/2026', titulo: 'Estrutura de repetição (for)', detalhes: ['Instrutores: Miguel e Leandro'] },
-          { data: '31/03/2026', titulo: 'Estrutura de repetição (exercícios)', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '31/03/2026',
+            titulo: 'Estrutura de repetição (exercícios)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
           { data: '01/04/2026', titulo: 'Funções', detalhes: ['Instrutores: Miguel e Leandro'] },
           { data: '07/04/2026', titulo: 'Funções (exercícios)', detalhes: ['Instrutores: Pedro e Diego'] },
           { data: '08/04/2026', titulo: 'Projeto', detalhes: ['Instrutores: Miguel e Leandro'] },
@@ -267,135 +403,189 @@ export const trilhasAtuais: Trilha[] = [
         ],
       },
       {
-        nome: "JavaScript para Web",
+        nome: 'JavaScript para Web',
         duracao: '36 horas',
         topicos: [
-          "O que é a DOM e Ferramentas de desenvolvedor",
-          "Acessando elementos da página",
-          "Manipulando valores de input",
-          "Trabalhando com estilos via JavaScript",
-          "Desenvolvimento do Projeto",
+          'O que é a DOM e Ferramentas de desenvolvedor',
+          'Acessando elementos da página',
+          'Manipulando valores de input',
+          'Trabalhando com estilos via JavaScript',
+          'Desenvolvimento do Projeto',
         ],
         aulas: [
           { data: '16/04/2026', titulo: 'Projeto', detalhes: ['Instrutores: Miguel e Leandro'] },
-          { data: '22/04/2026', titulo: 'O que é a DOM e Ferramentas de desenvolvedor', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '23/04/2026', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores: Miguel e Leandro'] },
+          {
+            data: '22/04/2026',
+            titulo: 'O que é a DOM e Ferramentas de desenvolvedor',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
+          {
+            data: '23/04/2026',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores: Miguel e Leandro'],
+          },
           { data: '28/04/2026', titulo: 'Acessando elementos da pagina', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '29/04/2026', titulo: 'Acessando elementos da pagina (exercícios)', detalhes: ['Instrutores: Miguel e Leandro'] },
+          {
+            data: '29/04/2026',
+            titulo: 'Acessando elementos da pagina (exercícios)',
+            detalhes: ['Instrutores: Miguel e Leandro'],
+          },
           { data: '30/04/2026', titulo: 'Manipulando valores de input', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '05/05/2026', titulo: 'Manipulando valores de input (exercícios)', detalhes: ['Instrutores: Miguel e Leandro'] },
-          { data: '06/05/2026', titulo: 'Trabalhando com estilos via javascript', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '07/05/2026', titulo: 'Trabalhando com estilos via javascript (exercícios)', detalhes: ['Instrutores: Miguel e Leandro'] },
+          {
+            data: '05/05/2026',
+            titulo: 'Manipulando valores de input (exercícios)',
+            detalhes: ['Instrutores: Miguel e Leandro'],
+          },
+          {
+            data: '06/05/2026',
+            titulo: 'Trabalhando com estilos via javascript',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
+          {
+            data: '07/05/2026',
+            titulo: 'Trabalhando com estilos via javascript (exercícios)',
+            detalhes: ['Instrutores: Miguel e Leandro'],
+          },
           { data: '12/05/2026', titulo: 'Exercícios', detalhes: ['Instrutores: Pedro e Diego'] },
           { data: '13/05/2026', titulo: 'Projeto', detalhes: ['Instrutores: Miguel e Leandro'] },
-          { data: '14/05/2026', titulo: 'Oficina Softskills: Comportamento em Entrevistas e Networking', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '14/05/2026',
+            titulo: 'Oficina Softskills: Comportamento em Entrevistas e Networking',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
           { data: '19/05/2026', titulo: 'Projeto', detalhes: ['Instrutores: Miguel e Leandro'] },
           { data: '20/05/2026', titulo: 'O que é API/ O que é JSON', detalhes: ['Instrutores: Pedro e Diego'] },
         ],
       },
       {
-        nome: "Trabalhando com APIs",
+        nome: 'Trabalhando com APIs',
         duracao: '46 horas',
         topicos: [
-          "O que é API",
-          "O que é JSON",
-          "Como funciona requisições HTTP",
-          "Consumindo uma API (GET)",
-          "Conhecendo outros métodos",
-          "Inserindo dados via API",
-          "Banco de Dados",
-          "Desenvolvimento do Projeto",
+          'O que é API',
+          'O que é JSON',
+          'Como funciona requisições HTTP',
+          'Consumindo uma API (GET)',
+          'Conhecendo outros métodos',
+          'Inserindo dados via API',
+          'Banco de Dados',
+          'Desenvolvimento do Projeto',
         ],
         aulas: [
-          { data: '21/05/2026', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores: Miguel e Leandro'] },
+          {
+            data: '21/05/2026',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores: Miguel e Leandro'],
+          },
           { data: '26/05/2026', titulo: 'Como funciona requisições HTTP', detalhes: ['Instrutores: Pedro e Diego'] },
           { data: '27/05/2026', titulo: 'Consumindo uma API (GET)', detalhes: ['Instrutores: Miguel e Leandro'] },
-          { data: '28/05/2026', titulo: 'Consumindo uma API (GET) (exercícios)', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '28/05/2026',
+            titulo: 'Consumindo uma API (GET) (exercícios)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
           { data: '02/06/2026', titulo: 'Inserindo dados via API', detalhes: ['Instrutores: Miguel e Leandro'] },
-          { data: '03/06/2026', titulo: 'Inserindo dados via API (exercícios)', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '03/06/2026',
+            titulo: 'Inserindo dados via API (exercícios)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
           { data: '09/06/2026', titulo: 'Conhecendo outros métodos', detalhes: ['Instrutores: Miguel e Leandro'] },
-          { data: '10/06/2026', titulo: 'Conhecendo outros métodos (exercícios)', detalhes: ['Instrutores: Pedro e Diego'] },
-          { data: '11/06/2026', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores: Miguel e Leandro'] },
+          {
+            data: '10/06/2026',
+            titulo: 'Conhecendo outros métodos (exercícios)',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
+          {
+            data: '11/06/2026',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores: Miguel e Leandro'],
+          },
           { data: '16/06/2026', titulo: 'Banco de Dados', detalhes: ['Instrutores: Pedro e Diego'] },
           { data: '17/06/2026', titulo: 'Banco de Dados', detalhes: ['Instrutores: Miguel e Leandro'] },
           { data: '18/06/2026', titulo: 'Banco de Dados', detalhes: ['Instrutores: Pedro e Diego'] },
           { data: '23/06/2026', titulo: 'Banco de Dados', detalhes: ['Instrutores: Miguel e Leandro'] },
           { data: '24/06/2026', titulo: 'Banco de Dados', detalhes: ['Instrutores: Pedro e Diego'] },
           { data: '25/06/2026', titulo: 'Banco de Dados (exercícios)', detalhes: ['Instrutores: Miguel e Leandro'] },
-          { data: '30/06/2026', titulo: 'Pitch de Projeto: Como Apresentar Suas Ideias', detalhes: ['Instrutores: Pedro e Diego'] },
+          {
+            data: '30/06/2026',
+            titulo: 'Pitch de Projeto: Como Apresentar Suas Ideias',
+            detalhes: ['Instrutores: Pedro e Diego'],
+          },
         ],
       },
     ],
   },
   {
     id: 'forge',
-    titulo: "FORGE",
+    titulo: 'FORGE',
     horas: '36 HORAS',
     modulos: [
       {
-        nome: "Introdução",
+        nome: 'Introdução',
         duracao: '4 horas',
-        topicos: [
-          "Introdução a automação e web-crawlers",
-          "RPA",
-          "Diferença entre automação e automatização",
-        ],
+        topicos: ['Introdução a automação e web-crawlers', 'RPA', 'Diferença entre automação e automatização'],
       },
       {
-        nome: "Tutorial Básico de Forge",
+        nome: 'Tutorial Básico de Forge',
         duracao: '6 horas',
-        topicos: [
-          "Editar blocos de entrada e saída",
-          "Blocos de ações básicas",
-        ],
+        topicos: ['Editar blocos de entrada e saída', 'Blocos de ações básicas'],
       },
       {
-        nome: "Prática",
+        nome: 'Prática',
         duracao: '14 horas',
-        topicos: [
-          "Desenvolvimento de bot",
-          "Desafio Bot Individual",
-        ],
+        topicos: ['Desenvolvimento de bot', 'Desafio Bot Individual'],
       },
     ],
   },
   {
     id: 'oficinas',
-    titulo: "OFICINAS",
+    titulo: 'OFICINAS',
     horas: '15 HORAS',
     modulos: [
       {
-        nome: "Oficina de Currículo e LinkedIn",
+        nome: 'Oficina de Currículo e LinkedIn',
         duracao: '3 horas',
         topicos: [],
         aulas: [
-          { data: '27/08/2025', titulo: 'Oficina de Currículo e LinkedIn (Mundiale)', detalhes: ['Instrutores presentes: Pedro e Diego'] },
+          {
+            data: '27/08/2025',
+            titulo: 'Oficina de Currículo e LinkedIn (Mundiale)',
+            detalhes: ['Instrutores presentes: Pedro e Diego'],
+          },
         ],
       },
       {
-        nome: "Oficina Softskills: Mentalidade de Crescimento e Autogestão",
+        nome: 'Oficina Softskills: Mentalidade de Crescimento e Autogestão',
         duracao: '3 horas',
         topicos: [],
         aulas: [
-          { data: '08/10/2025', titulo: 'Oficina Softskills: Mentalidade de Crescimento e Autogestão (Mundiale)', detalhes: ['Instrutores presentes: Renato e Victor'] },
+          {
+            data: '08/10/2025',
+            titulo: 'Oficina Softskills: Mentalidade de Crescimento e Autogestão (Mundiale)',
+            detalhes: ['Instrutores presentes: Renato e Victor'],
+          },
         ],
       },
       {
-        nome: "Oficina Softskills: Trabalho em equipe",
+        nome: 'Oficina Softskills: Trabalho em equipe',
         duracao: '3 horas',
         topicos: [],
         aulas: [
-          { data: '18/12/2025', titulo: 'Oficina Softskills: Trabalho em equipe (Mundiale)', detalhes: ['Instrutores presentes: Renato e Emily'] },
+          {
+            data: '18/12/2025',
+            titulo: 'Oficina Softskills: Trabalho em equipe (Mundiale)',
+            detalhes: ['Instrutores presentes: Renato e Emily'],
+          },
         ],
       },
       {
-        nome: "Oficina Softskills: Comportamento em Entrevistas e Networking",
+        nome: 'Oficina Softskills: Comportamento em Entrevistas e Networking',
         duracao: '3 horas',
         topicos: [],
         nota: 'Aula de 14/05/2026, no módulo JavaScript para Web.',
       },
       {
-        nome: "Pitch de Projeto: Como Apresentar Suas Ideias",
+        nome: 'Pitch de Projeto: Como Apresentar Suas Ideias',
         duracao: '3 horas',
         topicos: [],
         nota: 'Aula de 30/06/2026, no módulo Trabalhando com APIs.',
@@ -404,24 +594,64 @@ export const trilhasAtuais: Trilha[] = [
   },
   {
     id: 'intervencao',
-    titulo: "INTERVENÇÃO PSICOLÓGICA",
+    titulo: 'INTERVENÇÃO PSICOLÓGICA',
     horas: '15 HORAS',
     modulos: [
       {
-        nome: "Intervenção Psicológica em grupo",
+        nome: 'Intervenção Psicológica em grupo',
         duracao: '15 horas',
         topicos: [],
         aulas: [
-          { data: '28/08/2025', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores presentes: Renato e Victor', 'Psicóloga: Alinne Viegas (AOPA)'] },
-          { data: '18/09/2025', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores presentes: Pedro e Diego', 'Psicóloga: Alinne Viegas (AOPA)'] },
-          { data: '09/10/2025', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores presentes: Pedro e Diego', 'Psicóloga: Alinne Viegas (AOPA)'] },
-          { data: '06/11/2025', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores presentes: Renato e Victor', 'Psicóloga: Alinne Viegas (AOPA)'] },
-          { data: '27/11/2025', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores presentes: Renato e Victor', 'Psicóloga: Alinne Viegas (AOPA)'] },
-          { data: '16/12/2025', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores presentes: Renato e Emily', 'Psicóloga: Alinne Viegas (AOPA)'] },
-          { data: '2026', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores presentes: A definir', 'Psicóloga: Alinne Viegas (AOPA)'] },
-          { data: '2026', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores presentes: A definir', 'Psicóloga: Alinne Viegas (AOPA)'] },
-          { data: '2026', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores presentes: A definir', 'Psicóloga: Alinne Viegas (AOPA)'] },
-          { data: '2026', titulo: 'Intervenção Psicológica em grupo', detalhes: ['Instrutores presentes: A definir', 'Psicóloga: Alinne Viegas (AOPA)'] },
+          {
+            data: '28/08/2025',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores presentes: Renato e Victor', 'Psicóloga: Alinne Viegas (AOPA)'],
+          },
+          {
+            data: '18/09/2025',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores presentes: Pedro e Diego', 'Psicóloga: Alinne Viegas (AOPA)'],
+          },
+          {
+            data: '09/10/2025',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores presentes: Pedro e Diego', 'Psicóloga: Alinne Viegas (AOPA)'],
+          },
+          {
+            data: '06/11/2025',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores presentes: Renato e Victor', 'Psicóloga: Alinne Viegas (AOPA)'],
+          },
+          {
+            data: '27/11/2025',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores presentes: Renato e Victor', 'Psicóloga: Alinne Viegas (AOPA)'],
+          },
+          {
+            data: '16/12/2025',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores presentes: Renato e Emily', 'Psicóloga: Alinne Viegas (AOPA)'],
+          },
+          {
+            data: '2026',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores presentes: A definir', 'Psicóloga: Alinne Viegas (AOPA)'],
+          },
+          {
+            data: '2026',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores presentes: A definir', 'Psicóloga: Alinne Viegas (AOPA)'],
+          },
+          {
+            data: '2026',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores presentes: A definir', 'Psicóloga: Alinne Viegas (AOPA)'],
+          },
+          {
+            data: '2026',
+            titulo: 'Intervenção Psicológica em grupo',
+            detalhes: ['Instrutores presentes: A definir', 'Psicóloga: Alinne Viegas (AOPA)'],
+          },
         ],
       },
     ],
@@ -445,45 +675,49 @@ export const edicoesAnteriores: EdicaoAnterior[] = [
             duracao: '3 horas',
             topicos: [
               'A carreira em TI (Ânima Transformação Digital e parceiros)',
-              'Como montar um currículo; Trabalho em equipe; Entrevistas de emprego e oratória'
-            ]
+              'Como montar um currículo; Trabalho em equipe; Entrevistas de emprego e oratória',
+            ],
           },
           {
             nome: 'Mídias Digitais',
             duracao: '3 horas',
-            topicos: ['Ferramentas essenciais para o trabalho']
+            topicos: ['Ferramentas essenciais para o trabalho'],
           },
           {
             nome: 'Inclusão: Mundo Digital',
             duracao: '6 horas',
-            topicos: ['Acessar computador; Conceitos de hardware e software']
+            topicos: ['Acessar computador; Conceitos de hardware e software'],
           },
           {
             nome: 'Pensamento Lógico',
             duracao: '6 horas',
-            topicos: ['Uso de ferramentas e jogos para desenvolver o raciocínio lógico']
+            topicos: ['Uso de ferramentas e jogos para desenvolver o raciocínio lógico'],
           },
           {
             nome: 'Low Code',
             duracao: '9 horas',
-            topicos: ['Criação de histórias, jogos e animações usando ferramentas lúdicas (Scratch/Construct 3)']
+            topicos: ['Criação de histórias, jogos e animações usando ferramentas lúdicas (Scratch/Construct 3)'],
           },
           {
             nome: 'Lógica de programação básica',
             duracao: '48 horas',
-            topicos: ['Fluxograma, algoritmos, operadores, estrutura de decisão, estrutura de repetição, estrutura de dados simples - Portugol/Python']
+            topicos: [
+              'Fluxograma, algoritmos, operadores, estrutura de decisão, estrutura de repetição, estrutura de dados simples - Portugol/Python',
+            ],
           },
           {
             nome: 'App Inventor/Bubble.io',
             duracao: '9 horas',
-            topicos: ['Ferramentas de programação baseadas em blocos para construir aplicativos funcionais para dispositivos móveis']
+            topicos: [
+              'Ferramentas de programação baseadas em blocos para construir aplicativos funcionais para dispositivos móveis',
+            ],
           },
           {
             nome: 'Desenvolvimento de Projeto',
             duracao: '6 horas',
-            topicos: ['Aplicação do conhecimento adquirido na trilha']
-          }
-        ]
+            topicos: ['Aplicação do conhecimento adquirido na trilha'],
+          },
+        ],
       },
       {
         id: 't2',
@@ -493,24 +727,21 @@ export const edicoesAnteriores: EdicaoAnterior[] = [
           {
             nome: 'Front-end',
             duracao: '40 horas',
-            topicos: ['Criação de páginas de site usando Html; CSS; Java Script']
+            topicos: ['Criação de páginas de site usando Html; CSS; Java Script'],
           },
           {
             nome: 'Back end',
             duracao: '40 horas',
-            topicos: [
-              'Banco de dados relacional',
-              'Ambiente de execução Node JS'
-            ]
+            topicos: ['Banco de dados relacional', 'Ambiente de execução Node JS'],
           },
           {
             nome: 'WitForce',
             duracao: '12 horas',
-            topicos: []
-          }
-        ]
-      }
-    ]
+            topicos: [],
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'edicao-2',
@@ -527,17 +758,13 @@ export const edicoesAnteriores: EdicaoAnterior[] = [
             topicos: [
               'Carreira em TI',
               'Como montar um currículo, trabalho em equipe, entrevistas de emprego e oratória',
-              'Oficina de LinkedIn, uso de e-mail'
-            ]
+              'Oficina de LinkedIn, uso de e-mail',
+            ],
           },
           {
             nome: 'Inclusão: Mundo Digital',
             duracao: '6 horas',
-            topicos: [
-              'Acessar computador',
-              'Onde buscar os recursos',
-              'Conceitos de hardware e software'
-            ]
+            topicos: ['Acessar computador', 'Onde buscar os recursos', 'Conceitos de hardware e software'],
           },
           {
             nome: 'Pensamento Lógico',
@@ -547,25 +774,25 @@ export const edicoesAnteriores: EdicaoAnterior[] = [
               'Resolução de problemas de modo geral',
               'Ferramentas que possibilitem o desenvolvimento lógico',
               'Lógica de programação e algoritmos',
-              'Correlacionando com Fluxograma'
-            ]
+              'Correlacionando com Fluxograma',
+            ],
           },
           {
             nome: 'Git e GitHub',
             duracao: '3 horas',
-            topicos: ['Controle de versão com Git e GitHub']
+            topicos: ['Controle de versão com Git e GitHub'],
           },
           {
             nome: 'Projeto',
             duracao: '2 horas',
-            topicos: ['Definição do tema e esboço']
+            topicos: ['Definição do tema e esboço'],
           },
           {
             nome: 'SoftSkills',
             duracao: '3 horas',
-            topicos: ['Oficinas']
-          }
-        ]
+            topicos: ['Oficinas'],
+          },
+        ],
       },
       {
         id: 't2',
@@ -580,8 +807,8 @@ export const edicoesAnteriores: EdicaoAnterior[] = [
               'Cabeçalhos, parágrafos, formatação',
               'Lista ordenada e não ordenada, imagens',
               'Links, formulários',
-              'Desenvolvimento do Projeto'
-            ]
+              'Desenvolvimento do Projeto',
+            ],
           },
           {
             nome: 'CSS',
@@ -591,13 +818,13 @@ export const edicoesAnteriores: EdicaoAnterior[] = [
               'Seletores, classes, ids, tags',
               'Fontes, bordas, cores',
               'Formatação, posicionamentos',
-              'Desenvolvimento do Projeto'
-            ]
+              'Desenvolvimento do Projeto',
+            ],
           },
           {
             nome: 'JAVASCRIPT',
             duracao: '52 horas',
-            topicos: TOPICOS_JAVASCRIPT
+            topicos: TOPICOS_JAVASCRIPT,
           },
           {
             nome: 'JAVASCRIPT PARA WEB',
@@ -608,13 +835,13 @@ export const edicoesAnteriores: EdicaoAnterior[] = [
               'Acessando elementos da página',
               'Manipulando valores de input',
               'Trabalhando com estilos via JavaScript',
-              'Desenvolvimento do Projeto'
-            ]
+              'Desenvolvimento do Projeto',
+            ],
           },
           {
             nome: 'SoftSkills',
             duracao: '2 horas',
-            topicos: ['Oficinas']
+            topicos: ['Oficinas'],
           },
           {
             nome: 'Trabalhando com APIs',
@@ -626,10 +853,10 @@ export const edicoesAnteriores: EdicaoAnterior[] = [
               'Consumindo uma API (GET)',
               'Conhecendo outros métodos',
               'Inserindo dados via API',
-              'Desenvolvimento do Projeto'
-            ]
-          }
-        ]
+              'Desenvolvimento do Projeto',
+            ],
+          },
+        ],
       },
       {
         id: 't3',
@@ -639,29 +866,19 @@ export const edicoesAnteriores: EdicaoAnterior[] = [
           {
             nome: 'Introdução',
             duracao: '4 horas',
-            topicos: [
-              'Introdução a automação e web-crawlers',
-              'RPA',
-              'Diferença entre automação e automatização'
-            ]
+            topicos: ['Introdução a automação e web-crawlers', 'RPA', 'Diferença entre automação e automatização'],
           },
           {
             nome: 'Tutorial Básico de Forge',
             duracao: '6 horas',
-            topicos: [
-              'Editar blocos de entrada e saída',
-              'Blocos de ações básicas'
-            ]
+            topicos: ['Editar blocos de entrada e saída', 'Blocos de ações básicas'],
           },
           {
             nome: 'Prática',
             duracao: '14 horas',
-            topicos: [
-              'Desenvolvimento de bot',
-              'Desafio Bot Individual'
-            ]
-          }
-        ]
+            topicos: ['Desenvolvimento de bot', 'Desafio Bot Individual'],
+          },
+        ],
       },
       {
         id: 't4',
@@ -671,15 +888,15 @@ export const edicoesAnteriores: EdicaoAnterior[] = [
           {
             nome: 'Intervenção Psicológica em grupo',
             duracao: '20 horas',
-            topicos: []
+            topicos: [],
           },
           {
             nome: 'Plantão Psicológico',
             duracao: '20 horas',
-            topicos: []
-          }
-        ]
-      }
-    ]
-  }
+            topicos: [],
+          },
+        ],
+      },
+    ],
+  },
 ];

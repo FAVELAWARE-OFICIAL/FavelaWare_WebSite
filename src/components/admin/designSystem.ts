@@ -65,8 +65,7 @@ export const superficie = {
 /** Anel de foco (aparece só na navegação por teclado) */
 export const foco = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-favela-green-500';
 
-export const campo =
-  `w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-favela-green-500`;
+export const campo = `w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-favela-green-500`;
 
 /** Cores de estado (fundo + texto + borda) */
 export const estado = {

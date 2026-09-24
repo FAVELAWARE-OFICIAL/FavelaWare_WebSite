@@ -25,6 +25,7 @@
  * Quem pediu "reduzir movimento" no sistema vê a logo pronta, sem animação.
  */
 import { useEffect, useId, useRef, useState } from 'react';
+import { LOGO } from '../../data/imagens';
 
 // ============================================
 // ROTEIRO (frações do ciclo)
@@ -118,7 +119,9 @@ const ROTEIRO = (() => {
     splines: splines.join('; '),
     temposCerdas: txt(temposCerdas),
     cerdas: txt(cerdas),
-    splinesCerdas: Array(cerdas.length - 1).fill(SUAVE).join('; '),
+    splinesCerdas: Array(cerdas.length - 1)
+      .fill(SUAVE)
+      .join('; '),
   };
 })();
 
@@ -170,10 +173,15 @@ export function useCarregamentoCompleto(carregando: boolean, atraso = 300): bool
     let ativo = true;
     if (carregando) {
       const espera = setTimeout(() => ativo && setVisivel(true), atraso);
-      return () => { ativo = false; clearTimeout(espera); };
+      return () => {
+        ativo = false;
+        clearTimeout(espera);
+      };
     }
     if (visivel) aguardarCicloCompleto().then(() => ativo && setVisivel(false));
-    return () => { ativo = false; };
+    return () => {
+      ativo = false;
+    };
   }, [carregando, visivel, atraso]);
 
   return visivel;
@@ -241,8 +249,16 @@ const LataDeSpray: React.FC<{ id: string; dur: string }> = ({ id, dur }) => (
     <g transform={`translate(${BICO.x} ${BICO.y}) rotate(${ANGULO_LATA})`}>
       {/* Inclina para o lado da passada */}
       <g>
-        <animateTransform attributeName="transform" type="rotate" dur={dur} repeatCount="indefinite" calcMode="spline"
-          values={ROTEIRO.cerdas} keyTimes={ROTEIRO.temposCerdas} keySplines={ROTEIRO.splinesCerdas} />
+        <animateTransform
+          attributeName="transform"
+          type="rotate"
+          dur={dur}
+          repeatCount="indefinite"
+          calcMode="spline"
+          values={ROTEIRO.cerdas}
+          keyTimes={ROTEIRO.temposCerdas}
+          keySplines={ROTEIRO.splinesCerdas}
+        />
         {/* Válvula (com o bico) e haste */}
         <rect x="0" y="-5" width="12" height="10" rx="2.5" fill={`url(#metal-${id})`} />
         <circle cx="1" cy="0" r="1.6" fill="#111827" />
@@ -253,7 +269,17 @@ const LataDeSpray: React.FC<{ id: string; dur: string }> = ({ id, dur }) => (
         <rect x="-11" y="17" width="34" height="80" rx="4" fill={`url(#corpo-${id})`} />
         {/* Rótulo verde com a sigla */}
         <rect x="-11" y="42" width="34" height="28" fill={`url(#faixa-${id})`} />
-        <text x="6" y="61" textAnchor="middle" fontSize="12" fontWeight="800" fill="#fff" fontFamily="Inter, system-ui, sans-serif">FW</text>
+        <text
+          x="6"
+          y="61"
+          textAnchor="middle"
+          fontSize="12"
+          fontWeight="800"
+          fill="#fff"
+          fontFamily="Inter, system-ui, sans-serif"
+        >
+          FW
+        </text>
         {/* Reflexo de luz e aro do fundo */}
         <rect x="-5" y="20" width="3" height="72" rx="1.5" fill="#fff" opacity="0.3" />
         <rect x="-11" y="93" width="34" height="5" rx="2" fill={`url(#metal-${id})`} />
@@ -276,8 +302,14 @@ const Jato: React.FC<{ id: string; dur: string }> = ({ id, dur }) => (
       </radialGradient>
     </defs>
     {/* Só aparece enquanto está pintando */}
-    <animate attributeName="opacity" dur={dur} repeatCount="indefinite" calcMode="discrete"
-      values="0; 1; 0; 0; 0; 0" keyTimes={`0; ${CHEGA}; ${FIM_PINTURA}; ${LEVANTOU}; ${PRONTA}; ${SUMIU}`} />
+    <animate
+      attributeName="opacity"
+      dur={dur}
+      repeatCount="indefinite"
+      calcMode="discrete"
+      values="0; 1; 0; 0; 0; 0"
+      keyTimes={`0; ${CHEGA}; ${FIM_PINTURA}; ${LEVANTOU}; ${PRONTA}; ${SUMIU}`}
+    />
     <circle cx="0" cy="0" r="22" fill={`url(#mancha-${id})`}>
       <animate attributeName="r" dur="0.5s" repeatCount="indefinite" values="20; 24; 20" />
     </circle>
@@ -286,9 +318,19 @@ const Jato: React.FC<{ id: string; dur: string }> = ({ id, dur }) => (
     </path>
     {GOTICULAS.map((g, i) => (
       <circle key={i} r={g.raio} fill="#6aa520">
-        <animateMotion dur={`${g.duracao}s`} begin={`${g.atraso}s`} repeatCount="indefinite"
-          path={`M${BICO.x} ${BICO.y} L${g.destino.x} ${g.destino.y}`} />
-        <animate attributeName="opacity" dur={`${g.duracao}s`} begin={`${g.atraso}s`} repeatCount="indefinite" values="0.9; 0.7; 0" />
+        <animateMotion
+          dur={`${g.duracao}s`}
+          begin={`${g.atraso}s`}
+          repeatCount="indefinite"
+          path={`M${BICO.x} ${BICO.y} L${g.destino.x} ${g.destino.y}`}
+        />
+        <animate
+          attributeName="opacity"
+          dur={`${g.duracao}s`}
+          begin={`${g.atraso}s`}
+          repeatCount="indefinite"
+          values="0.9; 0.7; 0"
+        />
       </circle>
     ))}
   </g>
@@ -326,8 +368,15 @@ const Carregamento: React.FC<{ texto: string; modo?: 'bloco' | 'sobreposto' }> =
       filter={filtro}
     >
       {!parado && (
-        <animate attributeName="stroke-dashoffset" dur={dur} repeatCount="indefinite" calcMode="spline"
-          values={ROTEIRO.tinta} keyTimes={ROTEIRO.tempos} keySplines={ROTEIRO.splines} />
+        <animate
+          attributeName="stroke-dashoffset"
+          dur={dur}
+          repeatCount="indefinite"
+          calcMode="spline"
+          values={ROTEIRO.tinta}
+          keyTimes={ROTEIRO.tempos}
+          keySplines={ROTEIRO.splines}
+        />
       )}
     </path>
   );
@@ -347,7 +396,15 @@ const Carregamento: React.FC<{ texto: string; modo?: 'bloco' | 'sobreposto' }> =
         <filter id={`nucleo-${id}`} filterUnits="userSpaceOnUse" x="-120" y="-100" width="640" height="460">
           <feGaussianBlur stdDeviation="2.5" />
         </filter>
-        <mask id={`tinta-${id}`} maskUnits="userSpaceOnUse" x="-120" y="-100" width="640" height="460" style={{ maskType: 'alpha' }}>
+        <mask
+          id={`tinta-${id}`}
+          maskUnits="userSpaceOnUse"
+          x="-120"
+          y="-100"
+          width="640"
+          height="460"
+          style={{ maskType: 'alpha' }}
+        >
           {tinta(66, `url(#nucleo-${id})`)}
           {tinta(104, `url(#spray-${id})`)}
         </mask>
@@ -356,38 +413,85 @@ const Carregamento: React.FC<{ texto: string; modo?: 'bloco' | 'sobreposto' }> =
       {/* A logo "pintada": só aparece onde a tinta já chegou */}
       <g mask={`url(#tinta-${id})`}>
         {!parado && (
-          <animate attributeName="opacity" dur={dur} repeatCount="indefinite" calcMode="spline"
-            values="1; 1; 1; 1; 1; 0; 0" keyTimes={FASES} keySplines={SPLINES_FASES} />
+          <animate
+            attributeName="opacity"
+            dur={dur}
+            repeatCount="indefinite"
+            calcMode="spline"
+            values="1; 1; 1; 1; 1; 0; 0"
+            keyTimes={FASES}
+            keySplines={SPLINES_FASES}
+          />
         )}
-        <image href="/imgs/logo/logo.png" x="0" y="0" width={LARGURA} height={ALTURA} />
+        <image href={LOGO} x="0" y="0" width={LARGURA} height={ALTURA} />
       </g>
 
       {/* Legenda dentro do desenho, colada na logo: o centro do quadro é o centro da logo */}
-      <text x={LARGURA / 2} y={ALTURA + 62} textAnchor="middle" fontSize="24" fontWeight="500" fill="#4b5563"
-        fontFamily="Inter, system-ui, sans-serif">
+      <text
+        x={LARGURA / 2}
+        y={ALTURA + 62}
+        textAnchor="middle"
+        fontSize="24"
+        fontWeight="500"
+        fill="#4b5563"
+        fontFamily="Inter, system-ui, sans-serif"
+      >
         {legenda}
       </text>
 
       {!parado && (
         <g>
           {/* Chega pelo alto, pinta e se afasta no fim */}
-          <animateTransform attributeName="transform" type="translate" dur={dur} repeatCount="indefinite" calcMode="spline"
-            values="-40 -120; 0 0; 0 0; 110 -90; 110 -90; 110 -90; -40 -120" keyTimes={FASES} keySplines={SPLINES_FASES} />
-          <animate attributeName="opacity" dur={dur} repeatCount="indefinite" calcMode="spline"
-            values="0; 1; 1; 0; 0; 0; 0" keyTimes={FASES} keySplines={SPLINES_FASES} />
+          <animateTransform
+            attributeName="transform"
+            type="translate"
+            dur={dur}
+            repeatCount="indefinite"
+            calcMode="spline"
+            values="-40 -120; 0 0; 0 0; 110 -90; 110 -90; 110 -90; -40 -120"
+            keyTimes={FASES}
+            keySplines={SPLINES_FASES}
+          />
+          <animate
+            attributeName="opacity"
+            dur={dur}
+            repeatCount="indefinite"
+            calcMode="spline"
+            values="0; 1; 1; 0; 0; 0; 0"
+            keyTimes={FASES}
+            keySplines={SPLINES_FASES}
+          />
           <g>
             {/* Segue a tinta, no mesmo compasso (mesmos tempos e curvas) */}
-            <animateMotion dur={dur} repeatCount="indefinite" path={PINCELADA} calcMode="spline"
-              keyPoints={ROTEIRO.progresso} keyTimes={ROTEIRO.tempos} keySplines={ROTEIRO.splines} />
+            <animateMotion
+              dur={dur}
+              repeatCount="indefinite"
+              path={PINCELADA}
+              calcMode="spline"
+              keyPoints={ROTEIRO.progresso}
+              keyTimes={ROTEIRO.tempos}
+              keySplines={ROTEIRO.splines}
+            />
             <Jato id={id} dur={dur} />
             <g>
               {/* Chacoalhada antes de pintar */}
-              <animateTransform attributeName="transform" type="translate" dur={dur} repeatCount="indefinite"
-                values={CHACOALHAR.valores} keyTimes={CHACOALHAR.tempos} />
+              <animateTransform
+                attributeName="transform"
+                type="translate"
+                dur={dur}
+                repeatCount="indefinite"
+                values={CHACOALHAR.valores}
+                keyTimes={CHACOALHAR.tempos}
+              />
               <g>
                 {/* Tremor leve da mão */}
-                <animateTransform attributeName="transform" type="translate" dur="0.31s" repeatCount="indefinite"
-                  values="0 0; 0.7 1.2; -0.4 0.5; 0 0" />
+                <animateTransform
+                  attributeName="transform"
+                  type="translate"
+                  dur="0.31s"
+                  repeatCount="indefinite"
+                  values="0 0; 0.7 1.2; -0.4 0.5; 0 0"
+                />
                 <LataDeSpray id={id} dur={dur} />
               </g>
             </g>

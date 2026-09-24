@@ -339,6 +339,9 @@ def gerar_sql(carga):
         saida.append(f'insert into public.{tabela} ({", ".join(colunas)}){sobrepor} values\n{valores};')
         if 'id' in colunas:
             saida.append(f"select setval(pg_get_serial_sequence('public.{tabela}', 'id'), {max(l['id'] for l in linhas)});")
+    # As edições das planilhas já acabaram: encerra DEPOIS de carregar as presenças
+    # (com a edição encerrada, os gatilhos recusariam as aulas e presenças)
+    saida.append('update public.edicoes set encerrada = true where not demonstracao;')
     saida.append('commit;')
     return '\n'.join(saida) + '\n'
 

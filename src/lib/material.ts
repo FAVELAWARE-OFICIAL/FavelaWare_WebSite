@@ -9,6 +9,8 @@
  * - Alunos com acesso só leem.
  * - Só links https:// são aceitos (o banco também confere).
  */
+import { linkValido, vazioViraNulo } from '../utils/texto';
+import { mensagemDeErroDeCadastro, proximaOrdem } from './banco';
 import { supabase } from './supabase';
 
 export interface MaterialDaTrilha {
@@ -19,7 +21,8 @@ export interface MaterialDaTrilha {
   ordem: number;
 }
 
-export interface Trilha {
+/** Trilha cadastrada no portal (as trilhas do site público ficam em src/data/trilhas.ts) */
+export interface TrilhaDoPortal {
   id: number;
   nome: string;
   descricao: string | null;
@@ -30,19 +33,13 @@ export interface Trilha {
 /** Chave do cache (ver lib/cache.ts) */
 export const CHAVE_MATERIAL = 'material';
 
-/** Todas as trilhas com os materiais, na ordem definida pela equipe */
-export async function carregarTrilhas(): Promise<Trilha[]> {
-  const { data, error } = await supabase
-    .from('trilhas')
-    .select('id, nome, descricao, ordem, materiais(id, titulo, descricao, url, ordem)')
-    .order('ordem')
-    .order('nome');
-  if (error) throw error;
-  return (data as Trilha[]).map((t) => ({
-    ...t,
-    materiais: [...t.materiais].sort((a, b) => a.ordem - b.ordem || a.titulo.localeCompare(b.titulo, 'pt-BR')),
-  }));
-}
+const DUPLICADO = 'Já existe uma trilha com esse nome.';
+
+/** Mesmas mensagens de antes para o que o banco recusa (valor fora do padrão tem texto próprio) */
+const mensagemDoErro = (erro: { code?: string }, padrao: string) =>
+  erro.code === '23514'
+    ? 'Confira os campos: algum valor não é aceito.'
+    : mensagemDeErroDeCadastro(erro, padrao, DUPLICADO);
 
 /** "https://drive.google.com/..." -> "drive.google.com" (mostrado no cartão) */
 export function dominioDoLink(url: string): string {
@@ -53,66 +50,69 @@ export function dominioDoLink(url: string): string {
   }
 }
 
-export const linkValido = (url: string) => /^https:\/\/\S+$/i.test(url.trim());
-
-const vazioViraNulo = (texto: string) => (texto.trim() ? texto.trim() : null);
-
-const erroPadrao = (erro: { code?: string }, padrao: string) =>
-  erro.code === '23505' ? 'Já existe uma trilha com esse nome.' : erro.code === '23514' ? 'Confira os campos: algum valor não é aceito.' : padrao;
-
-// ============================================
-// TRILHAS
-// ============================================
-
-export async function salvarTrilha(dados: { nome: string; descricao: string }, id?: number): Promise<string | null> {
-  const campos = { nome: dados.nome.trim(), descricao: vazioViraNulo(dados.descricao) };
-  if (id) {
-    const { error } = await supabase.from('trilhas').update(campos).eq('id', id);
-    return error ? erroPadrao(error, 'Não foi possível salvar a trilha.') : null;
+export class ServicoMaterial {
+  /** Todas as trilhas com os materiais, na ordem definida pela equipe */
+  async carregarTrilhas(): Promise<TrilhaDoPortal[]> {
+    const { data, error } = await supabase
+      .from('trilhas')
+      .select('id, nome, descricao, ordem, materiais(id, titulo, descricao, url, ordem)')
+      .order('ordem')
+      .order('nome');
+    if (error) throw error;
+    return (data as TrilhaDoPortal[]).map((t) => ({
+      ...t,
+      materiais: [...t.materiais].sort((a, b) => a.ordem - b.ordem || a.titulo.localeCompare(b.titulo, 'pt-BR')),
+    }));
   }
-  // Trilha nova entra no fim da lista
-  const { data: ultima } = await supabase.from('trilhas').select('ordem').order('ordem', { ascending: false }).limit(1).maybeSingle();
-  const { error } = await supabase.from('trilhas').insert({ ...campos, ordem: (ultima?.ordem ?? 0) + 1 });
-  return error ? erroPadrao(error, 'Não foi possível criar a trilha.') : null;
-}
 
-/** Apaga a trilha e TODOS os materiais dela */
-export async function apagarTrilha(id: number): Promise<string | null> {
-  const { error } = await supabase.from('trilhas').delete().eq('id', id);
-  if (!error) return null;
-  // Trilha com atividades não é apagada (o banco protege as entregas)
-  return error.code === '23503'
-    ? 'Esta trilha tem atividades. Apague ou mude a trilha das atividades antes.'
-    : 'Não foi possível apagar a trilha.';
-}
-
-// ============================================
-// MATERIAIS
-// ============================================
-
-export async function salvarMaterial(
-  dados: { trilha_id: number; titulo: string; descricao: string; url: string },
-  id?: number,
-): Promise<string | null> {
-  if (!linkValido(dados.url)) return 'O link precisa começar com https://';
-  const campos = {
-    trilha_id: dados.trilha_id,
-    titulo: dados.titulo.trim(),
-    descricao: vazioViraNulo(dados.descricao),
-    url: dados.url.trim(),
-  };
-  if (id) {
-    const { error } = await supabase.from('materiais').update(campos).eq('id', id);
-    return error ? erroPadrao(error, 'Não foi possível salvar o material.') : null;
+  async salvarTrilha(dados: { nome: string; descricao: string }, id?: number): Promise<string | null> {
+    const campos = { nome: dados.nome.trim(), descricao: vazioViraNulo(dados.descricao) };
+    if (id) {
+      const { error } = await supabase.from('trilhas').update(campos).eq('id', id);
+      return error ? mensagemDoErro(error, 'Não foi possível salvar a trilha.') : null;
+    }
+    // Trilha nova entra no fim da lista
+    const ordem = await proximaOrdem('trilhas');
+    if (ordem === null) return 'Não foi possível criar a trilha.';
+    const { error } = await supabase.from('trilhas').insert({ ...campos, ordem });
+    return error ? mensagemDoErro(error, 'Não foi possível criar a trilha.') : null;
   }
-  const { data: ultimo } = await supabase
-    .from('materiais').select('ordem').eq('trilha_id', dados.trilha_id)
-    .order('ordem', { ascending: false }).limit(1).maybeSingle();
-  const { error } = await supabase.from('materiais').insert({ ...campos, ordem: (ultimo?.ordem ?? 0) + 1 });
-  return error ? erroPadrao(error, 'Não foi possível adicionar o material.') : null;
+
+  /** Apaga a trilha e TODOS os materiais dela */
+  async apagarTrilha(id: number): Promise<string | null> {
+    const { error } = await supabase.from('trilhas').delete().eq('id', id);
+    if (!error) return null;
+    // Trilha com atividades não é apagada (o banco protege as entregas)
+    return error.code === '23503'
+      ? 'Esta trilha tem atividades. Apague ou mude a trilha das atividades antes.'
+      : 'Não foi possível apagar a trilha.';
+  }
+
+  async salvarMaterial(
+    dados: { trilha_id: number; titulo: string; descricao: string; url: string },
+    id?: number,
+  ): Promise<string | null> {
+    if (!linkValido(dados.url)) return 'O link precisa começar com https://';
+    const campos = {
+      trilha_id: dados.trilha_id,
+      titulo: dados.titulo.trim(),
+      descricao: vazioViraNulo(dados.descricao),
+      url: dados.url.trim(),
+    };
+    if (id) {
+      const { error } = await supabase.from('materiais').update(campos).eq('id', id);
+      return error ? mensagemDoErro(error, 'Não foi possível salvar o material.') : null;
+    }
+    const ordem = await proximaOrdem('materiais', { coluna: 'trilha_id', valor: dados.trilha_id });
+    if (ordem === null) return 'Não foi possível adicionar o material.';
+    const { error } = await supabase.from('materiais').insert({ ...campos, ordem });
+    return error ? mensagemDoErro(error, 'Não foi possível adicionar o material.') : null;
+  }
+
+  async apagarMaterial(id: number): Promise<string | null> {
+    const { error } = await supabase.from('materiais').delete().eq('id', id);
+    return error ? 'Não foi possível apagar o material.' : null;
+  }
 }
 
-export async function apagarMaterial(id: number): Promise<string | null> {
-  const { error } = await supabase.from('materiais').delete().eq('id', id);
-  return error ? 'Não foi possível apagar o material.' : null;
-}
+export const servicoMaterial = new ServicoMaterial();

@@ -9,15 +9,18 @@
  *
  * Não usa a Navbar nem o Footer do site: é área de trabalho.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import MenuLateral, { itemEstaAtivo, type ItemMenu } from './MenuLateral';
 import { IconeMenu } from './Icones';
-import { supabase, alternarPapel, carregarPerfil, type Papel } from '../../lib/supabase';
-import { esquecerCache } from '../../lib/cache';
+import { NOME_DO_PAPEL, PAPEIS_DO_VER_COMO, servicoSessao, type Papel } from '../../lib/sessao';
 import { EVENTO_PERFIL_ALTERADO } from '../../lib/perfil';
+import { StatusProcessamento } from '../../types';
+import { gravarPreferencia, lerPreferencia } from '../../utils/preferencias';
+import { iniciaisDoNome } from '../../utils/texto';
 import Carregamento from './Carregamento';
 import { foco } from './designSystem';
 import './tema-escuro.css';
@@ -28,17 +31,10 @@ type Tema = 'claro' | 'escuro';
 function temaInicial(): Tema {
   const salvo = lerPreferencia('restrita:tema');
   if (salvo === 'claro' || salvo === 'escuro') return salvo;
-  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'escuro' : 'claro';
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches
+    ? 'escuro'
+    : 'claro';
 }
-
-// Preferências deste navegador. localStorage pode falhar (aba anônima,
-// bloqueio): nesse caso só não lembra.
-export const lerPreferencia = (chave: string) => {
-  try { return localStorage.getItem(chave); } catch { return null; }
-};
-export const gravarPreferencia = (chave: string, valor: string) => {
-  try { localStorage.setItem(chave, valor); } catch { /* sem memória, sem problema */ }
-};
 
 interface Props {
   itens: ItemMenu[];
@@ -74,10 +70,9 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
   // Relê quando a pessoa muda o nome na tela "Meu perfil".
   useEffect(() => {
     const ler = () =>
-      supabase.auth.getSession().then(async ({ data }) => {
-        const conta = data.session?.user;
-        if (!conta) return;
-        const perfil = await carregarPerfil(conta.id);
+      servicoSessao.contaLogada().then((logada) => {
+        if (!logada) return;
+        const { conta, perfil } = logada;
         setUsuario({
           nome: perfil.nome || (conta.email ?? '').split('@')[0],
           foto: perfil.foto,
@@ -114,25 +109,26 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
   const verComo = async (papel: Papel) => {
     setTrocandoPapel(true);
     setErroTroca(null);
-    try {
-      const destino = await alternarPapel(papel);
-      esquecerCache(); // dados guardados eram do papel anterior
-      navigate(destino, { replace: true });
-    } catch (e) {
-      console.error('[ver como] falha ao trocar de papel', e);
-      const texto = (e as { message?: string } | null)?.message;
-      setErroTroca(texto && /demonstra/i.test(texto) ? texto : 'Não foi possível trocar de papel. Tente de novo.');
-      setTrocandoPapel(false);
+    const { resultado, destino } = await servicoSessao.alternarPapel(papel);
+    if (resultado.status === StatusProcessamento.Sucesso && destino) {
+      // Recarrega de verdade: gestor e parceiro usam o mesmo endereço, e a área
+      // precisa montar de novo com o papel novo (menu, abas, dados)
+      window.location.assign(destino);
+      return;
     }
+    setErroTroca(resultado.mensagem);
+    setTrocandoPapel(false);
   };
 
   const sair = async () => {
-    await supabase.auth.signOut();
+    await servicoSessao.sair();
     navigate('/login', { replace: true });
   };
 
   return (
-    <div className={`min-h-screen ${tema === 'escuro' ? 'tema-escuro bg-[#0b1220] text-[#e5e9f2]' : 'bg-gray-100 text-gray-900'}`}>
+    <div
+      className={`min-h-screen ${tema === 'escuro' ? 'tema-escuro bg-[#0b1220] text-[#e5e9f2]' : 'bg-gray-100 text-gray-900'}`}
+    >
       <MenuLateral
         itens={itens}
         subtitulo={subtitulo}
@@ -144,7 +140,10 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
         rodape={
           usuario?.podeAlternarPapel && usuario.papel ? (
             <div className="px-1">
-              <label htmlFor="ver-como" className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-white/60">
+              <label
+                htmlFor="ver-como"
+                className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-white/60"
+              >
                 Ver como
               </label>
               <select
@@ -154,18 +153,26 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
                 onChange={(e) => verComo(e.target.value as Papel)}
                 className="w-full rounded-lg border border-white/15 bg-white/5 py-2 pl-3 pr-8 text-sm font-medium text-white focus:border-transparent focus:ring-2 focus:ring-favela-green-500 disabled:opacity-50 [&>option]:text-gray-900"
               >
-                <option value="gestor">Gestor</option>
-                <option value="professor">Instrutor</option>
-                <option value="aluno">Aluno</option>
+                {PAPEIS_DO_VER_COMO.map((papel) => (
+                  <option key={papel} value={papel}>
+                    {NOME_DO_PAPEL[papel]}
+                  </option>
+                ))}
               </select>
-              {erroTroca && <p role="alert" className="mt-1 text-xs text-red-300">{erroTroca}</p>}
+              {erroTroca && (
+                <p role="alert" className="mt-1 text-xs text-red-300">
+                  {erroTroca}
+                </p>
+              )}
             </div>
           ) : undefined
         }
       />
 
       {/* O conteúdo abre espaço para o menu fixo (largura muda quando recolhe) */}
-      <div className={`flex min-h-screen flex-col transition-[padding] duration-200 ${recolhido ? 'lg:pl-[4.5rem]' : 'lg:pl-64'}`}>
+      <div
+        className={`flex min-h-screen flex-col transition-[padding] duration-200 ${recolhido ? 'lg:pl-[4.5rem]' : 'lg:pl-64'}`}
+      >
         <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-gray-200 bg-white px-4 sm:px-6">
           {/* Só no celular: abre a gaveta (no computador o botão fica no topo do menu) */}
           <button
@@ -194,8 +201,12 @@ const Moldura: React.FC<Props> = ({ itens, subtitulo, acoesTopo, children }) => 
               {tema === 'escuro' ? <IconeSol /> : <IconeLua />}
             </button>
             {usuario && (
-              <Link to={caminhoPerfil} aria-label="Meu perfil" title="Meu perfil"
-                className={`rounded-full ${foco} focus-visible:ring-offset-2`}>
+              <Link
+                to={caminhoPerfil}
+                aria-label="Meu perfil"
+                title="Meu perfil"
+                className={`rounded-full ${foco} focus-visible:ring-offset-2`}
+              >
                 <FotoDoUsuario nome={usuario.nome} foto={usuario.foto} />
               </Link>
             )}
@@ -233,15 +244,23 @@ const FotoDoUsuario: React.FC<{ nome: string; foto: string | null }> = ({ nome, 
   if (foto && !falhou) {
     return (
       <span className="block h-10 w-10 shrink-0 overflow-hidden rounded-full bg-favela-green-500" title={nome}>
-        <img src={foto} alt={nome} onError={() => setFalhou(true)}
-          className="h-full w-full origin-[50%_30%] scale-[1.35] object-cover" />
+        <img
+          src={foto}
+          alt={nome}
+          onError={() => setFalhou(true)}
+          className="h-full w-full origin-[50%_30%] scale-[1.35] object-cover"
+        />
       </span>
     );
   }
-  const iniciais = nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]!.toUpperCase()).join('');
+  const iniciais = iniciaisDoNome(nome);
   return (
-    <span aria-label={nome} role="img"
-      title={nome} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2d2a5f] text-xs font-bold text-white">
+    <span
+      aria-label={nome}
+      role="img"
+      title={nome}
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2d2a5f] text-xs font-bold text-white"
+    >
       {iniciais}
     </span>
   );
@@ -249,18 +268,80 @@ const FotoDoUsuario: React.FC<{ nome: string; foto: string | null }> = ({ nome, 
 
 /** Ícones do botão de tema (SVG no traço dos outros ícones) */
 const IconeSol: React.FC = () => (
-  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" aria-hidden="true">
+  <svg
+    className="h-5 w-5"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
     <circle cx="12" cy="12" r="4" />
     <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
   </svg>
 );
 const IconeLua: React.FC = () => (
-  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    className="h-5 w-5"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
   </svg>
 );
 
 /** Carregamento das áreas restritas (com a cara do FavelaWare) */
 export const Carregando: React.FC<{ texto: string }> = ({ texto }) => <Carregamento texto={texto} />;
+
+// Transição entre páginas: o conteúdo entra subindo de leve e sai suave.
+// Com "reduzir movimento" no sistema, o MotionConfig do App tira o deslocamento.
+const TRANSICAO = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -6, transition: { duration: 0.15 } }, // a antiga sai rápido
+  transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+} as const;
+
+/**
+ * Conteúdo das áreas (gestor, instrutor, aluno): o carregamento sai em fade e a
+ * página entra; trocar de página também é suave. flex-1: o carregamento ocupa a
+ * área toda e fica no centro exato.
+ * - `carregando`: mostra a pintura do carregamento;
+ * - `pronta`: a página pode aparecer (falso sem carregar = nada ainda, ex.: erro).
+ * A `pagina` vem do useOutlet: na saída, a antiga continua na tela enquanto some.
+ */
+export const TransicaoDaArea: React.FC<{
+  carregando: boolean;
+  pronta: boolean;
+  texto: string;
+  pagina: React.ReactNode;
+}> = ({ carregando, pronta, texto, pagina }) => {
+  const { pathname } = useLocation();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      {carregando ? (
+        <motion.div
+          key="carregando"
+          className="flex flex-1 flex-col"
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+        >
+          <Carregando texto={texto} />
+        </motion.div>
+      ) : pronta ? (
+        <motion.div key={pathname} className="flex flex-1 flex-col" {...TRANSICAO}>
+          {/* As páginas já foram pré-carregadas: a espera do Suspense é imperceptível */}
+          <Suspense fallback={<Carregando texto={texto} />}>{pagina}</Suspense>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+};
 
 export default Moldura;

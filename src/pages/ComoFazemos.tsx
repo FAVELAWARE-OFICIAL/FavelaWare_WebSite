@@ -20,7 +20,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { edicoesAnteriores, trilhasAtuais, type Modulo, type Trilha } from '../data/trilhas';
+import { edicoesAnteriores, trilhasAtuais, type Modulo, type TrilhaDoCurso } from '../data/trilhas';
 
 /** Seta que gira quando o módulo abre (decorativa) */
 const Seta: React.FC<{ aberta: boolean }> = ({ aberta }) => (
@@ -30,7 +30,11 @@ const Seta: React.FC<{ aberta: boolean }> = ({ aberta }) => (
     fill="currentColor"
     aria-hidden="true"
   >
-    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+    <path
+      fillRule="evenodd"
+      d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
@@ -67,7 +71,9 @@ const DetalheDoModulo: React.FC<{ modulo: Modulo }> = ({ modulo }) => {
                   {aula.titulo}
                 </p>
                 {aula.detalhes.map((detalhe) => (
-                  <p key={detalhe} className="text-sm text-gray-600">{detalhe}</p>
+                  <p key={detalhe} className="text-sm text-gray-600">
+                    {detalhe}
+                  </p>
                 ))}
               </li>
             ))}
@@ -98,52 +104,57 @@ const ComoFazemos = () => {
   // NivelTitulo: h2 nas trilhas atuais; h3 dentro de "Edições Anteriores" (que já é h2).
   // NivelModulo: o botão de cada módulo fica dentro de um título (padrão de acordeão),
   // para o leitor de tela navegar pelos módulos com a tecla H.
-  const renderTrilha = (trilha: Trilha, prefixo: string, NivelTitulo: 'h2' | 'h3' = 'h2') => {
+  const renderTrilha = (trilha: TrilhaDoCurso, prefixo: string, NivelTitulo: 'h2' | 'h3' = 'h2') => {
     const NivelModulo = NivelTitulo === 'h2' ? 'h3' : 'h4';
     return (
-    <>
-      {/* px-4 no celular: com px-8 o título mais longo não cabia a 375px */}
-      <div className="rounded-t-2xl bg-gradient-to-r from-[#8bc53f] to-[#7ab52f] px-4 py-5 md:px-8">
-        <NivelTitulo className="text-center text-xl font-black text-[#2d2a5f] md:text-2xl">
-          {trilha.titulo}{trilha.horas ? ` - ${trilha.horas}` : ''}
-        </NivelTitulo>
-      </div>
+      <>
+        {/* px-4 no celular: com px-8 o título mais longo não cabia a 375px */}
+        <div className="rounded-t-2xl bg-gradient-to-r from-[#8bc53f] to-[#7ab52f] px-4 py-5 md:px-8">
+          <NivelTitulo className="text-center text-xl font-black text-[#2d2a5f] md:text-2xl">
+            {trilha.titulo}
+            {trilha.horas ? ` - ${trilha.horas}` : ''}
+          </NivelTitulo>
+        </div>
 
-      <ul className="divide-y divide-gray-200 rounded-b-2xl border-2 border-t-0 border-gray-200 bg-white">
-        {trilha.modulos.map((modulo) => {
-          const chave = `${prefixo}:${trilha.id}:${modulo.nome}`;
-          const aberto = abertos.has(chave);
-          const idPainel = `painel-${chave.replace(/[^a-zA-Z0-9]+/g, '-')}`;
-          const totalAulas = modulo.aulas?.length ?? 0;
-          return (
-            <li key={chave}>
-              <NivelModulo>
-              <button
-                type="button"
-                onClick={() => alternar(chave)}
-                aria-expanded={aberto}
-                aria-controls={idPainel}
-                className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-favela-green-500 md:px-6"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block text-base font-bold text-[#2d2a5f] md:text-lg">{modulo.nome}</span>
-                  <span className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-gray-600">
-                    {modulo.duracao && <span className="font-semibold text-[#6aa520]">{modulo.duracao}</span>}
-                    {totalAulas > 0 && <span>{totalAulas} {totalAulas === 1 ? 'aula' : 'aulas'}</span>}
-                  </span>
-                </span>
-                <Seta aberta={aberto} />
-              </button>
-              </NivelModulo>
-              {/* Fica no HTML mesmo fechado (hidden) para o aria-controls sempre apontar para ele */}
-              <div id={idPainel} hidden={!aberto}>
-                {aberto && <DetalheDoModulo modulo={modulo} />}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </>
+        <ul className="divide-y divide-gray-200 rounded-b-2xl border-2 border-t-0 border-gray-200 bg-white">
+          {trilha.modulos.map((modulo) => {
+            const chave = `${prefixo}:${trilha.id}:${modulo.nome}`;
+            const aberto = abertos.has(chave);
+            const idPainel = `painel-${chave.replace(/[^a-zA-Z0-9]+/g, '-')}`;
+            const totalAulas = modulo.aulas?.length ?? 0;
+            return (
+              <li key={chave}>
+                <NivelModulo>
+                  <button
+                    type="button"
+                    onClick={() => alternar(chave)}
+                    aria-expanded={aberto}
+                    aria-controls={idPainel}
+                    className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-favela-green-500 md:px-6"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-base font-bold text-[#2d2a5f] md:text-lg">{modulo.nome}</span>
+                      <span className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-gray-600">
+                        {modulo.duracao && <span className="font-semibold text-[#6aa520]">{modulo.duracao}</span>}
+                        {totalAulas > 0 && (
+                          <span>
+                            {totalAulas} {totalAulas === 1 ? 'aula' : 'aulas'}
+                          </span>
+                        )}
+                      </span>
+                    </span>
+                    <Seta aberta={aberto} />
+                  </button>
+                </NivelModulo>
+                {/* Fica no HTML mesmo fechado (hidden) para o aria-controls sempre apontar para ele */}
+                <div id={idPainel} hidden={!aberto}>
+                  {aberto && <DetalheDoModulo modulo={modulo} />}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </>
     );
   };
 

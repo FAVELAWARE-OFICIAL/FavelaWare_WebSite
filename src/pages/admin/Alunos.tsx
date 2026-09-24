@@ -13,11 +13,11 @@ import { useCallback, useMemo, useState } from 'react';
 import Avatar from '../../components/admin/Avatar';
 import FormularioAluno from '../../components/admin/FormularioAluno';
 import { AcessosDaTurma, SeloAcesso } from '../../components/admin/AcessosAlunos';
-import { carregarAcessos, CHAVE_ACESSOS, type SituacaoDoAcesso } from '../../lib/acessos';
-import { useDadosEmCache } from '../../lib/cache';
+import { CHAVE_ACESSOS, servicoAcessos, type SituacaoDoAcesso } from '../../lib/acessos';
+import { useDadosEmCache } from '../../hooks/useDadosEmCache';
 import Janela from '../../components/admin/Janela';
 import { Aviso, BarraDeFiltros, Botao, Vazio, type Mensagem } from '../../components/admin/Ui';
-import { FAIXAS, faixaDe, formatarPercentual, type AlunoDoPainel, type Participante } from '../../lib/dashboard';
+import { FAIXAS, faixaDe, formatarPercentual, type AlunoDoPainel, type Participante } from '../../lib/painel';
 import { useAdmin } from './contexto';
 import { campo, foco, superficie, texto } from '../../components/admin/designSystem';
 
@@ -49,7 +49,10 @@ const BarraFrequencia: React.FC<{ frequencia: number | null }> = ({ frequencia }
   return (
     <div className="flex min-w-[8rem] items-center gap-2">
       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
-        <div className="h-full rounded-full" style={{ width: `${(frequencia ?? 0) * 100}%`, backgroundColor: faixa?.cor }} />
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${(frequencia ?? 0) * 100}%`, backgroundColor: faixa?.cor }}
+        />
       </div>
       <span className="w-10 text-right text-sm font-semibold tabular-nums">{formatarPercentual(frequencia)}</span>
     </div>
@@ -57,17 +60,22 @@ const BarraFrequencia: React.FC<{ frequencia: number | null }> = ({ frequencia }
 };
 
 const Alunos: React.FC = () => {
-  const { edicao, dados, painel, recarregarDados } = useAdmin();
+  const { edicao, dados, painel, recarregarDados, somenteLeitura } = useAdmin();
   const [ordem, setOrdem] = useState<{ campo: Coluna; crescente: boolean }>({ campo: 'nome', crescente: true });
   // undefined = janela fechada; null = cadastro novo; Participante = edição
   const [emEdicao, setEmEdicao] = useState<Participante | null | undefined>(undefined);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
   const [janelaAcessos, setJanelaAcessos] = useState(false);
-  // Quem já tem login no sistema (vem pronto do cache; o layout carrega na abertura)
-  const { dados: acessos, recarregar: recarregarAcessos } = useDadosEmCache(CHAVE_ACESSOS, carregarAcessos);
+  // Quem já tem login no sistema (vem pronto do cache; o layout carrega na abertura).
+  // O parceiro não vê acesso nem login dos alunos.
+  const { dados: acessos, recarregar: recarregarAcessos } = useDadosEmCache(CHAVE_ACESSOS, () =>
+    somenteLeitura ? Promise.resolve<Record<number, SituacaoDoAcesso>>({}) : servicoAcessos.carregar(),
+  );
   const situacao = (id: number): SituacaoDoAcesso => acessos?.[id] ?? 'sem-acesso';
   // Criar acesso pode gerar o login do aluno: atualiza as duas listas
-  const aoMudarAcesso = async () => { await Promise.all([recarregarAcessos(), recarregarDados()]); };
+  const aoMudarAcesso = async () => {
+    await Promise.all([recarregarAcessos(), recarregarDados()]);
+  };
 
   const ordenados = useMemo(() => {
     const { campo, crescente } = ordem;
@@ -82,7 +90,10 @@ const Alunos: React.FC = () => {
 
   // Texto começa em A→Z; número começa do maior
   const ordenarPor = (campo: Coluna) =>
-    setOrdem((atual) => ({ campo, crescente: atual.campo === campo ? !atual.crescente : campo === 'nome' || campo === 'turma' }));
+    setOrdem((atual) => ({
+      campo,
+      crescente: atual.campo === campo ? !atual.crescente : campo === 'nome' || campo === 'turma',
+    }));
 
   const fecharJanela = useCallback(() => setEmEdicao(undefined), []);
   const fecharAcessos = useCallback(() => setJanelaAcessos(false), []);
@@ -93,11 +104,14 @@ const Alunos: React.FC = () => {
     await recarregarDados();
   };
 
-  const botaoEditar = (a: AlunoDoPainel) => (
-    <Botao onClick={() => setEmEdicao(a)} tamanho="pequeno" aria-label={`Editar ${a.nome}`}>
-      Editar
-    </Botao>
-  );
+  // Parceiro só vê: sem editar e sem a situação do acesso
+  const botaoEditar = (a: AlunoDoPainel) =>
+    somenteLeitura ? null : (
+      <Botao onClick={() => setEmEdicao(a)} tamanho="pequeno" aria-label={`Editar ${a.nome}`}>
+        Editar
+      </Botao>
+    );
+  const seloDoAcesso = (a: AlunoDoPainel) => (somenteLeitura ? null : <SeloAcesso situacao={situacao(a.id)} />);
 
   return (
     <>
@@ -107,7 +121,9 @@ const Alunos: React.FC = () => {
       <BarraDeFiltros
         extras={
           <div className="w-full sm:w-48">
-            <label htmlFor="ordenar" className={texto.rotulo}>Ordenar por</label>
+            <label htmlFor="ordenar" className={texto.rotulo}>
+              Ordenar por
+            </label>
             <select
               id="ordenar"
               value={`${ordem.campo}:${ordem.crescente ? 'asc' : 'desc'}`}
@@ -117,15 +133,40 @@ const Alunos: React.FC = () => {
               }}
               className={campo}
             >
-              {ORDENACOES.map((o) => <option key={o.valor} value={o.valor}>{o.rotulo}</option>)}
+              {ORDENACOES.map((o) => (
+                <option key={o.valor} value={o.valor}>
+                  {o.rotulo}
+                </option>
+              ))}
             </select>
           </div>
         }
         acoes={
           <>
-            <span className={`${texto.apoio} pb-2`}>{ordenados.length} aluno{ordenados.length === 1 ? '' : 's'}</span>
-            <Botao onClick={() => { setMensagem(null); setJanelaAcessos(true); }}>Acessos</Botao>
-            <Botao variante="primario" onClick={() => { setMensagem(null); setEmEdicao(null); }}>+ Novo aluno</Botao>
+            <span className={`${texto.apoio} pb-2`}>
+              {ordenados.length} aluno{ordenados.length === 1 ? '' : 's'}
+            </span>
+            {!somenteLeitura && (
+              <>
+                <Botao
+                  onClick={() => {
+                    setMensagem(null);
+                    setJanelaAcessos(true);
+                  }}
+                >
+                  Acessos
+                </Botao>
+                <Botao
+                  variante="primario"
+                  onClick={() => {
+                    setMensagem(null);
+                    setEmEdicao(null);
+                  }}
+                >
+                  + Novo aluno
+                </Botao>
+              </>
+            )}
           </>
         }
       />
@@ -133,7 +174,7 @@ const Alunos: React.FC = () => {
       {!ordenados.length ? (
         <Vazio>
           {painel.alunos.length === 0 && !dados.participantes.some((p) => p.funcao === 'aluno')
-            ? 'Esta edição ainda não tem alunos. Clique em "Novo aluno" para cadastrar.'
+            ? `Esta edição ainda não tem alunos.${somenteLeitura ? '' : ' Clique em "Novo aluno" para cadastrar.'}`
             : 'Nenhum aluno com os filtros atuais.'}
         </Vazio>
       ) : (
@@ -147,11 +188,13 @@ const Alunos: React.FC = () => {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-gray-900">{a.nome}</p>
                     <p className={`truncate ${texto.apoio}`}>{[a.turma, a.login].filter(Boolean).join(' · ')}</p>
-                    <div className="mt-1"><SeloAcesso situacao={situacao(a.id)} /></div>
+                    <div className="mt-1 empty:hidden">{seloDoAcesso(a)}</div>
                   </div>
                   {botaoEditar(a)}
                 </div>
-                <div className="mt-3"><BarraFrequencia frequencia={a.frequencia} /></div>
+                <div className="mt-3">
+                  <BarraFrequencia frequencia={a.frequencia} />
+                </div>
                 <p className={`mt-2 ${texto.apoio} tabular-nums`}>
                   {a.presentes} presenças · {a.ausentes} faltas · {a.justificadas} justificadas
                 </p>
@@ -179,12 +222,18 @@ const Alunos: React.FC = () => {
                         className={`rounded uppercase tracking-wide hover:text-gray-900 ${foco}`}
                       >
                         {rotulo}
-                        <span aria-hidden="true" className="ml-1">{ordem.campo === campo ? (ordem.crescente ? '↑' : '↓') : ''}</span>
+                        <span aria-hidden="true" className="ml-1">
+                          {ordem.campo === campo ? (ordem.crescente ? '↑' : '↓') : ''}
+                        </span>
                       </button>
                     </th>
                   ))}
-                  <th scope="col" className="px-4 py-3 text-left font-medium">Observação</th>
-                  <th scope="col" className="px-4 py-3"><span className="sr-only">Ações</span></th>
+                  <th scope="col" className="px-4 py-3 text-left font-medium">
+                    Observação
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    <span className="sr-only">Ações</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -197,7 +246,7 @@ const Alunos: React.FC = () => {
                           <p className="font-medium text-gray-900">{a.nome}</p>
                           <p className={`flex flex-wrap items-center gap-2 ${texto.apoio}`}>
                             {a.login}
-                            <SeloAcesso situacao={situacao(a.id)} />
+                            {seloDoAcesso(a)}
                           </p>
                         </div>
                       </div>
@@ -206,7 +255,9 @@ const Alunos: React.FC = () => {
                     <td className="px-4 py-2.5 text-right tabular-nums">{a.presentes}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{a.ausentes}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{a.justificadas}</td>
-                    <td className="px-4 py-2.5"><BarraFrequencia frequencia={a.frequencia} /></td>
+                    <td className="px-4 py-2.5">
+                      <BarraFrequencia frequencia={a.frequencia} />
+                    </td>
                     <td className="max-w-xs px-4 py-2.5 text-gray-600">{a.observacao ?? ''}</td>
                     <td className="px-4 py-2.5 text-right">{botaoEditar(a)}</td>
                   </tr>
@@ -232,7 +283,12 @@ const Alunos: React.FC = () => {
 
       <Janela titulo="Acessos dos alunos" aberta={janelaAcessos} onFechar={fecharAcessos}>
         {janelaAcessos && (
-          <AcessosDaTurma turmas={dados.turmas} alunos={dados.participantes} acessos={acessos ?? {}} onConcluir={aoMudarAcesso} />
+          <AcessosDaTurma
+            turmas={dados.turmas}
+            alunos={dados.participantes}
+            acessos={acessos ?? {}}
+            onConcluir={aoMudarAcesso}
+          />
         )}
       </Janela>
     </>

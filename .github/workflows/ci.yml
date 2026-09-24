@@ -1,0 +1,91 @@
+name: CI
+
+# Gates de todo PR e de todo push na main e na develop.
+#
+# O id do job `ci` e o nome `Dependency audit` são os status checks que os
+# rulesets protect-main e protect-develop exigem pelo nome literal. Não renomear.
+#
+# Nunca use `--if-present` nos passos abaixo: com ele o npm sai com 0 quando o
+# script não existe, e o CI fica verde sem ter rodado nada.
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # Histórico completo: o gitleaks varre TODOS os commits.
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Antes do npm ci de propósito: não há motivo para instalar dependências
+      # antes de confirmar que o histórico não carrega segredo.
+      - name: Segredos (gitleaks, histórico completo)
+        run: |
+          set -euo pipefail
+          curl --retry 5 --retry-all-errors --retry-delay 2 -sSfL \
+            -o "$RUNNER_TEMP/gitleaks.tar.gz" \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz
+          echo "9991e0b2903da4c8f6122b5c3186448b927a5da4deef1fe45271c3793f4ee29c  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" detect --source . --redact --no-banner
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar
+        run: npm ci
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Tipos (TypeScript)
+        run: npm run typecheck
+
+      - name: Formatação (Prettier)
+        run: npm run format:check
+
+      - name: Testes (Vitest)
+        run: npm test
+
+      # Edge Functions rodam em Deno: tipos conferidos com o Deno do npm
+      - name: Tipos das Edge Functions (Deno)
+        working-directory: supabase/functions
+        run: npx --yes deno@2.9.6 check acessos-alunos/index.ts convidar-professor/index.ts entregas-drive/index.ts
+
+      - name: Build
+        run: npm run build
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      # Reprova vulnerabilidade alta ou crítica em qualquer dependência.
+      - name: npm audit
+        run: npm audit --audit-level=high

@@ -12,26 +12,26 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { useCarregamentoCompleto } from '../../components/admin/Carregamento';
+import DetalheDaJustificativa from '../../components/admin/DetalheDaJustificativa';
 import Janela from '../../components/admin/Janela';
 import { Carregando } from '../../components/admin/Moldura';
 import PlanilhaDeChamada, { LegendaSituacoes } from '../../components/admin/PlanilhaDeChamada';
-import { Aviso, BarraDeFiltros, Botao, Cartao, Indicador, Vazio, classeCampo, classeRotulo, type Mensagem } from '../../components/admin/Ui';
-import { espaco, foco, selo, texto } from '../../components/admin/designSystem';
-import { useDadosEmCache } from '../../lib/cache';
-import { hoje } from '../../lib/chamada';
-import { formatarData } from '../../lib/dashboard';
 import {
-  carregarPontosDaEquipe, mensagemDoErroDePonto, OPCOES_PONTO, opcaoDoPonto, registrarPonto, type SituacaoPonto,
-} from '../../lib/ponto';
+  Aviso,
+  BarraDeFiltros,
+  Botao,
+  Cartao,
+  Indicador,
+  Vazio,
+  classeCampo,
+  classeRotulo,
+  type Mensagem,
+} from '../../components/admin/Ui';
+import { espaco, foco, selo, texto } from '../../components/admin/designSystem';
+import { useDadosEmCache } from '../../hooks/useDadosEmCache';
+import { OPCOES_PONTO, opcaoDoPonto, servicoPonto, type SituacaoPonto } from '../../lib/ponto';
+import { diasAtras, formatarData, hoje } from '../../utils/datas';
 import { useAdmin } from './contexto';
-
-/** "AAAA-MM-DD" de N dias atrás (pela data local, sem passar por UTC) */
-const diasAtras = (n: number) => {
-  const d = new Date(`${hoje()}T12:00:00`);
-  d.setDate(d.getDate() - n);
-  const doisDigitos = (x: number) => String(x).padStart(2, '0');
-  return `${d.getFullYear()}-${doisDigitos(d.getMonth() + 1)}-${doisDigitos(d.getDate())}`;
-};
 
 type Correcao = { professorId: string; nome: string; data: string; atual?: SituacaoPonto };
 
@@ -42,7 +42,9 @@ const PresencaProfessores: React.FC = () => {
   const de = filtros.dataDe || diasAtras(30);
   const ate = filtros.dataAte || hoje();
   const ultimoDiaLancavel = ate < hoje() ? ate : hoje(); // "Lançar ponto": dentro do período e nunca no futuro
-  const { dados, erro, recarregar } = useDadosEmCache(`pontos:${de}:${ate}`, () => carregarPontosDaEquipe(de, ate));
+  const { dados, erro, recarregar } = useDadosEmCache(`pontos:${de}:${ate}`, () =>
+    servicoPonto.carregarDaEquipe(de, ate),
+  );
   const mostrarCarregando = useCarregamentoCompleto(dados === undefined && !erro, 0);
 
   const [correcao, setCorrecao] = useState<Correcao | null>(null);
@@ -54,10 +56,10 @@ const PresencaProfessores: React.FC = () => {
   // Grade: só os professores atuais e os dias em que algum deles tem ponto no
   // período (do mais antigo ao mais novo). O ponto de quem deixou de ser
   // professor fica guardado no banco, mas não aparece aqui.
-  const { dias, celula, totais } = useMemo(() => {
+  const { dias, celula, pontoDe, totais } = useMemo(() => {
     const atuais = new Set((dados?.professores ?? []).map((p) => p.id));
     const pontos = (dados?.pontos ?? []).filter((p) => atuais.has(p.professor_id));
-    const mapa = new Map(pontos.map((p) => [`${p.professor_id}|${p.data}`, p.situacao]));
+    const mapa = new Map(pontos.map((p) => [`${p.professor_id}|${p.data}`, p]));
     const contagem = new Map<string, Record<SituacaoPonto, number>>();
     for (const p of pontos) {
       const c = contagem.get(p.professor_id) ?? { presente: 0, ausente: 0, justificada: 0 };
@@ -66,20 +68,25 @@ const PresencaProfessores: React.FC = () => {
     }
     return {
       dias: [...new Set(pontos.map((p) => p.data))].sort(),
-      celula: (professorId: string, data: string) => mapa.get(`${professorId}|${data}`),
+      celula: (professorId: string, data: string) => mapa.get(`${professorId}|${data}`)?.situacao,
+      pontoDe: (professorId: string, data: string) => mapa.get(`${professorId}|${data}`),
       totais: (professorId: string) => contagem.get(professorId) ?? { presente: 0, ausente: 0, justificada: 0 },
     };
   }, [dados]);
 
-  const fecharCorrecao = useCallback(() => { if (!salvando) setCorrecao(null); }, [salvando]);
-  const fecharLancamento = useCallback(() => { if (!salvando) setLancando(false); }, [salvando]);
+  const fecharCorrecao = useCallback(() => {
+    if (!salvando) setCorrecao(null);
+  }, [salvando]);
+  const fecharLancamento = useCallback(() => {
+    if (!salvando) setLancando(false);
+  }, [salvando]);
 
   const salvar = async (professorId: string, nome: string, data: string, situacao: SituacaoPonto | null) => {
     setSalvando(true);
     try {
-      await registrarPonto(data, situacao, professorId);
+      await servicoPonto.registrar(data, situacao, professorId);
     } catch (e) {
-      setMensagem({ tipo: 'erro', texto: mensagemDoErroDePonto(e) });
+      setMensagem({ tipo: 'erro', texto: servicoPonto.mensagemDoErro(e) });
       setCorrecao(null);
       setLancando(false);
       setSalvando(false);
@@ -165,9 +172,18 @@ const PresencaProfessores: React.FC = () => {
                   <caption className="sr-only">Ponto dos instrutores por dia</caption>
                   <thead>
                     <tr className="bg-gray-50">
-                      <th scope="col" className="sticky left-0 z-10 bg-gray-50 px-3 py-2 text-left font-semibold text-gray-700">Instrutor</th>
+                      <th
+                        scope="col"
+                        className="sticky left-0 z-10 bg-gray-50 px-3 py-2 text-left font-semibold text-gray-700"
+                      >
+                        Instrutor
+                      </th>
                       {dias.map((d) => (
-                        <th key={d} scope="col" className="h-20 whitespace-nowrap px-1 py-2 font-medium text-gray-500 [writing-mode:vertical-rl] rotate-180">
+                        <th
+                          key={d}
+                          scope="col"
+                          className="h-20 whitespace-nowrap px-1 py-2 font-medium text-gray-500 [writing-mode:vertical-rl] rotate-180"
+                        >
                           {formatarData(d).slice(0, 5)}
                         </th>
                       ))}
@@ -176,7 +192,11 @@ const PresencaProfessores: React.FC = () => {
                   <tbody>
                     {professores.map((p) => (
                       <tr key={p.id} className="border-t border-gray-100">
-                        <th scope="row" className="sticky left-0 z-10 max-w-[10rem] truncate whitespace-nowrap bg-white px-3 py-1 text-left font-medium text-gray-800" title={nomeDe(p)}>
+                        <th
+                          scope="row"
+                          className="sticky left-0 z-10 max-w-[10rem] truncate whitespace-nowrap bg-white px-3 py-1 text-left font-medium text-gray-800"
+                          title={nomeDe(p)}
+                        >
                           {nomeDe(p)}
                         </th>
                         {dias.map((d) => {
@@ -186,7 +206,10 @@ const PresencaProfessores: React.FC = () => {
                             <td key={d} className="p-0.5">
                               <button
                                 type="button"
-                                onClick={() => { setMensagem(null); setCorrecao({ professorId: p.id, nome: nomeDe(p), data: d, atual }); }}
+                                onClick={() => {
+                                  setMensagem(null);
+                                  setCorrecao({ professorId: p.id, nome: nomeDe(p), data: d, atual });
+                                }}
                                 aria-label={`Corrigir: ${nomeDe(p)} em ${formatarData(d)}, ${op ? op.rotulo : 'sem registro'}`}
                                 title={`${nomeDe(p)} · ${formatarData(d)} · ${op ? op.rotulo : 'sem registro'}`}
                                 className={`flex h-6 w-6 items-center justify-center rounded border font-bold hover:ring-2 hover:ring-gray-900 ${foco} ${op ? op.classe : 'border-gray-100 bg-gray-100'}`}
@@ -205,7 +228,11 @@ const PresencaProfessores: React.FC = () => {
             <div className="mt-4 flex flex-wrap gap-3">
               {OPCOES_PONTO.map((o) => (
                 <span key={o.valor} className={`flex items-center gap-2 ${texto.apoio}`}>
-                  <span className={`flex h-5 w-5 items-center justify-center rounded border text-[10px] font-bold ${o.classe}`}>{o.letra}</span>
+                  <span
+                    className={`flex h-5 w-5 items-center justify-center rounded border text-[10px] font-bold ${o.classe}`}
+                  >
+                    {o.letra}
+                  </span>
                   {o.rotulo}
                 </span>
               ))}
@@ -222,10 +249,14 @@ const PresencaProfessores: React.FC = () => {
         >
           <div className="mb-4 flex flex-wrap gap-2">
             {painel.professores.map((p) => (
-              <span key={p.id} className={`${selo.base} ${selo.neutro}`}>{p.nome}: {p.presentes} dias · {p.folgas} folga(s)</span>
+              <span key={p.id} className={`${selo.base} ${selo.neutro}`}>
+                {p.nome}: {p.presentes} dias · {p.folgas} folga(s)
+              </span>
             ))}
           </div>
-          <div className="mb-4"><LegendaSituacoes situacoes={['presente', 'folga']} /></div>
+          <div className="mb-4">
+            <LegendaSituacoes situacoes={['presente', 'folga']} />
+          </div>
           <PlanilhaDeChamada
             titulo="Presença dos instrutores (planilha)"
             pessoas={painel.professores}
@@ -241,8 +272,13 @@ const PresencaProfessores: React.FC = () => {
           <div className={espaco.formulario}>
             <p className={texto.corpo}>
               <strong>{correcao.nome}</strong> em <strong>{formatarData(correcao.data)}</strong>
-              <br />Hoje está como: {correcao.atual ? opcaoDoPonto(correcao.atual).rotulo : 'sem registro'}
+              <br />
+              Hoje está como: {correcao.atual ? opcaoDoPonto(correcao.atual).rotulo : 'sem registro'}
             </p>
+            <DetalheDaJustificativa
+              justificativa={pontoDe(correcao.professorId, correcao.data)?.justificativa ?? null}
+              atestadoId={pontoDe(correcao.professorId, correcao.data)?.atestado_id ?? null}
+            />
             <OpcoesDePonto
               atual={correcao.atual}
               desabilitado={salvando}
@@ -255,19 +291,39 @@ const PresencaProfessores: React.FC = () => {
       <Janela titulo="Lançar ponto" aberta={lancando} onFechar={fecharLancamento}>
         <div className={espaco.formulario}>
           <div>
-            <label htmlFor="lancar-professor" className={classeRotulo}>Instrutor</label>
-            <select id="lancar-professor" value={lancamento.professorId} className={classeCampo}
-              onChange={(e) => setLancamento((l) => ({ ...l, professorId: e.target.value }))}>
-              {professores.map((p) => <option key={p.id} value={p.id}>{nomeDe(p)}</option>)}
+            <label htmlFor="lancar-professor" className={classeRotulo}>
+              Instrutor
+            </label>
+            <select
+              id="lancar-professor"
+              value={lancamento.professorId}
+              className={classeCampo}
+              onChange={(e) => setLancamento((l) => ({ ...l, professorId: e.target.value }))}
+            >
+              {professores.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {nomeDe(p)}
+                </option>
+              ))}
             </select>
           </div>
           <div>
-            <label htmlFor="lancar-dia" className={classeRotulo}>Dia</label>
-            <input id="lancar-dia" type="date" min={de} max={ultimoDiaLancavel} value={lancamento.data} className={classeCampo}
+            <label htmlFor="lancar-dia" className={classeRotulo}>
+              Dia
+            </label>
+            <input
+              id="lancar-dia"
+              type="date"
+              min={de}
+              max={ultimoDiaLancavel}
+              value={lancamento.data}
+              className={classeCampo}
               onChange={(e) => {
                 const v = e.target.value; // digitado pode escapar do min/max: fica dentro do período
-                if (v) setLancamento((l) => ({ ...l, data: v < de ? de : v > ultimoDiaLancavel ? ultimoDiaLancavel : v }));
-              }} />
+                if (v)
+                  setLancamento((l) => ({ ...l, data: v < de ? de : v > ultimoDiaLancavel ? ultimoDiaLancavel : v }));
+              }}
+            />
           </div>
           {(() => {
             const prof = professores.find((p) => p.id === lancamento.professorId);
@@ -304,12 +360,17 @@ const OpcoesDePonto: React.FC<{
             escolhido ? 'border-gray-900 bg-gray-50' : 'border-gray-200 hover:border-gray-400'
           }`}
         >
-          <span className={`flex h-8 w-8 items-center justify-center rounded border font-bold ${op.classe}`}>{op.letra}</span>
-          {op.rotulo}{escolhido ? ' (atual)' : ''}
+          <span className={`flex h-8 w-8 items-center justify-center rounded border font-bold ${op.classe}`}>
+            {op.letra}
+          </span>
+          {op.rotulo}
+          {escolhido ? ' (atual)' : ''}
         </button>
       );
     })}
-    <Botao onClick={() => aoEscolher(null)} disabled={desabilitado || !atual} className="py-3">Deixar sem registro</Botao>
+    <Botao onClick={() => aoEscolher(null)} disabled={desabilitado || !atual} className="py-3">
+      Deixar sem registro
+    </Botao>
   </div>
 );
 

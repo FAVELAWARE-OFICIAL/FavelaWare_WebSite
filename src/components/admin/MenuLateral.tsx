@@ -17,6 +17,7 @@ import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { IconeFechar, IconeMenu, IconeSair } from './Icones';
 import { foco } from './designSystem';
+import { FUNDO_DA_MARCA, LOGO } from '../../data/imagens';
 
 export interface ItemMenu {
   caminho: string;
@@ -67,57 +68,64 @@ const ConteudoMenu: React.FC<{
 }> = ({ itens, recolhido, onSair, aoEscolher, rodape }) => {
   const { pathname } = useLocation();
   return (
-  <>
-    <nav aria-label="Menu" className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4">
-      <ul className="space-y-1">
-        {itens.map((item) => {
-          const { caminho, rotulo, Icone } = item;
-          const ativo = itemEstaAtivo(item, pathname);
-          return (
-            <li key={caminho} className="group relative">
-              <Link
-                to={caminho}
-                onClick={aoEscolher}
-                aria-current={ativo ? 'page' : undefined}
-                className={`${classeItem(recolhido)} ${ativo ? 'bg-white/15 text-white' : 'text-white/75 hover:bg-white/10 hover:text-white'}`}
-              >
-                {/* Barrinha verde marca a página atual */}
-                {ativo && <span className="absolute bottom-2 left-0 top-2 w-1 rounded-r bg-favela-green-500" aria-hidden="true" />}
-                <Icone />
-                <span className={recolhido ? 'sr-only' : 'truncate'}>{rotulo}</span>
-              </Link>
-              {recolhido && <Balao texto={rotulo} />}
+    <>
+      <nav aria-label="Menu" className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4">
+        <ul className="space-y-1">
+          {itens.map((item) => {
+            const { caminho, rotulo, Icone } = item;
+            const ativo = itemEstaAtivo(item, pathname);
+            return (
+              <li key={caminho} className="group relative">
+                <Link
+                  to={caminho}
+                  onClick={aoEscolher}
+                  aria-current={ativo ? 'page' : undefined}
+                  className={`${classeItem(recolhido)} ${ativo ? 'bg-white/15 text-white' : 'text-white/75 hover:bg-white/10 hover:text-white'}`}
+                >
+                  {/* Barrinha verde marca a página atual */}
+                  {ativo && (
+                    <span
+                      className="absolute bottom-2 left-0 top-2 w-1 rounded-r bg-favela-green-500"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <Icone />
+                  <span className={recolhido ? 'sr-only' : 'truncate'}>{rotulo}</span>
+                </Link>
+                {recolhido && <Balao texto={rotulo} />}
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
 
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+      {/* Extra do rodapé: só com o menu aberto (recolhido não cabe) */}
+      {rodape && !recolhido && <div className="border-t border-white/10 px-3 pt-4">{rodape}</div>}
 
-    {/* Extra do rodapé: só com o menu aberto (recolhido não cabe) */}
-    {rodape && !recolhido && <div className="border-t border-white/10 px-3 pt-4">{rodape}</div>}
-
-    <div className="group relative border-t border-white/10 px-3 py-4">
-      <button type="button" onClick={onSair} className={`${classeItem(recolhido)} text-white/75 hover:bg-red-500/15 hover:text-red-200`}>
-        <IconeSair />
-        <span className={recolhido ? 'sr-only' : ''}>Sair</span>
-      </button>
-      {recolhido && <Balao texto="Sair" />}
-    </div>
-  </>
+      <div className="group relative border-t border-white/10 px-3 py-4">
+        <button
+          type="button"
+          onClick={onSair}
+          className={`${classeItem(recolhido)} text-white/75 hover:bg-red-500/15 hover:text-red-200`}
+        >
+          <IconeSair />
+          <span className={recolhido ? 'sr-only' : ''}>Sair</span>
+        </button>
+        {recolhido && <Balao texto="Sair" />}
+      </div>
+    </>
   );
 };
 
 const Marca: React.FC<{ subtitulo: string }> = ({ subtitulo }) => (
   <div className="flex min-w-0 items-center gap-3">
     {/* O logo não é quadrado: dimensiona só pela largura */}
-    <img src="/imgs/logo/logo.png" alt="FavelaWare" className="w-24 object-contain" />
+    <img src={LOGO} alt="FavelaWare" className="w-24 object-contain" />
     <span className="text-[11px] font-semibold uppercase leading-tight tracking-wider text-white/70">{subtitulo}</span>
   </div>
 );
 
-const classeBotaoTopo =
-  `flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/75 hover:bg-white/10 hover:text-white ${foco}`;
+const classeBotaoTopo = `flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/75 hover:bg-white/10 hover:text-white ${foco}`;
 
 /**
  * Fundo do menu: o mesmo banner da tela de login (foto da comunidade com código
@@ -125,14 +133,20 @@ const classeBotaoTopo =
  * para o texto branco ter contraste; a cor de reserva é esse azul, se a imagem não carregar.
  */
 const FUNDO_DO_MENU: React.CSSProperties = {
-  backgroundImage:
-    "linear-gradient(to bottom, rgba(0, 70, 115, 0.96), rgba(0, 127, 193, 0.85) 12%, rgba(0, 127, 193, 0.8) 50%, rgba(0, 96, 150, 0.92)), url('/imgs/backgrounds/fundo.webp')",
+  backgroundImage: `linear-gradient(to bottom, rgba(0, 70, 115, 0.96), rgba(0, 127, 193, 0.85) 12%, rgba(0, 127, 193, 0.8) 50%, rgba(0, 96, 150, 0.92)), url('${FUNDO_DA_MARCA}')`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
 };
 
 const MenuLateral: React.FC<Props> = ({
-  itens, subtitulo, recolhido, onAlternarRecolhido, abertoNoCelular, onFecharNoCelular, onSair, rodape,
+  itens,
+  subtitulo,
+  recolhido,
+  onAlternarRecolhido,
+  abertoNoCelular,
+  onFecharNoCelular,
+  onSair,
+  rodape,
 }) => {
   const botaoFecharRef = useRef<HTMLButtonElement>(null);
 
@@ -160,7 +174,9 @@ const MenuLateral: React.FC<Props> = ({
         }`}
       >
         {/* Topo: botão de recolher (e o logo, quando há espaço) */}
-        <div className={`flex h-16 items-center border-b border-white/10 ${recolhido ? 'justify-center px-2' : 'justify-between gap-2 pl-4 pr-3'}`}>
+        <div
+          className={`flex h-16 items-center border-b border-white/10 ${recolhido ? 'justify-center px-2' : 'justify-between gap-2 pl-4 pr-3'}`}
+        >
           {!recolhido && <Marca subtitulo={subtitulo} />}
           <button
             type="button"
@@ -177,7 +193,10 @@ const MenuLateral: React.FC<Props> = ({
       </aside>
 
       {/* ============ CELULAR: gaveta por cima da tela ============ */}
-      <div className={`fixed inset-0 z-40 lg:hidden ${abertoNoCelular ? '' : 'pointer-events-none'}`} aria-hidden={!abertoNoCelular}>
+      <div
+        className={`fixed inset-0 z-40 lg:hidden ${abertoNoCelular ? '' : 'pointer-events-none'}`}
+        aria-hidden={!abertoNoCelular}
+      >
         {/* Fundo escuro: clicar fora fecha */}
         <div
           className={`absolute inset-0 bg-gray-950/60 transition-opacity duration-200 ${abertoNoCelular ? 'opacity-100' : 'opacity-0'}`}
@@ -197,11 +216,23 @@ const MenuLateral: React.FC<Props> = ({
         >
           <div className="flex h-16 items-center justify-between border-b border-white/10 pl-4 pr-3">
             <Marca subtitulo={subtitulo} />
-            <button ref={botaoFecharRef} type="button" onClick={onFecharNoCelular} aria-label="Fechar menu" className={classeBotaoTopo}>
+            <button
+              ref={botaoFecharRef}
+              type="button"
+              onClick={onFecharNoCelular}
+              aria-label="Fechar menu"
+              className={classeBotaoTopo}
+            >
               <IconeFechar />
             </button>
           </div>
-          <ConteudoMenu itens={itens} recolhido={false} onSair={onSair} aoEscolher={onFecharNoCelular} rodape={rodape} />
+          <ConteudoMenu
+            itens={itens}
+            recolhido={false}
+            onSair={onSair}
+            aoEscolher={onFecharNoCelular}
+            rodape={rodape}
+          />
         </aside>
       </div>
     </>
