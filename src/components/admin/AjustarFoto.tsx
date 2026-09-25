@@ -14,6 +14,7 @@ import {
   comZoom,
   COR_DO_CIRCULO,
   enquadramentoPadrao,
+  servicoFotoPadronizada,
   recorteDaFoto,
   ZOOM_MAXIMO,
   type Enquadramento,
@@ -36,6 +37,8 @@ const AjustarFoto: React.FC<{
   aoCancelar: () => void;
 }> = ({ arquivo, aoConfirmar, aoCancelar }) => {
   const [imagem, setImagem] = useState<ImageBitmap | null>(null);
+  // Onde a pessoa começa, na foto que já vem sem fundo (o padrão enquadra pela cabeça)
+  const [topo, setTopo] = useState<number | null>(null);
   const [enquadramento, setEnquadramento] = useState<Enquadramento>({ zoom: 1, x: 0.5, y: 0.5 });
   const [erro, setErro] = useState<string | null>(null);
   // O fundo das fotos do site, para a prévia ficar igual à foto final
@@ -64,8 +67,11 @@ const AjustarFoto: React.FC<{
       .then((bitmap) => {
         aberta = bitmap;
         if (!ativo) return bitmap.close();
+        const { semFundo, topo: topoDaPessoa } = servicoFotoPadronizada.transparencia(bitmap);
+        const topoDoPadrao = semFundo ? topoDaPessoa : null;
         setImagem(bitmap);
-        setEnquadramento(enquadramentoPadrao(bitmap.width, bitmap.height));
+        setTopo(topoDoPadrao);
+        setEnquadramento(enquadramentoPadrao(bitmap.width, bitmap.height, topoDoPadrao));
       })
       .catch((e) => {
         console.error('[foto] não abriu a foto para ajustar', (e as Error)?.message);
@@ -206,7 +212,7 @@ const AjustarFoto: React.FC<{
               <Botao
                 tamanho="pequeno"
                 disabled={!imagem}
-                onClick={() => imagem && setEnquadramento(enquadramentoPadrao(imagem.width, imagem.height))}
+                onClick={() => imagem && setEnquadramento(enquadramentoPadrao(imagem.width, imagem.height, topo))}
               >
                 Voltar ao padrão
               </Botao>
