@@ -96,8 +96,8 @@ export class ServicoEquipe {
   }
 
   /**
-   * Gestor: vínculo e cargo da pessoa (vazio apaga). Gestor, parceiro e a líder
-   * discente só aparecem no site com cargo; o instrutor sem cargo sai como "Instrutor(a)".
+   * Gestor: vínculo e cargo da pessoa (vazio apaga). Gestor, colaborador, parceiro e a
+   * líder discente só aparecem no site com cargo; o instrutor sem cargo sai como "Instrutor(a)".
    */
   async salvarVinculoECargo(id: string, vinculo: { organizacao: string; cargo: string }): Promise<string | null> {
     const { data, error } = await supabase

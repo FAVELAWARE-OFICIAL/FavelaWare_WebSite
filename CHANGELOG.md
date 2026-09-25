@@ -5,6 +5,19 @@ dos commits (Conventional Commits) ou da label `version:*` no PR de release.
 
 Enquanto o site está em desenvolvimento, as versões ficam em 0.x (pré-lançamento). A 1.0.0 é o lançamento.
 
+## [0.3.0] - 2026-09-25
+
+### Adicionado
+
+- Colaborador com cargo aparece na equipe da edição, na página Sobre e, quando a edição encerra, no Hall da Fama.
+- Hall da Fama: foto nova do Lucelho em 2022, e João Vitor na equipe da 3ª edição como Desenvolvedor Full-Stack.
+
+### Corrigido
+
+- Página Sobre com uma equipe só, a da edição atual: a edição aberta mais recente que já tem turma, ou a Edição III enquanto não houver outra. Antes apareciam as duas, e quem estava nas duas aparecia duas vezes. A Edição III fica no Hall da Fama.
+- Quem está em Idealizadores não se repete na equipe da edição.
+- Fotos enviadas pelo portal (perfil, instrutor e aluno) saem com o mesmo fundo das fotos do site: o círculo ocupa a imagem inteira, sem o anel de outro verde e sem o degradê que escurecia embaixo.
+
 ## [0.2.0] - 2026-09-25
 
 ### Adicionado
