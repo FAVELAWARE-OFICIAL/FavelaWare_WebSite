@@ -208,15 +208,16 @@ export class ServicoEquipe {
   }
 
   /**
-   * Remove o professor da equipe: tira o papel de professor e os vínculos com as
-   * turmas. A conta de login continua existindo (sem acesso a nada), e as
-   * chamadas que ele já fez ficam no histórico.
+   * Remove da equipe APAGANDO a conta de login (Edge Function "remover-membro",
+   * que tem a chave secreta). Saem junto, em cascata: vínculos com turmas, ponto,
+   * dados do RPA, atestados e notas da pessoa. Chamadas ficam, sem o nome.
+   * O e-mail fica livre para um convite novo. Erro vira exceção com o texto da tela.
    */
-  async remover(professorId: string): Promise<void> {
-    const { error } = await supabase.from('perfis').update({ papel: 'aluno' }).eq('id', professorId);
-    if (error) throw error;
-    const { error: erroVinculos } = await supabase.from('professores_turmas').delete().eq('professor_id', professorId);
-    if (erroVinculos) throw erroVinculos;
+  async remover(id: string): Promise<void> {
+    const { error } = await supabase.functions.invoke('remover-membro', { body: { id } });
+    if (!error) return;
+    const { mensagem } = await resultadoDaFuncao(error, 'Não foi possível remover da equipe.');
+    throw new Error(mensagem ?? 'Não foi possível remover da equipe.');
   }
 }
 

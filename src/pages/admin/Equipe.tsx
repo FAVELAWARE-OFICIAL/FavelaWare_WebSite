@@ -214,7 +214,7 @@ const Equipe: React.FC = () => {
   const remover = async (professor: Professor) => {
     if (
       !window.confirm(
-        `Remover ${professor.nome ?? professor.email} da equipe? Ele perde o acesso às turmas; as chamadas que já fez continuam no histórico.`,
+        `Apagar a conta de ${professor.nome ?? professor.email}? Saem junto o ponto, os dados do RPA, os atestados e as notas que ele deu; as chamadas ficam, sem o nome. Não dá para desfazer.`,
       )
     )
       return;
@@ -222,9 +222,9 @@ const Equipe: React.FC = () => {
     try {
       await servicoEquipe.remover(professor.id);
       await recarregar();
-      setMensagem({ tipo: 'sucesso', texto: `${professor.nome ?? professor.email} removido da equipe.` });
-    } catch {
-      setMensagem({ tipo: 'erro', texto: 'Não foi possível remover o instrutor.' });
+      setMensagem({ tipo: 'sucesso', texto: `A conta de ${professor.nome ?? professor.email} foi apagada.` });
+    } catch (erro) {
+      setMensagem({ tipo: 'erro', texto: (erro as Error).message });
     } finally {
       setOcupado(null);
     }
