@@ -2,8 +2,36 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('./supabase', () => import('../testes/supabaseFalso'));
 
+import { FunctionsHttpError } from '@supabase/supabase-js';
+
+import { supabase as supabaseFalso } from '../testes/supabaseFalso';
 import { excecaoDeNegocio, StatusProcessamento, sucesso } from '../types';
 import { servicoEquipe } from './equipe';
+
+describe('equipe: remover apaga a conta pelo servidor', () => {
+  const chamarFuncao = (resposta: { error: unknown }) => {
+    const invoke = vi.fn(async () => ({ data: null, ...resposta }));
+    Object.assign(supabaseFalso, { functions: { invoke } });
+    return invoke;
+  };
+
+  it('chama a Edge Function remover-membro com a conta', async () => {
+    const invoke = chamarFuncao({ error: null });
+    await servicoEquipe.remover('conta-1');
+    expect(invoke).toHaveBeenCalledWith('remover-membro', { body: { id: 'conta-1' } });
+  });
+
+  it('recusa do servidor vira erro com o texto dele', async () => {
+    const recusa = new Response(JSON.stringify({ erro: 'Você não pode remover a própria conta.' }), { status: 403 });
+    chamarFuncao({ error: new FunctionsHttpError(recusa) });
+    await expect(servicoEquipe.remover('conta-1')).rejects.toThrow('Você não pode remover a própria conta.');
+  });
+
+  it('falha de rede vira erro com o texto padrão', async () => {
+    chamarFuncao({ error: new Error('rede') });
+    await expect(servicoEquipe.remover('conta-1')).rejects.toThrow('Não foi possível remover da equipe.');
+  });
+});
 
 describe('equipe: adicionar membro pela tela Membros', () => {
   afterEach(() => vi.restoreAllMocks());

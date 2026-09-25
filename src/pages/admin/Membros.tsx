@@ -9,7 +9,7 @@
  * todas as personas (o "Ver como"): a função dela só ela muda, e ninguém mais
  * ganha isso. O banco confere as duas regras.
  * O gestor também adiciona (convite por e-mail já com a função) e remove
- * (a pessoa perde a função e as turmas; a conta e o histórico ficam).
+ * (apaga a conta, com o ponto, o RPA e as notas da pessoa; ver lib/equipe.ts).
  */
 import { useCallback, useEffect, useState } from 'react';
 
@@ -136,10 +136,9 @@ const Membros: React.FC = () => {
     setSalvando(true);
     try {
       await servicoEquipe.remover(removendo.id);
-      setMensagem({ tipo: 'sucesso', texto: `${removendo.nome ?? removendo.email} saiu da equipe.` });
+      setMensagem({ tipo: 'sucesso', texto: `A conta de ${removendo.nome ?? removendo.email} foi apagada.` });
     } catch (erro) {
-      console.error('[equipe] falha ao remover da equipe', (erro as { code?: string })?.code);
-      setMensagem({ tipo: 'erro', texto: 'Não foi possível remover da equipe.' });
+      setMensagem({ tipo: 'erro', texto: (erro as Error).message });
     } finally {
       setSalvando(false);
       setRemovendo(null);
@@ -310,7 +309,7 @@ const Membros: React.FC = () => {
       </Janela>
 
       <JanelaDeConfirmacao
-        titulo="Remover da equipe?"
+        titulo="Apagar a conta?"
         aberta={removendo !== null}
         aoFechar={fecharRemocao}
         aoConfirmar={confirmarRemocao}
@@ -320,8 +319,9 @@ const Membros: React.FC = () => {
         rotuloOcupado="Removendo…"
         rotuloVoltar="Voltar"
       >
-        <strong>{removendo?.nome ?? removendo?.email}</strong> perde a função e as turmas, e deixa de acessar o portal
-        da equipe. A conta e o histórico (chamadas, avaliações) continuam guardados.
+        A conta de <strong>{removendo?.nome ?? removendo?.email}</strong> será apagada, junto com o ponto, os dados do
+        RPA, os atestados e as notas que a pessoa deu. As chamadas ficam, sem o nome. Não dá para desfazer; o e-mail
+        pode ser convidado de novo.
       </JanelaDeConfirmacao>
 
       <JanelaDeConfirmacao
