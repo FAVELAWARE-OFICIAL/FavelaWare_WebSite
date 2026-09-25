@@ -12,12 +12,13 @@ import { useEffect, useRef, useState } from 'react';
 
 import {
   comZoom,
-  DEGRADE_DO_CIRCULO,
+  COR_DO_CIRCULO,
   enquadramentoPadrao,
   recorteDaFoto,
   ZOOM_MAXIMO,
   type Enquadramento,
 } from '../../lib/fotoPadronizada';
+import { FUNDO_DA_FOTO } from '../../data/imagens';
 import Janela from './Janela';
 import { Botao, classeRotulo } from './Ui';
 import { foco, texto } from './designSystem';
@@ -37,6 +38,13 @@ const AjustarFoto: React.FC<{
   const [imagem, setImagem] = useState<ImageBitmap | null>(null);
   const [enquadramento, setEnquadramento] = useState<Enquadramento>({ zoom: 1, x: 0.5, y: 0.5 });
   const [erro, setErro] = useState<string | null>(null);
+  // O fundo das fotos do site, para a prévia ficar igual à foto final
+  const [fundo, setFundo] = useState<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const imagemDoFundo = new Image();
+    imagemDoFundo.onload = () => setFundo(imagemDoFundo);
+    imagemDoFundo.src = FUNDO_DA_FOTO;
+  }, []);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const arraste = useRef<{ px: number; py: number; inicio: Enquadramento } | null>(null);
 
@@ -80,14 +88,12 @@ const AjustarFoto: React.FC<{
     contexto.beginPath();
     contexto.arc(RESOLUCAO / 2, RESOLUCAO / 2, RESOLUCAO / 2, 0, Math.PI * 2);
     contexto.clip();
-    const degrade = contexto.createLinearGradient(0, 0, RESOLUCAO, RESOLUCAO);
-    degrade.addColorStop(0, DEGRADE_DO_CIRCULO[0]);
-    degrade.addColorStop(1, DEGRADE_DO_CIRCULO[1]);
-    contexto.fillStyle = degrade;
+    contexto.fillStyle = COR_DO_CIRCULO;
     contexto.fillRect(0, 0, RESOLUCAO, RESOLUCAO);
+    if (fundo) contexto.drawImage(fundo, 0, 0, RESOLUCAO, RESOLUCAO);
     contexto.drawImage(imagem, x, y, lado, lado, 0, 0, RESOLUCAO, RESOLUCAO);
     contexto.restore();
-  }, [imagem, enquadramento]);
+  }, [imagem, enquadramento, fundo]);
 
   const mudar = (mudanca: Partial<Enquadramento>) => setEnquadramento((e) => ({ ...e, ...mudanca }));
 

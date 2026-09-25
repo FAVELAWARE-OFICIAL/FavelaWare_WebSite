@@ -6,6 +6,13 @@
 /** Pessoa sem foto: silhueta no círculo verde (alunos, instrutores, avatar das áreas) */
 export const FOTO_PADRAO_DE_PESSOA = '/imgs/turmas/sem-foto.webp';
 
+/**
+ * Fundo das fotos de pessoas: o círculo verde com os reflexos e a comunidade
+ * embaixo, o mesmo das fotos fixas do site (tirado do sem-foto.webp, sem a
+ * silhueta). O portal monta as fotos enviadas sobre ele.
+ */
+export const FUNDO_DA_FOTO = '/imgs/backgrounds/fundo-da-foto.webp';
+
 /** Banner oficial: foto da comunidade com código binário (fundo do Hero, do login e da moldura) */
 export const FUNDO_DA_MARCA = '/imgs/backgrounds/fundo.webp';
 
