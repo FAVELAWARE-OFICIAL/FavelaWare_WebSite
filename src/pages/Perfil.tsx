@@ -9,7 +9,7 @@
  * 2. Trocar senha: pede a senha atual antes de gravar a nova.
  * O instrutor tem um terceiro: o atalho para atualizar os dados do RPA.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -28,7 +28,10 @@ import { StatusProcessamento } from '../types';
 import { hoje as hojeLocal } from '../utils/datas';
 import { emailValido } from '../utils/texto';
 import { NOME_DO_PAPEL } from '../lib/sessao';
+import AjustarFoto from '../components/admin/AjustarFoto';
 import EscolherFoto from '../components/admin/EscolherFoto';
+import { IconeLapis } from '../components/admin/Icones';
+import type { Enquadramento } from '../lib/fotoPadronizada';
 
 /**
  * Onde a pessoa aparece no site (foto e LinkedIn); null = só no portal. Resumo da
@@ -99,13 +102,17 @@ const Identidade: React.FC<{ dados: MeusDados }> = ({ dados }) => {
   const [foto, setFoto] = useState(dados.foto);
   const [enviando, setEnviando] = useState(false);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
+  // Foto escolhida pelo lápis, esperando o ajuste de zoom e posição
+  const [paraAjustar, setParaAjustar] = useState<File | null>(null);
+  const cancelarAjuste = useCallback(() => setParaAjustar(null), []);
   const noSite = ondeApareceNoSite(dados);
 
-  const trocarFoto = async (arquivo: File) => {
+  const trocarFoto = async (arquivo: File, enquadramento: Enquadramento) => {
+    setParaAjustar(null);
     setEnviando(true);
     setMensagem(null);
     try {
-      const nova = await servicoPerfil.trocarMinhaFoto(arquivo, foto);
+      const nova = await servicoPerfil.trocarMinhaFoto(arquivo, foto, enquadramento);
       await aguardarCicloCompleto(); // a pintura do carregamento termina antes do resultado
       setFoto(nova);
       setMensagem({ tipo: 'sucesso', texto: `Foto atualizada.${noSite ? ` Ela aparece ${noSite}.` : ''}` });
@@ -126,9 +133,21 @@ const Identidade: React.FC<{ dados: MeusDados }> = ({ dados }) => {
       <img src={CAPA_VERDE} alt="" className="so-tema-claro h-24 w-full bg-[#91d429] object-contain sm:h-32" />
       <img src={CAPA_AZUL} alt="" className="so-tema-escuro h-24 w-full bg-[#21225f] object-contain sm:h-32" />
       <div className="flex flex-col items-center gap-3 px-5 pb-5 text-center sm:flex-row sm:items-end sm:gap-5 sm:text-left">
-        {/* A foto sobe sobre a faixa; o anel tem a cor do cartão (clara ou escura) */}
-        <span className="-mt-10 shrink-0 rounded-full bg-white p-1 shadow-md sm:-mt-12">
+        {/* A foto sobe sobre a faixa; o anel tem a cor do cartão (clara ou escura). O lápis fica na borda */}
+        <span className="relative -mt-10 shrink-0 rounded-full bg-white p-1 shadow-md sm:-mt-12">
           <Avatar foto={foto} nome={dados.nome} tamanho="lg" />
+          <span className="absolute -bottom-1 -right-1">
+            <EscolherFoto
+              variante="lapis"
+              ocupado={enviando}
+              rotulo={foto ? 'Trocar foto' : 'Adicionar foto'}
+              icone={<IconeLapis className="h-4 w-4" />}
+              aoEscolher={(arquivo) => {
+                setMensagem(null);
+                setParaAjustar(arquivo);
+              }}
+            />
+          </span>
         </span>
         <div className="min-w-0 flex-1 sm:pb-1">
           <h2 className="truncate text-lg font-semibold text-gray-900">{dados.nome || 'Sem nome'}</h2>
@@ -136,12 +155,6 @@ const Identidade: React.FC<{ dados: MeusDados }> = ({ dados }) => {
         </div>
         <div className="flex flex-wrap items-center justify-center gap-3 sm:mb-1">
           {dados.papel && <span className={`${selo.base} ${selo.marca}`}>{NOME_DO_PAPEL[dados.papel]}</span>}
-          <EscolherFoto
-            variante="botao-compacto"
-            ocupado={enviando}
-            rotulo={foto ? 'Trocar foto' : 'Adicionar foto'}
-            aoEscolher={trocarFoto}
-          />
         </div>
       </div>
       {mensagem && (
@@ -149,6 +162,11 @@ const Identidade: React.FC<{ dados: MeusDados }> = ({ dados }) => {
           <Aviso mensagem={mensagem} className="" />
         </div>
       )}
+      <AjustarFoto
+        arquivo={paraAjustar}
+        aoCancelar={cancelarAjuste}
+        aoConfirmar={(enquadramento) => paraAjustar && trocarFoto(paraAjustar, enquadramento)}
+      />
     </section>
   );
 };

@@ -14,7 +14,7 @@
  */
 import { emailValido, normalizarGithub, normalizarLinkedin } from '../utils/texto';
 import { CODIGO_REGRA_DO_BANCO, codigoDoErro } from './banco';
-import { servicoFotoPadronizada } from './fotoPadronizada';
+import { servicoFotoPadronizada, type Enquadramento } from './fotoPadronizada';
 import { servicoSessao, type Papel } from './sessao';
 import { supabase } from './supabase';
 
@@ -105,7 +105,7 @@ export class ServicoPerfil {
    * da turma; os outros, a do perfil. O banco confere que a foto foi enviada
    * pela própria pessoa. Devolve a URL nova.
    */
-  async trocarMinhaFoto(arquivo: File, fotoAntiga: string | null): Promise<string> {
+  async trocarMinhaFoto(arquivo: File, fotoAntiga: string | null, enquadramento?: Enquadramento): Promise<string> {
     const url = await servicoFotoPadronizada.trocar(
       arquivo,
       'perfis',
@@ -116,6 +116,7 @@ export class ServicoPerfil {
         throw new Error('Não foi possível salvar a foto.');
       },
       fotoAntiga,
+      enquadramento,
     );
     this.avisarQueMudou();
     return url;
