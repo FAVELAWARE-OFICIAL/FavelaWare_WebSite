@@ -7,7 +7,14 @@ import { consultaFalha, removerDoStorage } from '../testes/supabaseFalso';
 import { servicoAtestados } from './atestados';
 import { notasCompletas, servicoAvaliacoes, somaDasNotas } from './avaliacoes';
 import { servicoEdicoes } from './edicoes';
-import { comZoom, enquadramentoPadrao, recorteDaFoto, servicoFotoPadronizada, ZOOM_MAXIMO } from './fotoPadronizada';
+import {
+  comZoom,
+  enquadramentoPadrao,
+  lerTransparencia,
+  recorteDaFoto,
+  servicoFotoPadronizada,
+  ZOOM_MAXIMO,
+} from './fotoPadronizada';
 import { servicoMaterial } from './material';
 import { mensagemDeErroDeCadastro } from './banco';
 import { validarDados, type DadosInstrutor } from './dadosInstrutor';
@@ -552,5 +559,36 @@ describe('site: cada pessoa aparece uma vez na página Sobre', () => {
     ];
     expect(semQuemJaAparece(equipe, idealizadores).map((p) => p.nome)).toEqual(['Lucelho Silva', 'Raquel Souza']);
     expect(semQuemJaAparece(equipe, [])).toEqual(equipe);
+  });
+});
+
+describe('foto que já vem sem fundo (PNG recortado)', () => {
+  /** Imagem RGBA de teste: transparente, com a pessoa (opaca) a partir de uma linha */
+  const imagem = (largura: number, altura: number, pessoaDesde: number | null) => {
+    const rgba = new Uint8ClampedArray(largura * altura * 4);
+    for (let linha = 0; linha < altura; linha++)
+      for (let coluna = 0; coluna < largura; coluna++)
+        rgba[(linha * largura + coluna) * 4 + 3] = pessoaDesde !== null && linha >= pessoaDesde ? 255 : 0;
+    return rgba;
+  };
+
+  it('reconhece a foto sem fundo e onde a pessoa começa', () => {
+    expect(lerTransparencia(imagem(10, 20, 4), 10, 20)).toEqual({ semFundo: true, topo: 4 });
+  });
+
+  it('foto comum (toda opaca) não conta como sem fundo', () => {
+    expect(lerTransparencia(imagem(10, 20, 0), 10, 20)).toEqual({ semFundo: false, topo: 0 });
+  });
+
+  it('corpo inteiro: o quadrado começa logo acima da cabeça, não no meio da foto', () => {
+    // 334x746 como o exemplo: cabeça em 90 px
+    const { y, lado } = recorteDaFoto(334, 746, undefined, 90);
+    expect(lado).toBe(334);
+    expect(y).toBeCloseTo(90 - 334 * 0.06);
+    // Cabeça colada no alto: não passa de 0; e sem topo, o recorte de sempre
+    expect(recorteDaFoto(334, 746, undefined, 5).y).toBe(0);
+    expect(recorteDaFoto(334, 746, undefined, null)).toEqual(recorteDaFoto(334, 746));
+    // A janela de ajuste abre no mesmo enquadramento
+    expect(recorteDaFoto(334, 746, enquadramentoPadrao(334, 746, 90)).y).toBeCloseTo(90 - 334 * 0.06);
   });
 });

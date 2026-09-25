@@ -68,17 +68,48 @@ export interface Recorte {
 
 const entre = (valor: number, minimo: number, maximo: number) => Math.min(maximo, Math.max(minimo, valor));
 
+/** Quanto de folga fica acima da cabeça, na foto que já vem sem fundo (fração do lado) */
+const FOLGA_ACIMA_DA_CABECA = 0.06;
+/** A partir de quanto da imagem transparente a foto conta como "já sem fundo" */
+const FRACAO_TRANSPARENTE_MINIMA = 0.05;
+
+/**
+ * Lê o canal de transparência (RGBA, como o getImageData devolve) de uma foto:
+ * - semFundo: a foto já vem sem fundo (PNG recortado): não se tira o fundo de novo;
+ * - topo: a primeira linha com a pessoa (onde começa a cabeça), em px da leitura.
+ */
+export function lerTransparencia(rgba: ArrayLike<number>, largura: number, altura: number) {
+  let transparentes = 0;
+  let topo: number | null = null;
+  for (let linha = 0; linha < altura; linha++) {
+    for (let coluna = 0; coluna < largura; coluna++) {
+      const alfa = rgba[(linha * largura + coluna) * 4 + 3];
+      if (alfa < 128) transparentes++;
+      else topo ??= linha;
+    }
+  }
+  return { semFundo: transparentes / (largura * altura) >= FRACAO_TRANSPARENTE_MINIMA, topo };
+}
+
 /**
  * Recorte padrão, sem ajuste: o maior quadrado do centro, um pouco acima do meio
- * (onde costuma estar o rosto). Com enquadramento, o quadrado encolhe com o zoom e
+ * (onde costuma estar o rosto). Na foto que já vem sem fundo, com `topo` (onde a
+ * pessoa começa), o quadrado começa logo acima da cabeça: uma foto de corpo
+ * inteiro não sai sem cabeça. Com enquadramento, o quadrado encolhe com o zoom e
  * anda dentro da sobra da foto, sem nunca sair dela.
  */
-export function recorteDaFoto(largura: number, altura: number, enquadramento?: Enquadramento): Recorte {
+export function recorteDaFoto(
+  largura: number,
+  altura: number,
+  enquadramento?: Enquadramento,
+  topo?: number | null,
+): Recorte {
   const maior = Math.min(largura, altura);
   if (!enquadramento) {
+    const yPadrao = Math.max(0, (altura - maior) / 2 - maior * 0.08);
     return {
       x: (largura - maior) / 2,
-      y: Math.max(0, (altura - maior) / 2 - maior * 0.08),
+      y: topo == null ? yPadrao : entre(topo - maior * FOLGA_ACIMA_DA_CABECA, 0, altura - maior),
       lado: maior,
     };
   }
@@ -109,8 +140,8 @@ export function comZoom(largura: number, altura: number, atual: Enquadramento, z
 }
 
 /** O enquadramento que reproduz o recorte padrão (ponto de partida da janela de ajuste) */
-export function enquadramentoPadrao(largura: number, altura: number): Enquadramento {
-  const { x, y, lado } = recorteDaFoto(largura, altura);
+export function enquadramentoPadrao(largura: number, altura: number, topo?: number | null): Enquadramento {
+  const { x, y, lado } = recorteDaFoto(largura, altura, undefined, topo);
   const sobraX = largura - lado;
   const sobraY = altura - lado;
   return { zoom: 1, x: sobraX > 0 ? x / sobraX : 0.5, y: sobraY > 0 ? y / sobraY : 0.5 };
@@ -127,8 +158,11 @@ export class ServicoFotoPadronizada {
     if (!arquivo.type.startsWith('image/')) throw new Error('Escolha um arquivo de imagem.');
     const imagem = await createImageBitmap(arquivo);
     try {
-      const mascara = await this.mascaraDaPessoa(imagem);
-      const canvas = await this.montar(imagem, mascara, recorteDaFoto(imagem.width, imagem.height, enquadramento));
+      // Foto que já vem sem fundo (PNG recortado): entra como veio, só sobre o fundo do site
+      const { semFundo, topo } = this.transparencia(imagem);
+      const mascara = semFundo ? null : await this.mascaraDaPessoa(imagem);
+      const recorte = recorteDaFoto(imagem.width, imagem.height, enquadramento, semFundo ? topo : null);
+      const canvas = await this.montar(imagem, mascara, recorte);
       return await new Promise<Blob>((resolve, reject) =>
         canvas.toBlob(
           (b) => (b ? resolve(b) : reject(new Error('Não foi possível processar a foto.'))),
@@ -139,6 +173,23 @@ export class ServicoFotoPadronizada {
     } finally {
       imagem.close();
     }
+  }
+
+  /**
+   * Se a foto já vem sem fundo e onde a pessoa começa (em px da foto). A leitura é
+   * feita numa cópia pequena (até 128 px), que basta para as duas respostas.
+   */
+  transparencia(imagem: ImageBitmap | HTMLImageElement): { semFundo: boolean; topo: number | null } {
+    const escala = Math.min(1, 128 / Math.max(imagem.width, imagem.height));
+    const largura = Math.max(1, Math.round(imagem.width * escala));
+    const altura = Math.max(1, Math.round(imagem.height * escala));
+    const canvas = document.createElement('canvas');
+    canvas.width = largura;
+    canvas.height = altura;
+    const contexto = canvas.getContext('2d')!;
+    contexto.drawImage(imagem, 0, 0, largura, altura);
+    const { semFundo, topo } = lerTransparencia(contexto.getImageData(0, 0, largura, altura).data, largura, altura);
+    return { semFundo, topo: topo === null ? null : topo / escala };
   }
 
   /** Carrega o segmentador uma vez por visita (null se não der: segue sem recorte) */
