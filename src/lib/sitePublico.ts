@@ -63,6 +63,19 @@ export interface EquipeDaEdicao {
   pessoas: PessoaDoHall[];
 }
 
+/** Nome para comparar pessoas entre seções: sem acento, sem maiúscula e sem espaço sobrando */
+const chaveDoNome = (nome: string) =>
+  nome.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+/**
+ * Tira da lista quem já aparece em outra seção da página (ex.: a Rafaela, que é
+ * idealizadora e também está na equipe do banco): cada pessoa aparece uma vez só.
+ */
+export function semQuemJaAparece<T extends { nome: string }>(pessoas: T[], jaAparecem: { nome: string }[]): T[] {
+  const nomes = new Set(jaAparecem.map((p) => chaveDoNome(p.nome)));
+  return pessoas.filter((p) => !nomes.has(chaveDoNome(p.nome)));
+}
+
 /** Linha de equipe_da_edicao_atual ou hall_da_fama_do_site -> cartão do site */
 const linhaParaPessoa = (l: Record<string, unknown>): PessoaDoHall => ({
   nome: String(l.nome ?? 'Instrutor'),
@@ -119,7 +132,7 @@ export class ServicoSitePublico {
     return [...novas, ...(temAtualNoBanco ? comFotos.map((t) => ({ ...t, atual: false })) : comFotos)];
   }
 
-  /** Equipe da edição atual com o título da seção (null se não houver edição aberta com equipe) */
+  /** Equipe da edição atual com o título da seção (null se não houver edição aberta com turma e equipe) */
   async equipeDaEdicaoAtual(): Promise<EquipeDaEdicao | null> {
     const linhas = await this.chamar<Record<string, unknown>>('equipe_da_edicao_atual');
     if (!linhas.length) return null;

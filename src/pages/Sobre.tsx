@@ -24,6 +24,7 @@ import { MotionLink } from '../components/MotionLink';
 import { equipeEdicaoIII } from '../data/hallDaFama';
 import { parceiros } from '../data/parceiros';
 import { useEquipeDaEdicaoAtual } from '../hooks/useEquipeDaEdicaoAtual';
+import { semQuemJaAparece } from '../lib/sitePublico';
 import { cronograma, idealizadores, propositos } from '../data/sobre';
 import CartaoDePessoa from '../components/CartaoDePessoa';
 import { classeBotaoDestaque } from '../components/estilosDoSite';
@@ -31,6 +32,8 @@ import { classeBotaoDestaque } from '../components/estilosDoSite';
 const Sobre = () => {
   // Instrutores da edição em andamento: aparecem sozinhos quando o gestor os vincula às turmas
   const equipeAtual = useEquipeDaEdicaoAtual();
+  // Quem é idealizador aparece só em Idealizadores, não de novo na equipe da edição
+  const pessoasDaEquipe = semQuemJaAparece(equipeAtual ? equipeAtual.pessoas : equipeEdicaoIII, idealizadores);
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -223,8 +226,12 @@ const Sobre = () => {
         </div>
       </section>
 
-      {/* Equipe da edição em andamento (instrutores, coordenação e parceiros, direto do banco) */}
-      {equipeAtual && (
+      {/*
+        Uma equipe só, a da edição atual: a da edição aberta que já tem turma
+        (direto do banco) ou, enquanto não há, a da Edição III. A III fica sempre
+        no Hall da Fama; mostrar as duas aqui repetia quem está nas duas.
+      */}
+      {equipeAtual !== undefined && (
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.h2
@@ -233,10 +240,10 @@ const Sobre = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              {equipeAtual.titulo}
+              {equipeAtual ? equipeAtual.titulo : 'EQUIPE — EDIÇÃO III'}
             </motion.h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
-              {equipeAtual.pessoas.map((pessoa, index) => (
+              {pessoasDaEquipe.map((pessoa, index) => (
                 <CartaoDePessoa
                   key={`${pessoa.nome}-${index}`}
                   nome={pessoa.nome}
@@ -248,44 +255,16 @@ const Sobre = () => {
                 />
               ))}
             </div>
+
+            {/* Atalho para as equipes anteriores */}
+            <div className="text-center mt-12">
+              <Link to="/hall-da-fama" className={classeBotaoDestaque}>
+                VER AS EQUIPES ANTERIORES
+              </Link>
+            </div>
           </div>
         </section>
       )}
-
-      {/* Equipe da edição III */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.h2
-            className="text-3xl md:text-4xl font-black text-[#2d2a5f] text-center mb-12"
-            initial={{ opacity: 0, y: -20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            EQUIPE — EDIÇÃO III
-          </motion.h2>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
-            {equipeEdicaoIII.map((pessoa, index) => (
-              <CartaoDePessoa
-                key={pessoa.nome}
-                nome={pessoa.nome}
-                foto={pessoa.foto}
-                cargo={pessoa.cargo}
-                organizacao={pessoa.organizacao}
-                linkedin={pessoa.linkedin}
-                atraso={(index % 5) * 0.1}
-              />
-            ))}
-          </div>
-
-          {/* Atalho para as equipes anteriores */}
-          <div className="text-center mt-12">
-            <Link to="/hall-da-fama" className={classeBotaoDestaque}>
-              VER AS EQUIPES ANTERIORES
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* Propositos */}
       <section className="py-16 bg-gray-50">

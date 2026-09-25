@@ -18,7 +18,7 @@
 
 import { BUCKET_FOTOS_ALUNOS, PREFIXO_FOTOS_PUBLICAS } from '../config';
 import { supabase } from './supabase';
-import { FUNDO_DA_MARCA } from '../data/imagens';
+import { FUNDO_DA_FOTO } from '../data/imagens';
 
 /** Versão do pacote @mediapipe/tasks-vision (a do package.json): o WASM da CDN precisa ser igual */
 const VERSAO_MEDIAPIPE = '1.0.1';
@@ -29,7 +29,9 @@ const ENDERECO_MODELO = '/modelos/selfie_segmenter.tflite';
 const LADO = 480;
 /** Círculo verde: centro e raio dentro da imagem */
 const CENTRO = LADO / 2;
-const RAIO = LADO * 0.46;
+// O círculo ocupa a imagem inteira, como nas fotos fixas do site: sobra de
+// transparência em volta mostrava o fundo do cartão, num verde diferente
+const RAIO = LADO / 2;
 
 type Segmentador = {
   segment: (imagem: CanvasImageSource) => {
@@ -51,8 +53,11 @@ export interface Enquadramento {
 
 export const ZOOM_MAXIMO = 3;
 
-/** Verde do círculo (degradê da marca), o mesmo na prévia do ajuste e na foto final */
-export const DEGRADE_DO_CIRCULO = ['#9bd24f', '#7ab52f'] as const;
+/**
+ * Verde do círculo quando o fundo das fotos (FUNDO_DA_FOTO) não carrega: o verde
+ * médio das fotos fixas do site (mediana medida em public/imgs/team e hall-da-fama).
+ */
+export const COR_DO_CIRCULO = '#a0db53';
 
 /** Quadrado da foto original que vai para o círculo (em px da foto) */
 export interface Recorte {
@@ -183,7 +188,7 @@ export class ServicoFotoPadronizada {
     }
   }
 
-  /** Monta a imagem final: círculo verde com textura e a pessoa por cima */
+  /** Monta a imagem final: o fundo das fotos do site e a pessoa por cima */
   private async montar(
     imagem: ImageBitmap,
     mascara: HTMLCanvasElement | null,
@@ -194,24 +199,16 @@ export class ServicoFotoPadronizada {
     canvas.height = LADO;
     const contexto = canvas.getContext('2d')!;
 
-    // 1. Círculo verde da marca, com a textura do banner bem de leve
+    // 1. O círculo com o fundo das fotos fixas (reflexos e a comunidade embaixo);
+    //    se ele não carregar, o verde médio delas
     contexto.save();
     contexto.beginPath();
     contexto.arc(CENTRO, CENTRO, RAIO, 0, Math.PI * 2);
     contexto.clip();
-    const gradiente = contexto.createLinearGradient(0, 0, LADO, LADO);
-    gradiente.addColorStop(0, DEGRADE_DO_CIRCULO[0]);
-    gradiente.addColorStop(1, DEGRADE_DO_CIRCULO[1]);
-    contexto.fillStyle = gradiente;
+    contexto.fillStyle = COR_DO_CIRCULO;
     contexto.fillRect(0, 0, LADO, LADO);
-    const textura = await this.carregarTextura();
-    if (textura) {
-      contexto.globalAlpha = 0.18;
-      contexto.globalCompositeOperation = 'luminosity';
-      contexto.drawImage(textura, 0, 0, LADO, LADO);
-      contexto.globalAlpha = 1;
-      contexto.globalCompositeOperation = 'source-over';
-    }
+    const fundo = await this.carregarFundo();
+    if (fundo) contexto.drawImage(fundo, 0, 0, LADO, LADO);
     contexto.restore();
 
     // 2. A pessoa: o recorte quadrado da foto, com o fundo tirado pela máscara
@@ -294,11 +291,13 @@ export class ServicoFotoPadronizada {
     if (url && url !== fotoOriginal) await this.apagar(url);
   }
 
-  private async carregarTextura(): Promise<ImageBitmap | null> {
+  /** O fundo das fotos (null se não carregar: fica o verde médio) */
+  private async carregarFundo(): Promise<ImageBitmap | null> {
     try {
-      const resposta = await fetch(FUNDO_DA_MARCA);
+      const resposta = await fetch(FUNDO_DA_FOTO);
       return resposta.ok ? await createImageBitmap(await resposta.blob()) : null;
-    } catch {
+    } catch (erro) {
+      console.error('[foto] fundo das fotos indisponível; fica o verde', (erro as Error)?.message);
       return null;
     }
   }

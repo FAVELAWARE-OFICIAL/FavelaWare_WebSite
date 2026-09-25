@@ -15,6 +15,8 @@ declare
   v_parceiro_sem uuid := gen_random_uuid();
   v_banca uuid := gen_random_uuid();
   v_lider uuid := gen_random_uuid();
+  v_colab uuid := gen_random_uuid();
+  v_colab_sem uuid := gen_random_uuid();
   v_edicao bigint;
   v_demo bigint;
   v_turma bigint;
@@ -30,7 +32,9 @@ begin
     (v_parceiro, 'hall-parceiro@exemplo.invalid', 'authenticated', 'authenticated'),
     (v_parceiro_sem, 'hall-parceiro2@exemplo.invalid', 'authenticated', 'authenticated'),
     (v_banca, 'hall-banca@exemplo.invalid', 'authenticated', 'authenticated'),
-    (v_lider, 'hall-lider@exemplo.invalid', 'authenticated', 'authenticated');
+    (v_lider, 'hall-lider@exemplo.invalid', 'authenticated', 'authenticated'),
+    (v_colab, 'hall-colab@exemplo.invalid', 'authenticated', 'authenticated'),
+    (v_colab_sem, 'hall-colab2@exemplo.invalid', 'authenticated', 'authenticated');
   -- Só as contas do teste têm cargo (o resto da equipe real não entra na conta)
   update public.perfis set cargo = null where cargo is not null;
   update public.edicoes set encerrada = true where not demonstracao and not encerrada;
@@ -43,6 +47,8 @@ begin
   update public.perfis set papel = 'parceiro', nome = 'Parceiro Sem Cargo' where id = v_parceiro_sem;
   update public.perfis set papel = 'banca', nome = 'Banca Carla Dias', cargo = 'Jurada' where id = v_banca;
   update public.perfis set papel = 'gestor', nome = 'Lider Discente Teste', pode_alternar_papel = true where id = v_lider;
+  update public.perfis set papel = 'colaborador', nome = 'Colaboradora Rita Lima' where id = v_colab;
+  update public.perfis set papel = 'colaborador', nome = 'Colaborador Sem Cargo' where id = v_colab_sem;
   insert into public.professores_turmas (professor_id, turma_id) values (v_prof, v_turma);
 
   -- ===== Gestor preenche vínculo e cargo =====
@@ -51,6 +57,7 @@ begin
   update public.perfis set cargo = 'Coordenadora', organizacao = 'Mundiale' where id = v_gestor;
   update public.perfis set cargo = 'Psicóloga', organizacao = 'AOPA' where id = v_parceiro;
   update public.perfis set cargo = 'Líder Discente', organizacao = 'Ânima' where id = v_lider;
+  update public.perfis set cargo = 'Designer', organizacao = 'Ânima' where id = v_colab;
   update public.perfis set organizacao = 'Ânima' where id = v_prof;
   select organizacao into v_txt from public.perfis where id = v_prof;
   r := r || E'\n' || case when v_txt = 'Ânima' then 'ok' else 'FALHOU' end || ' - gestor grava o vínculo';
@@ -77,9 +84,9 @@ begin
   perform set_config('request.jwt.claims', '{"role":"anon"}', true);
   set local role anon;
   select string_agg(nome || '|' || cargo, ',' order by nome) into v_txt from public.equipe_da_edicao_atual();
-  r := r || E'\n' || case when v_txt = 'Gestora Silva|Coordenadora,Instrutor Pereira|Instrutor(a),Lider Teste|Líder Discente,Parceira Souza|Psicóloga'
+  r := r || E'\n' || case when v_txt = 'Colaboradora Lima|Designer,Gestora Silva|Coordenadora,Instrutor Pereira|Instrutor(a),Lider Teste|Líder Discente,Parceira Souza|Psicóloga'
     then 'ok' else 'FALHOU (' || coalesce(v_txt, 'nada') || ')' end
-    || ' - Sobre: instrutor da edição, gestor, parceiro e líder com cargo, nome curto (sem banca, sem cargo e sem turma ficam de fora)';
+    || ' - Sobre: instrutor da edição, gestor, colaborador, parceiro e líder com cargo, nome curto (sem banca, sem cargo e sem turma ficam de fora)';
   select organizacao into v_txt from public.equipe_da_edicao_atual() where nome = 'Parceira Souza';
   r := r || E'\n' || case when v_txt = 'AOPA' then 'ok' else 'FALHOU' end || ' - Sobre mostra o vínculo';
   begin
@@ -89,13 +96,26 @@ begin
   end;
   reset role;
 
+  -- Edição mais nova ainda sem turma não vira a atual: o Sobre segue com a anterior
+  insert into public.edicoes (nome, ordem, arquivo_origem) values ('Edição 100 (2100)', 9991, 'teste');
+  perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+  set local role anon;
+  select string_agg(distinct edicao_nome, ',') into v_txt from public.equipe_da_edicao_atual();
+  r := r || E'\n' || case when v_txt = 'Edição 99 (2099)' then 'ok' else 'FALHOU (' || coalesce(v_txt, 'nada') || ')' end
+    || ' - edição nova sem turma não é a atual (fica a anterior)';
+  reset role;
+
   -- ===== Encerrar a edição leva a equipe para o hall =====
   perform set_config('request.jwt.claims', json_build_object('sub', v_gestor, 'role', 'authenticated')::text, true);
   set local role authenticated;
   update public.edicoes set encerrada = true where id = v_edicao;
   reset role;
   select count(*) into v_n from public.hall_da_fama where edicao_id = v_edicao;
-  r := r || E'\n' || case when v_n = 4 then 'ok' else 'FALHOU (' || v_n || ')' end || ' - ao encerrar, a equipe vai para o hall';
+  r := r || E'\n' || case when v_n = 5 then 'ok' else 'FALHOU (' || v_n || ')' end || ' - ao encerrar, a equipe vai para o hall';
+  -- Encerrada a 99, a única aberta (100) não tem turma: nada (o site mostra a equipe anterior)
+  select count(*) into v_n from public.equipe_da_edicao_atual();
+  r := r || E'\n' || case when v_n = 0 then 'ok' else 'FALHOU' end
+    || ' - sem edição aberta com turma, a função não devolve equipe';
 
   -- Depois do retrato, a pessoa muda: o hall não muda
   update public.perfis set cargo = 'Outro cargo', papel = 'aluno' where id = v_parceiro;
@@ -110,7 +130,7 @@ begin
   update public.edicoes set encerrada = false where id = v_edicao;
   update public.edicoes set encerrada = true where id = v_edicao;
   select count(*) into v_n from public.hall_da_fama where edicao_id = v_edicao;
-  r := r || E'\n' || case when v_n = 4 then 'ok' else 'FALHOU (' || v_n || ')' end || ' - encerrar de novo não duplica';
+  r := r || E'\n' || case when v_n = 5 then 'ok' else 'FALHOU (' || v_n || ')' end || ' - encerrar de novo não duplica';
 
   -- Demonstração nunca vai para o hall
   select id into v_demo from public.edicoes where demonstracao;

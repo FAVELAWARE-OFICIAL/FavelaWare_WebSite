@@ -66,6 +66,12 @@ export const equipeEdicaoIII: Omit<MembroEquipe, 'ano'>[] = [
     linkedin: 'https://www.linkedin.com/in/lorraine-vieira/',
   },
   {
+    nome: 'João Vitor',
+    cargo: 'Desenvolvedor Full-Stack',
+    organizacao: 'Ânima',
+    foto: '/imgs/hall-da-fama/joao-vitor.webp',
+  },
+  {
     nome: 'Lucelho Silva',
     cargo: 'Líder Discente',
     organizacao: 'Ânima',
@@ -403,7 +409,7 @@ export const membros: MembroEquipe[] = [
     cargo: 'Instrutor Discente',
     organizacao: '',
     ano: '2022',
-    foto: '/imgs/hall-da-fama/lucelho-cristiano.webp',
+    foto: '/imgs/hall-da-fama/lucelho-2022.webp',
     linkedin: 'https://www.linkedin.com/in/lucelhosilva',
   },
   {

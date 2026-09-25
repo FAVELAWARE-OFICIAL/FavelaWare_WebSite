@@ -16,7 +16,7 @@ import { QUANTIDADE_NO_HISTORICO, servicoPonto, type Ponto } from './ponto';
 import { senhaForte, servicoSenha } from './senha';
 import { servicoPerfil } from './perfil';
 import { servicoSessao, type MeuPerfil } from './sessao';
-import { servicoSitePublico } from './sitePublico';
+import { semQuemJaAparece, servicoSitePublico } from './sitePublico';
 import { servicoSolicitacoes } from './solicitacoes';
 
 const perfil = (mudancas: Partial<MeuPerfil>): MeuPerfil => ({
@@ -538,5 +538,19 @@ describe('foto: recorte e ajuste de zoom e posição', () => {
     const [cx1, cy1] = centro(recorteDaFoto(1000, 600, depois));
     expect(cx1).toBeCloseTo(cx0);
     expect(cy1).toBeCloseTo(cy0);
+  });
+});
+
+describe('site: cada pessoa aparece uma vez na página Sobre', () => {
+  it('quem já é idealizador sai da equipe da edição, sem ligar para acento, maiúscula ou espaço', () => {
+    const idealizadores = [{ nome: 'Rafaela Moreira' }, { nome: 'Cristiane de Ávila' }];
+    const equipe = [
+      { nome: 'Lucelho Silva' },
+      { nome: 'rafaela  moreira ' },
+      { nome: 'Cristiane de Avila' },
+      { nome: 'Raquel Souza' },
+    ];
+    expect(semQuemJaAparece(equipe, idealizadores).map((p) => p.nome)).toEqual(['Lucelho Silva', 'Raquel Souza']);
+    expect(semQuemJaAparece(equipe, [])).toEqual(equipe);
   });
 });
