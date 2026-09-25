@@ -5,6 +5,12 @@ dos commits (Conventional Commits) ou da label `version:*` no PR de release.
 
 Enquanto o site está em desenvolvimento, as versões ficam em 0.x (pré-lançamento). A 1.0.0 é o lançamento.
 
+## [0.4.0] - 2026-09-25
+
+### Adicionado
+
+- Foto que já vem sem fundo (PNG recortado, como os do remove.bg) entra como está: o portal não tira o fundo de novo, só coloca a pessoa sobre o fundo das fotos do site. O quadrado começa logo acima da cabeça, para foto de corpo inteiro não sair sem cabeça, e a janela "Ajustar foto" abre nesse enquadramento. Foto comum continua passando pelo recorte.
+
 ## [0.3.0] - 2026-09-25
 
 ### Adicionado
