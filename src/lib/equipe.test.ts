@@ -49,10 +49,10 @@ describe('equipe: adicionar membro pela tela Membros', () => {
     expect(aviso).toBeUndefined();
   });
 
-  it('gestor e parceiro: convite e depois a troca de função da conta criada', async () => {
+  it('gestor, colaborador e parceiro: convite e depois a troca de função da conta criada', async () => {
     convitePronto();
     const trocar = vi.spyOn(servicoEquipe, 'trocarFuncao').mockResolvedValue(null);
-    for (const papel of ['gestor', 'parceiro'] as const) {
+    for (const papel of ['gestor', 'colaborador', 'parceiro'] as const) {
       const { resultado, aviso } = await servicoEquipe.adicionarMembro('Ana', 'ana@exemplo.com', papel);
       expect(trocar).toHaveBeenLastCalledWith('conta-1', papel);
       expect(resultado.status).toBe(StatusProcessamento.Sucesso);

@@ -11,7 +11,8 @@
  * - A trilha em si: nova, editar e apagar (trilha com atividades não é apagada).
  *
  * A mesma página aparece em /professor/trilhas e /dashboard/trilhas. O professor
- * vê as turmas dele; o gestor, todas. As regras ficam no banco (RLS).
+ * vê as turmas dele; o gestor e o colaborador, todas. O colaborador cuida só do
+ * conteúdo: não vê entregas nem corrige. As regras ficam no banco (RLS).
  */
 import { useCallback, useEffect, useState } from 'react';
 
@@ -28,6 +29,7 @@ import type { AlvoDeApagar, EstadoAtividades, JanelaAberta } from '../../compone
 import { useDadosEmCache } from '../../hooks/useDadosEmCache';
 import { chaveAtividadesDaTurma, servicoAtividades, type AtividadesDaTurma } from '../../lib/atividades';
 import { CHAVE_MATERIAL, servicoMaterial } from '../../lib/material';
+import { servicoSessao } from '../../lib/sessao';
 import { servicoTurmas } from '../../lib/turmas';
 import {
   gravarPreferencia,
@@ -44,6 +46,18 @@ const TrilhasEquipe: React.FC = () => {
   const daTurma = useDadosEmCache(turmaId === null ? 'atividades:sem-turma' : chaveAtividadesDaTurma(turmaId), () =>
     turmaId === null ? Promise.resolve(SEM_TURMA) : servicoAtividades.carregarDaTurma(turmaId),
   );
+
+  // Entregas e correção só para gestor e instrutor (até saber o papel, escondidas)
+  const [mostrarEntregas, setMostrarEntregas] = useState(false);
+  useEffect(() => {
+    servicoSessao
+      .contaLogada()
+      .then((l) => setMostrarEntregas(l ? servicoSessao.corrigeEntregas(l.perfil) : false))
+      .catch((e) => {
+        console.error('[trilhas] não leu o perfil', e?.code ?? e?.message);
+        setMostrarEntregas(false);
+      });
+  }, []);
 
   const [janela, setJanela] = useState<JanelaAberta | null>(null);
   const [mensagem, setMensagem] = useState<Mensagem>(null);
@@ -167,7 +181,9 @@ const TrilhasEquipe: React.FC = () => {
               ))}
             </select>
           </div>
-          {estadoAtividades === 'pronto' && <p className={texto.apoio}>{turma.alunos.length} aluno(s) nesta turma</p>}
+          {mostrarEntregas && estadoAtividades === 'pronto' && (
+            <p className={texto.apoio}>{turma.alunos.length} aluno(s) nesta turma</p>
+          )}
         </div>
       ) : (
         <div className={espaco.entreBlocos}>
@@ -186,6 +202,7 @@ const TrilhasEquipe: React.FC = () => {
             idsDosAlunos={idsDosAlunos}
             totalDeAlunos={turma.alunos.length}
             estadoAtividades={estadoAtividades}
+            mostrarEntregas={mostrarEntregas}
             aoAbrir={abrir}
             aoApagar={apagar}
           />

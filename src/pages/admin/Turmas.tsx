@@ -38,7 +38,7 @@ const TITULOS: Record<AlvoDaJanela['tipo'], string> = {
 };
 
 const Turmas: React.FC = () => {
-  const { edicao, edicoes, recarregarEdicoes, recarregarDados } = useAdmin();
+  const { edicao, edicoes, dados, recarregarEdicoes, recarregarDados, somenteLeitura } = useAdmin();
   const [janela, setJanela] = useState<AlvoDaJanela | null>(null);
   const [valor, setValor] = useState('');
   const [salvando, setSalvando] = useState(false);
@@ -53,6 +53,10 @@ const Turmas: React.FC = () => {
   } = useDadosEmCache(chaveTurmas(edicao.id), () => servicoTurmas.carregarDaEdicao(edicao.id));
 
   const usados = (turmas ?? []).map((t) => t.nome);
+  // Só leitura (colaborador): a contagem do banco vem zerada, porque ele não lê a
+  // tabela de participantes; conta pelos participantes da edição já carregados
+  const alunosDa = (t: TurmaComAlunos) =>
+    somenteLeitura ? dados.participantes.filter((p) => p.turma_id === t.id).length : t.alunos;
   // Sem os dados: carregamento na hora (nunca tela em branco) e pintura completa
   const mostrarCarregando = useCarregamentoCompleto(turmas === undefined && !erro, 0);
 
@@ -129,32 +133,34 @@ const Turmas: React.FC = () => {
       {
         <Cartao
           titulo={edicao.nome}
-          descricao={`${turmas.length} turma(s) · ${turmas.reduce((s, t) => s + t.alunos, 0)} alunos${
+          descricao={`${turmas.length} turma(s) · ${turmas.reduce((s, t) => s + alunosDa(t), 0)} alunos${
             edicao.encerrada ? ' · edição encerrada: presença só para consulta' : ''
           }`}
           acoes={
-            <div className="flex flex-wrap gap-2">
-              <Botao tamanho="pequeno" onClick={() => abrir({ tipo: 'renomear-edicao' }, edicao.nome)}>
-                Renomear edição
-              </Botao>
-              {!edicao.encerrada && !edicao.demonstracao && (
-                <Botao tamanho="pequeno" variante="perigo" onClick={encerrarEdicao}>
-                  Encerrar edição
+            !somenteLeitura && (
+              <div className="flex flex-wrap gap-2">
+                <Botao tamanho="pequeno" onClick={() => abrir({ tipo: 'renomear-edicao' }, edicao.nome)}>
+                  Renomear edição
                 </Botao>
-              )}
-              <Botao
-                tamanho="pequeno"
-                variante="primario"
-                onClick={() =>
-                  abrir(
-                    { tipo: 'nova-edicao' },
-                    `Edição ${edicoes.filter((e) => !e.demonstracao).length + 1} (${new Date().getFullYear()})`,
-                  )
-                }
-              >
-                + Nova edição
-              </Botao>
-            </div>
+                {!edicao.encerrada && !edicao.demonstracao && (
+                  <Botao tamanho="pequeno" variante="perigo" onClick={encerrarEdicao}>
+                    Encerrar edição
+                  </Botao>
+                )}
+                <Botao
+                  tamanho="pequeno"
+                  variante="primario"
+                  onClick={() =>
+                    abrir(
+                      { tipo: 'nova-edicao' },
+                      `Edição ${edicoes.filter((e) => !e.demonstracao).length + 1} (${new Date().getFullYear()})`,
+                    )
+                  }
+                >
+                  + Nova edição
+                </Botao>
+              </div>
+            )
           }
           className="max-w-3xl"
         >
@@ -166,34 +172,38 @@ const Turmas: React.FC = () => {
                 <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
                   <div>
                     <p className="font-medium text-gray-900">{t.nome}</p>
-                    <p className={`${texto.apoio}`}>{t.alunos} aluno(s)</p>
+                    <p className={`${texto.apoio}`}>{alunosDa(t)} aluno(s)</p>
                   </div>
-                  <div className="flex gap-1">
-                    <Botao tamanho="pequeno" onClick={() => abrir({ tipo: 'renomear-turma', id: t.id }, t.nome)}>
-                      Renomear
-                    </Botao>
-                    {t.alunos === 0 && (
-                      <Botao variante="perigo" tamanho="pequeno" onClick={() => apagar(t)}>
-                        Apagar
+                  {!somenteLeitura && (
+                    <div className="flex gap-1">
+                      <Botao tamanho="pequeno" onClick={() => abrir({ tipo: 'renomear-turma', id: t.id }, t.nome)}>
+                        Renomear
                       </Botao>
-                    )}
-                  </div>
+                      {t.alunos === 0 && (
+                        <Botao variante="perigo" tamanho="pequeno" onClick={() => apagar(t)}>
+                          Apagar
+                        </Botao>
+                      )}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
           )}
-          <Botao
-            className="w-full"
-            onClick={() => {
-              // Sugere o próximo nome livre ("Turma Única" só se for a primeira)
-              const sugestao =
-                NOMES_DE_TURMA.find((n) => !usados.includes(n) && (usados.length === 0 || n !== 'Turma Única')) ?? '';
-              abrir({ tipo: 'nova-turma' }, sugestao);
-            }}
-          >
-            + Adicionar turma
-          </Botao>
-          {usados.includes('Turma Única') && (
+          {!somenteLeitura && (
+            <Botao
+              className="w-full"
+              onClick={() => {
+                // Sugere o próximo nome livre ("Turma Única" só se for a primeira)
+                const sugestao =
+                  NOMES_DE_TURMA.find((n) => !usados.includes(n) && (usados.length === 0 || n !== 'Turma Única')) ?? '';
+                abrir({ tipo: 'nova-turma' }, sugestao);
+              }}
+            >
+              + Adicionar turma
+            </Botao>
+          )}
+          {!somenteLeitura && usados.includes('Turma Única') && (
             <p className="mt-2 text-xs text-amber-700">
               Vai ter mais de uma turma? Renomeie a “Turma Única” para “Turma 1” ou “Turma A”.
             </p>

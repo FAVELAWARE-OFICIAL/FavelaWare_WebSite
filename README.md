@@ -151,6 +151,7 @@ Regras de UI na skill `.claude/skills/favelaware-padrao-visual/`.
 | --- | --- | --- | --- |
 | Gestor | `/dashboard` | `gestor` | visão geral, alunos, chamada, turmas, equipe, membros, solicitações, avaliações, ponto dos instrutores, trilhas |
 | Parceiro | `/dashboard` | `parceiro` | só leitura: visão geral, alunos e chamada |
+| Colaborador | `/dashboard` | `colaborador` | equipe interna: lê visão geral, alunos, chamada e turmas; cria e apaga trilhas, materiais e atividades (sem ver entregas); responde solicitações. Não vê instrutores, equipe nem avaliações e não cadastra ninguém. O gestor dá a função pela tela Equipe |
 | Instrutor | `/professor` | `professor` | chamada, ponto, trilhas e, no prazo liberado, a avaliação final da turma |
 | Banca avaliadora | `/banca` | `banca` | só a avaliação do dia da banca (entra pelo link do e-mail, sem senha) |
 | Aluno | `/aluno` | `aluno` | trilhas, atividades e solicitações |

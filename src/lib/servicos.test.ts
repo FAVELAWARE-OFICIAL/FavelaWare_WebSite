@@ -35,6 +35,48 @@ describe('sessão: área de cada papel', () => {
     expect(servicoSessao.somenteLeitura(perfil({ papel: 'gestor' }))).toBe(false);
   });
 
+  it('colaborador usa a área do gestor: lê a edição e não corrige entregas', () => {
+    expect(servicoSessao.destinoDoPerfil(perfil({ papel: 'colaborador' }))).toBe('/dashboard');
+    expect(servicoSessao.somenteLeitura(perfil({ papel: 'colaborador' }))).toBe(true);
+    expect(servicoSessao.corrigeEntregas(perfil({ papel: 'colaborador' }))).toBe(false);
+    expect(servicoSessao.corrigeEntregas(perfil({ papel: 'parceiro' }))).toBe(false);
+    expect(servicoSessao.corrigeEntregas(perfil({ papel: 'gestor' }))).toBe(true);
+    expect(servicoSessao.corrigeEntregas(perfil({ papel: 'professor' }))).toBe(true);
+  });
+
+  it('alcance na área do gestor: gestor tudo, colaborador e parceiro só as páginas deles', () => {
+    const acesso = (papel: MeuPerfil['papel']) => servicoSessao.acessoNaAreaDoGestor(perfil({ papel }));
+    expect(acesso('gestor')).toBe('gestor');
+    expect(acesso('colaborador')).toBe('colaborador');
+    // Qualquer outro papel (ou nenhum) cai no mínimo
+    for (const papel of ['parceiro', 'professor', 'aluno', 'banca', null] as const)
+      expect(acesso(papel)).toBe('parceiro');
+
+    const abre = servicoSessao.podeAbrir.bind(servicoSessao);
+    for (const caminho of [
+      '/dashboard/membros',
+      '/dashboard/avaliacoes',
+      '/dashboard/equipe',
+      '/dashboard/presenca-professores',
+    ])
+      expect(abre('gestor', caminho)).toBe(true);
+    for (const caminho of ['/dashboard/turmas', '/dashboard/solicitacoes', '/dashboard/trilhas']) {
+      expect(abre('colaborador', caminho)).toBe(true);
+      expect(abre('parceiro', caminho)).toBe(false);
+    }
+    for (const caminho of [
+      '/dashboard/membros',
+      '/dashboard/avaliacoes',
+      '/dashboard/equipe',
+      '/dashboard/presenca-professores',
+    ]) {
+      expect(abre('colaborador', caminho)).toBe(false);
+      expect(abre('parceiro', caminho)).toBe(false);
+    }
+    for (const caminho of ['/dashboard', '/dashboard/alunos', '/dashboard/chamada', '/dashboard/perfil'])
+      expect(abre('parceiro', caminho)).toBe(true);
+  });
+
   it('gestor e professor vão para a área deles', () => {
     expect(servicoSessao.destinoDoPerfil(perfil({ papel: 'gestor' }))).toBe('/dashboard');
     expect(servicoSessao.destinoDoPerfil(perfil({ papel: 'professor' }))).toBe('/professor');
