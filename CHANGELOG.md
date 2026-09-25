@@ -5,6 +5,19 @@ dos commits (Conventional Commits) ou da label `version:*` no PR de release.
 
 Enquanto o site está em desenvolvimento, as versões ficam em 0.x (pré-lançamento). A 1.0.0 é o lançamento.
 
+## [0.2.0] - 2026-09-25
+
+### Adicionado
+
+- Papel colaborador, para a equipe interna do projeto (design e desenvolvimento). Ele lê a Visão geral, Alunos e chamadas e Turmas sem nenhum botão de cadastro. Cria, edita e apaga trilhas, materiais e atividades, sem ver entregas nem notas dos alunos. Responde e conclui solicitações, e na conversa aparece como "Coordenação". Não vê Instrutores, Equipe nem Avaliações, não cadastra ninguém e não entra na banca. O gestor dá a função pela tela Equipe, e o "Ver como" ganhou a opção Colaborador.
+- Página Membros: o gestor adiciona pessoas à equipe por convite e remove quem saiu. Remover apaga a conta no Supabase.
+- Templates dos e-mails do Auth com a identidade do FavelaWare (convite, link de acesso, redefinir senha, confirmar cadastro, troca de e-mail e código de reautenticação), em `supabase/templates/`. O envio passa pelo SMTP próprio, sem o limite de 2 e-mails por hora do servidor padrão.
+- Foto do perfil: o botão "Trocar foto" virou um lápis na borda da foto. Antes de salvar, abre a janela "Ajustar foto", com zoom e posição (arrastando a prévia ou pelos controles), "Centralizar" e "Voltar ao padrão".
+
+### Corrigido
+
+- Quem não lê as entregas (o colaborador) via toda atividade como "sem entregas" e conseguiria apagar uma atividade com entrega de aluno. Agora a conferência é feita por uma função que enxerga todas.
+
 ## [0.1.0] - 2026-09-24
 
 Código no padrão das 10 regras de `docs/boas-praticas.md`.
