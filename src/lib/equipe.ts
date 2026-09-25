@@ -40,10 +40,15 @@ export interface MembroDaEquipe {
 }
 
 /** Funções que o gestor pode dar na tela Equipe (aluno tem acesso pela turma) */
-export const FUNCOES_DA_EQUIPE: Papel[] = ['gestor', 'professor', 'parceiro', 'banca'];
+export const FUNCOES_DA_EQUIPE: Papel[] = ['gestor', 'professor', 'colaborador', 'parceiro', 'banca'];
 
 /** Funções de quem entra pela tela Membros (a banca entra pela Avaliação, já ligada à edição) */
-export const FUNCOES_DE_NOVO_MEMBRO = ['gestor', 'professor', 'parceiro'] as const satisfies readonly Papel[];
+export const FUNCOES_DE_NOVO_MEMBRO = [
+  'gestor',
+  'professor',
+  'colaborador',
+  'parceiro',
+] as const satisfies readonly Papel[];
 export type FuncaoDeNovoMembro = (typeof FUNCOES_DE_NOVO_MEMBRO)[number];
 
 export interface Professor extends ProfessorAtual {

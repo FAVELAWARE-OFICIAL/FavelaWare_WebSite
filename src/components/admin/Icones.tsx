@@ -137,3 +137,9 @@ export const IconeMembros: Icone = (p) => (
     <path d="M6.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5M1.5 19c0-2 1.4-3.6 3.5-3.9M22.5 19c0-2-1.4-3.6-3.5-3.9" />
   </Svg>
 );
+/** Lápis de editar (preenchido, não traço): o da foto do perfil */
+export const IconeLapis: Icone = ({ className = 'w-5 h-5' }) => (
+  <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M21.13 2.86a3 3 0 0 0-4.17 0l-13 13L2 22l6.19-2L21.13 7a3 3 0 0 0 0-4.16zM6.77 18.57l-1.35-1.34L16.64 6 18 7.35z" />
+  </svg>
+);
