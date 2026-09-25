@@ -8,6 +8,8 @@
  * cargo, que saem no cartão da página Sobre e do Hall da Fama. A dona do portal tem
  * todas as personas (o "Ver como"): a função dela só ela muda, e ninguém mais
  * ganha isso. O banco confere as duas regras.
+ * O gestor também adiciona (convite por e-mail já com a função) e remove
+ * (a pessoa perde a função e as turmas; a conta e o histórico ficam).
  */
 import { useCallback, useEffect, useState } from 'react';
 
@@ -27,10 +29,20 @@ import {
 } from '../../components/admin/Ui';
 import { selo, texto } from '../../components/admin/designSystem';
 import { useDadosEmCache } from '../../hooks/useDadosEmCache';
-import { FUNCOES_DA_EQUIPE, servicoEquipe, type MembroDaEquipe } from '../../lib/equipe';
+import {
+  FUNCOES_DA_EQUIPE,
+  FUNCOES_DE_NOVO_MEMBRO,
+  servicoEquipe,
+  type FuncaoDeNovoMembro,
+  type MembroDaEquipe,
+} from '../../lib/equipe';
 import { NOME_DO_PAPEL, servicoSessao, type Papel } from '../../lib/sessao';
+import { StatusProcessamento } from '../../types';
+import { emailValido } from '../../utils/texto';
 
 const CHAVE_MEMBROS = 'equipe:membros';
+
+const NOVO_MEMBRO = { nome: '', email: '', papel: 'professor' as FuncaoDeNovoMembro };
 
 const Membros: React.FC = () => {
   const { dados: membros, erro, recarregar } = useDadosEmCache(CHAVE_MEMBROS, () => servicoEquipe.listarMembros());
@@ -42,6 +54,10 @@ const Membros: React.FC = () => {
   const [editando, setEditando] = useState<{ membro: MembroDaEquipe; valor: VinculoECargo } | null>(null);
   const [erroJanela, setErroJanela] = useState<Mensagem>(null);
   const fecharEdicao = useCallback(() => setEditando(null), []);
+  const [novo, setNovo] = useState<typeof NOVO_MEMBRO | null>(null);
+  const fecharNovo = useCallback(() => setNovo(null), []);
+  const [removendo, setRemovendo] = useState<MembroDaEquipe | null>(null);
+  const fecharRemocao = useCallback(() => setRemovendo(null), []);
 
   useEffect(() => {
     servicoSessao
@@ -84,6 +100,53 @@ const Membros: React.FC = () => {
     await recarregar().catch(() => setMensagem({ tipo: 'erro', texto: 'Não foi possível atualizar a lista.' }));
   };
 
+  const abrirNovo = () => {
+    setErroJanela(null);
+    setNovo(NOVO_MEMBRO);
+  };
+
+  const adicionar = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!novo) return;
+    const nome = novo.nome.trim();
+    const email = novo.email.trim();
+    if (!nome || !emailValido(email)) {
+      return setErroJanela({ tipo: 'erro', texto: 'Preencha o nome e um e-mail válido.' });
+    }
+    setSalvando(true);
+    const { resultado, aviso } = await servicoEquipe.adicionarMembro(nome, email, novo.papel);
+    setSalvando(false);
+    if (resultado.status !== StatusProcessamento.Sucesso) {
+      return setErroJanela({ tipo: 'erro', texto: resultado.mensagem ?? 'Não foi possível adicionar.' });
+    }
+    setNovo(null);
+    setMensagem(
+      aviso
+        ? { tipo: 'erro', texto: `Convite enviado para ${email}. ${aviso}` }
+        : {
+            tipo: 'sucesso',
+            texto: `Convite enviado para ${email} como ${NOME_DO_PAPEL[novo.papel].toLowerCase()}. A pessoa define a senha pelo link do e-mail.`,
+          },
+    );
+    await recarregar().catch(() => setMensagem({ tipo: 'erro', texto: 'Não foi possível atualizar a lista.' }));
+  };
+
+  const confirmarRemocao = async () => {
+    if (!removendo) return;
+    setSalvando(true);
+    try {
+      await servicoEquipe.remover(removendo.id);
+      setMensagem({ tipo: 'sucesso', texto: `${removendo.nome ?? removendo.email} saiu da equipe.` });
+    } catch (erro) {
+      console.error('[equipe] falha ao remover da equipe', (erro as { code?: string })?.code);
+      setMensagem({ tipo: 'erro', texto: 'Não foi possível remover da equipe.' });
+    } finally {
+      setSalvando(false);
+      setRemovendo(null);
+    }
+    await recarregar().catch(() => setMensagem({ tipo: 'erro', texto: 'Não foi possível atualizar a lista.' }));
+  };
+
   const mostrarCarregando = useCarregamentoCompleto(membros === undefined && !erro, 0);
   if (erro && membros === undefined) {
     return <Aviso mensagem={{ tipo: 'erro', texto: 'Não foi possível carregar a equipe.' }} />;
@@ -96,6 +159,11 @@ const Membros: React.FC = () => {
       <Cartao
         titulo={`Membros e funções · ${membros.length} pessoa${membros.length === 1 ? '' : 's'}`}
         descricao="A função define o que cada pessoa acessa. Só o(a) líder discente tem todas as personas (o “Ver como”) e troca a própria função."
+        acoes={
+          <Botao variante="primario" tamanho="pequeno" onClick={abrirNovo}>
+            Adicionar membro
+          </Botao>
+        }
       >
         {!membros.length ? (
           <Vazio>Ninguém na equipe ainda.</Vazio>
@@ -137,6 +205,12 @@ const Membros: React.FC = () => {
                     </select>
                   </div>
                 )}
+                {/* Ninguém se remove (perderia o acesso) e a líder discente não sai por aqui */}
+                {m.id !== meuId && !m.todasAsPersonas && (
+                  <Botao variante="perigo" tamanho="pequeno" onClick={() => setRemovendo(m)}>
+                    Remover
+                  </Botao>
+                )}
               </li>
             ))}
           </ul>
@@ -169,6 +243,86 @@ const Membros: React.FC = () => {
           </form>
         )}
       </Janela>
+
+      <Janela titulo="Adicionar membro" aberta={novo !== null} onFechar={fecharNovo}>
+        {novo && (
+          <form onSubmit={adicionar} className="space-y-4" noValidate>
+            <Aviso mensagem={erroJanela} className="" />
+            <div>
+              <label htmlFor="novo-nome" className={texto.rotulo}>
+                Nome *
+              </label>
+              <input
+                id="novo-nome"
+                value={novo.nome}
+                onChange={(e) => setNovo({ ...novo, nome: e.target.value })}
+                required
+                maxLength={120}
+                autoComplete="off"
+                placeholder="Ex: Maria Souza"
+                disabled={salvando}
+                className={classeCampo}
+              />
+            </div>
+            <div>
+              <label htmlFor="novo-email" className={texto.rotulo}>
+                E-mail *
+              </label>
+              <input
+                id="novo-email"
+                type="email"
+                value={novo.email}
+                onChange={(e) => setNovo({ ...novo, email: e.target.value })}
+                required
+                autoComplete="off"
+                placeholder="Ex: maria@email.com"
+                disabled={salvando}
+                className={classeCampo}
+              />
+            </div>
+            <div>
+              <label htmlFor="novo-funcao" className={texto.rotulo}>
+                Função
+              </label>
+              <select
+                id="novo-funcao"
+                value={novo.papel}
+                onChange={(e) => setNovo({ ...novo, papel: e.target.value as FuncaoDeNovoMembro })}
+                disabled={salvando}
+                className={classeCampo}
+              >
+                {FUNCOES_DE_NOVO_MEMBRO.map((p) => (
+                  <option key={p} value={p}>
+                    {NOME_DO_PAPEL[p]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <p className={texto.apoio}>
+              A pessoa recebe um e-mail para criar a senha. As turmas do instrutor ficam na página Equipe; a banca entra
+              pela Avaliação.
+            </p>
+            <Botao type="submit" variante="primario" disabled={salvando}>
+              {salvando ? 'Enviando…' : 'Enviar convite'}
+            </Botao>
+          </form>
+        )}
+      </Janela>
+
+      <JanelaDeConfirmacao
+        titulo="Remover da equipe?"
+        aberta={removendo !== null}
+        aoFechar={fecharRemocao}
+        aoConfirmar={confirmarRemocao}
+        ocupado={salvando}
+        variante="perigo"
+        rotuloConfirmar="Remover"
+        rotuloOcupado="Removendo…"
+        rotuloVoltar="Voltar"
+      >
+        <strong>{removendo?.nome ?? removendo?.email}</strong> perde a função e as turmas, e deixa de acessar o portal
+        da equipe. A conta e o histórico (chamadas, avaliações) continuam guardados.
+      </JanelaDeConfirmacao>
 
       <JanelaDeConfirmacao
         titulo="Trocar a função?"

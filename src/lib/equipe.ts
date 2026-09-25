@@ -9,7 +9,7 @@
  * - Vincular/desvincular turma e tirar o acesso são gravações diretas: o banco
  *   só aceita porque quem está logado é gestor (RLS).
  */
-import { sucesso, type ResultadoOperacao } from '../types';
+import { StatusProcessamento, sucesso, type ResultadoOperacao } from '../types';
 import { resultadoDaFuncao } from './banco';
 import { servicoFotoPadronizada } from './fotoPadronizada';
 import type { Papel } from './sessao';
@@ -41,6 +41,10 @@ export interface MembroDaEquipe {
 
 /** Funções que o gestor pode dar na tela Equipe (aluno tem acesso pela turma) */
 export const FUNCOES_DA_EQUIPE: Papel[] = ['gestor', 'professor', 'parceiro', 'banca'];
+
+/** Funções de quem entra pela tela Membros (a banca entra pela Avaliação, já ligada à edição) */
+export const FUNCOES_DE_NOVO_MEMBRO = ['gestor', 'professor', 'parceiro'] as const satisfies readonly Papel[];
+export type FuncaoDeNovoMembro = (typeof FUNCOES_DE_NOVO_MEMBRO)[number];
 
 export interface Professor extends ProfessorAtual {
   turmas: number[];
@@ -157,6 +161,25 @@ export class ServicoEquipe {
     return {
       resultado: await resultadoDaFuncao(error, 'Não foi possível cadastrar agora. Tente de novo em instantes.'),
     };
+  }
+
+  /**
+   * Gestor, na tela Membros: convida por e-mail já com a função. O convite do
+   * servidor só cria instrutor (sem turma); gestor e parceiro são a troca de
+   * função logo em seguida, que o banco só aceita de gestor.
+   * Devolve o erro do convite, ou o aviso se o convite saiu e a troca falhou.
+   */
+  async adicionarMembro(
+    nome: string,
+    email: string,
+    papel: FuncaoDeNovoMembro,
+  ): Promise<{ resultado: ResultadoOperacao; aviso?: string }> {
+    const { resultado, contaId } = await this.convidar(nome, email, []);
+    if (resultado.status !== StatusProcessamento.Sucesso || papel === 'professor') return { resultado };
+    const falha = contaId ? await this.trocarFuncao(contaId, papel) : 'O convite não devolveu a conta.';
+    if (!falha) return { resultado };
+    console.error('[equipe] convite enviado, mas a função não foi trocada');
+    return { resultado, aviso: `${falha} A pessoa ficou como instrutor(a): troque a função na lista.` };
   }
 
   /**
