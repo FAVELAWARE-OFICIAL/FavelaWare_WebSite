@@ -1,7 +1,7 @@
 {
   "name": "favela-ware",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Site oficial e portal (gestor, instrutor e aluno) do FavelaWare, formação de jovens programadores das comunidades de Belo Horizonte.",
   "type": "module",
   "engines": {
