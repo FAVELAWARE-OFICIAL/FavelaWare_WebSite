@@ -16,9 +16,11 @@ import { definirLembrarDeMim, supabase } from './supabase';
 
 /**
  * parceiro: empresas e instituições que acompanham o curso, só leitura na área do gestor;
- * banca: membro externo da banca avaliadora, só vê a avaliação dele e a lista final.
+ * banca: membro externo da banca avaliadora, só vê a avaliação dele e a lista final;
+ * colaborador: equipe interna do projeto, na área do gestor lendo a edição e
+ * trabalhando só nas Trilhas e nas Solicitações.
  */
-export type Papel = 'aluno' | 'professor' | 'gestor' | 'parceiro' | 'banca';
+export type Papel = 'aluno' | 'professor' | 'gestor' | 'parceiro' | 'banca' | 'colaborador';
 
 export interface MeuPerfil {
   papel: Papel | null;
@@ -28,7 +30,7 @@ export interface MeuPerfil {
   participanteId: number | null;
   /** Aluno que ainda não fez o primeiro acesso (trocar senha + completar dados) */
   precisaTrocarSenha: boolean;
-  /** Conta que pode "ver como" gestor, professor, aluno ou parceiro */
+  /** Conta que pode "ver como" gestor, professor, aluno, parceiro ou colaborador */
   podeAlternarPapel: boolean;
 }
 
@@ -58,11 +60,12 @@ export const NOME_DO_PAPEL: Record<Papel, string> = {
   professor: 'Instrutor',
   aluno: 'Aluno',
   parceiro: 'Parceiro',
+  colaborador: 'Colaborador',
   banca: 'Banca avaliadora',
 };
 
 /** Papéis do "Ver como" (a banca não entra: é uma conta de fora, convidada) */
-export const PAPEIS_DO_VER_COMO: Papel[] = ['gestor', 'professor', 'aluno', 'parceiro'];
+export const PAPEIS_DO_VER_COMO: Papel[] = ['gestor', 'professor', 'aluno', 'parceiro', 'colaborador'];
 
 /** Área de cada papel */
 const AREA_DO_PAPEL: Record<Papel, string> = {
@@ -71,7 +74,29 @@ const AREA_DO_PAPEL: Record<Papel, string> = {
   aluno: '/aluno',
   // O parceiro usa a área do gestor, só para ver (ver somenteLeitura)
   parceiro: '/dashboard',
+  // O colaborador também, com as páginas dele (ver LayoutAdmin)
+  colaborador: '/dashboard',
   banca: '/banca',
+};
+
+/** Quem usa a área do gestor (/dashboard): o gestor vê tudo; parceiro e colaborador, só as páginas deles */
+export type AcessoDaArea = 'gestor' | 'parceiro' | 'colaborador';
+
+/** O que parceiro e colaborador abrem (o menu, as abas e o endereço seguem estas listas) */
+const ROTAS_DO_ACESSO: Record<Exclude<AcessoDaArea, 'gestor'>, string[]> = {
+  parceiro: ['/dashboard', '/dashboard/alunos', '/dashboard/chamada', '/dashboard/perfil'],
+  colaborador: [
+    '/dashboard',
+    '/dashboard/alunos',
+    '/dashboard/chamada',
+    '/dashboard/turmas',
+    '/dashboard/solicitacoes',
+    '/dashboard/trilhas',
+    // Endereços antigos que levam às trilhas
+    '/dashboard/material',
+    '/dashboard/atividades',
+    '/dashboard/perfil',
+  ],
 };
 
 /**
@@ -176,14 +201,37 @@ export class ServicoSessao {
     return Boolean(perfil.participanteId || perfil.podeAlternarPapel);
   }
 
-  /** Parceiro só vê: nada de cadastrar, corrigir ou responder (o banco também recusa) */
+  /**
+   * Alcance na área do gestor. Papel fora da lista cai no mínimo (parceiro): a
+   * guarda da rota já não deixa entrar, e em dúvida a tela mostra menos (o banco
+   * protege os dados de qualquer jeito).
+   */
+  acessoNaAreaDoGestor(perfil: MeuPerfil): AcessoDaArea {
+    if (perfil.papel === 'gestor' || perfil.papel === 'colaborador') return perfil.papel;
+    return 'parceiro';
+  }
+
+  /** Se o endereço da área do gestor é deste acesso (lista positiva) */
+  podeAbrir(acesso: AcessoDaArea, caminho: string): boolean {
+    return acesso === 'gestor' || ROTAS_DO_ACESSO[acesso].includes(caminho);
+  }
+
+  /**
+   * Dados da edição (Visão geral, Alunos, Chamada, Turmas) só para ver: parceiro e
+   * colaborador não cadastram nem fazem chamada (o banco também recusa)
+   */
   somenteLeitura(perfil: MeuPerfil): boolean {
-    return perfil.papel === 'parceiro';
+    return this.acessoNaAreaDoGestor(perfil) !== 'gestor';
+  }
+
+  /** Quem vê e corrige as entregas dos alunos nas Trilhas (o colaborador não) */
+  corrigeEntregas(perfil: MeuPerfil): boolean {
+    return perfil.papel === 'gestor' || perfil.papel === 'professor';
   }
 
   /**
    * Para onde a pessoa vai depois de entrar (null = ainda não tem área):
-   * gestor e parceiro -> /dashboard; professor -> /professor; aluno da turma -> /aluno
+   * gestor, parceiro e colaborador -> /dashboard; professor -> /professor; aluno da turma -> /aluno
    * (ou /primeiro-acesso, se ainda não trocou a senha padrão).
    */
   destinoDoPerfil(perfil: MeuPerfil): string | null {
@@ -191,6 +239,7 @@ export class ServicoSessao {
       perfil.papel === 'gestor' ||
       perfil.papel === 'professor' ||
       perfil.papel === 'parceiro' ||
+      perfil.papel === 'colaborador' ||
       perfil.papel === 'banca'
     ) {
       return AREA_DO_PAPEL[perfil.papel];

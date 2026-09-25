@@ -40,6 +40,8 @@ type Modo = 'aluno' | 'gestor';
 const PAPEL_NA_CONVERSA: Record<Papel, string> = {
   aluno: 'Aluno',
   gestor: 'Coordenação',
+  // O colaborador responde pela coordenação
+  colaborador: 'Coordenação',
   professor: 'Instrutor',
   parceiro: 'Parceiro',
   banca: 'Banca avaliadora',

@@ -22,6 +22,8 @@ interface PropsCartao {
   idsDosAlunos: Set<number>;
   totalDeAlunos: number;
   estadoAtividades: EstadoAtividades;
+  /** Entregas e correção (gestor e instrutor); o colaborador cuida só do conteúdo */
+  mostrarEntregas: boolean;
   aoAbrir: (j: JanelaAberta) => void;
   aoApagar: (alvo: AlvoDeApagar) => void;
 }
@@ -32,6 +34,7 @@ const CartaoDaTrilhaDaEquipe: React.FC<PropsCartao> = ({
   idsDosAlunos,
   totalDeAlunos,
   estadoAtividades,
+  mostrarEntregas,
   aoAbrir,
   aoApagar,
 }) => {
@@ -41,7 +44,7 @@ const CartaoDaTrilhaDaEquipe: React.FC<PropsCartao> = ({
   const aba: Aba = escolhida ?? (trilha.materiais.length === 0 && atividades.length > 0 ? 'atividades' : 'materiais');
 
   // Entregas esperando correção nesta trilha (só de quem está na turma)
-  const aguardandoNaTrilha = paraCorrigir(atividades, idsDosAlunos);
+  const aguardandoNaTrilha = mostrarEntregas ? paraCorrigir(atividades, idsDosAlunos) : 0;
 
   const painelMateriais = (
     <>
@@ -114,29 +117,33 @@ const CartaoDaTrilhaDaEquipe: React.FC<PropsCartao> = ({
                       <p className={texto.destaque}>{a.titulo}</p>
                       <p className={texto.apoio}>
                         Prazo: {formatarDataHora(a.prazo)}
-                        {encerrada ? ' (encerrado)' : ''} · {entregaram} de {totalDeAlunos} entregaram
+                        {encerrada ? ' (encerrado)' : ''}
+                        {mostrarEntregas && ` · ${entregaram} de ${totalDeAlunos} entregaram`}
                       </p>
                       {resumoDasRegras(a) && <p className={`mt-0.5 ${texto.apoio}`}>Exige: {resumoDasRegras(a)}</p>}
                     </div>
-                    {aguardando > 0 && (
+                    {mostrarEntregas && aguardando > 0 && (
                       <span className={`${selo.base} ${selo.informacao}`}>{aguardando} para corrigir</span>
                     )}
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1">
-                    <Botao
-                      tamanho="pequeno"
-                      variante={aguardando > 0 ? 'primario' : 'secundario'}
-                      onClick={() => aoAbrir({ tipo: 'entregas', atividadeId: a.id })}
-                    >
-                      Entregas
-                    </Botao>
+                    {mostrarEntregas && (
+                      <Botao
+                        tamanho="pequeno"
+                        variante={aguardando > 0 ? 'primario' : 'secundario'}
+                        onClick={() => aoAbrir({ tipo: 'entregas', atividadeId: a.id })}
+                      >
+                        Entregas
+                      </Botao>
+                    )}
                     <Botao
                       tamanho="pequeno"
                       onClick={() => aoAbrir({ tipo: 'atividade', trilhaId: trilha.id, atividade: a })}
                     >
                       Editar e prazo
                     </Botao>
-                    {a.tentativas.length === 0 && (
+                    {/* Sem ver as entregas, o botão fica sempre: o banco recusa atividade com entrega */}
+                    {(!mostrarEntregas || a.tentativas.length === 0) && (
                       <Botao
                         tamanho="pequeno"
                         variante="perigo"
