@@ -7,13 +7,14 @@ import { consultaFalha, removerDoStorage } from '../testes/supabaseFalso';
 import { servicoAtestados } from './atestados';
 import { notasCompletas, servicoAvaliacoes, somaDasNotas } from './avaliacoes';
 import { servicoEdicoes } from './edicoes';
-import { servicoFotoPadronizada } from './fotoPadronizada';
+import { comZoom, enquadramentoPadrao, recorteDaFoto, servicoFotoPadronizada, ZOOM_MAXIMO } from './fotoPadronizada';
 import { servicoMaterial } from './material';
 import { mensagemDeErroDeCadastro } from './banco';
 import { validarDados, type DadosInstrutor } from './dadosInstrutor';
 import { SEM_REGRAS, servicoEntregas } from './entregas';
 import { QUANTIDADE_NO_HISTORICO, servicoPonto, type Ponto } from './ponto';
 import { senhaForte, servicoSenha } from './senha';
+import { servicoPerfil } from './perfil';
 import { servicoSessao, type MeuPerfil } from './sessao';
 import { servicoSitePublico } from './sitePublico';
 import { servicoSolicitacoes } from './solicitacoes';
@@ -227,6 +228,29 @@ describe('troca de foto', () => {
     expect(gravar).toHaveBeenCalledWith(nova);
     expect(removerDoStorage).toHaveBeenCalledWith(['perfis/antiga.webp']);
     expect(removerDoStorage).not.toHaveBeenCalledWith(['perfis/nova.webp']);
+  });
+
+  it('o ajuste de zoom e posição chega até o envio; sem ajuste, segue o recorte padrão', async () => {
+    const enviar = vi.spyOn(servicoFotoPadronizada, 'enviar').mockResolvedValue(nova);
+    const gravar = vi.fn(async () => {});
+    await servicoFotoPadronizada.trocar(arquivo, 'perfis', gravar, null, { zoom: 2, x: 0, y: 1 });
+    expect(enviar).toHaveBeenLastCalledWith(arquivo, 'perfis', { zoom: 2, x: 0, y: 1 });
+    await servicoFotoPadronizada.trocar(arquivo, 'equipe', gravar, null);
+    expect(enviar).toHaveBeenLastCalledWith(arquivo, 'equipe', undefined);
+    enviar.mockRestore();
+
+    // O perfil repassa o ajuste para a troca (o aviso de perfil mudado é da tela, fica de fora)
+    const trocar = vi.spyOn(servicoFotoPadronizada, 'trocar').mockResolvedValue(nova);
+    const perfilPorDentro = servicoPerfil as unknown as { avisarQueMudou: () => void };
+    const avisar = vi.spyOn(perfilPorDentro, 'avisarQueMudou').mockImplementation(() => {});
+    await servicoPerfil.trocarMinhaFoto(arquivo, antiga, { zoom: 1.5, x: 0.3, y: 0.4 });
+    expect(trocar).toHaveBeenLastCalledWith(arquivo, 'perfis', expect.any(Function), antiga, {
+      zoom: 1.5,
+      x: 0.3,
+      y: 0.4,
+    });
+    trocar.mockRestore();
+    avisar.mockRestore();
   });
 
   it('não gravou: a nova sai do Storage, a antiga fica e o erro segue', async () => {
@@ -471,5 +495,48 @@ describe('avaliações do fim da edição', () => {
     const notas = new Map([[1, { participacao: 4, entrega: null, comportamento: 5, observacao: '' }]]);
     const resultado = await servicoAvaliacoes.salvarDaTurma(10, notas);
     expect(resultado.mensagem).toBe('Dê as três notas a todos os alunos antes de salvar.');
+  });
+});
+
+describe('foto: recorte e ajuste de zoom e posição', () => {
+  it('sem ajuste, o recorte é o de sempre: o maior quadrado do centro, um pouco acima do meio', () => {
+    expect(recorteDaFoto(1000, 600)).toEqual({ x: 200, y: 0, lado: 600 });
+    // Retrato: 8% do lado acima do centro (o rosto)
+    expect(recorteDaFoto(600, 1000)).toEqual({ x: 0, y: 200 - 48, lado: 600 });
+  });
+
+  it('o enquadramento inicial da janela reproduz o recorte de sempre', () => {
+    for (const [largura, altura] of [
+      [1000, 600],
+      [600, 1000],
+      [800, 800],
+    ]) {
+      expect(recorteDaFoto(largura, altura, enquadramentoPadrao(largura, altura))).toEqual(
+        recorteDaFoto(largura, altura),
+      );
+    }
+  });
+
+  it('zoom encolhe o quadrado e a posição anda na sobra, sem sair da foto', () => {
+    expect(recorteDaFoto(900, 600, { zoom: 2, x: 0, y: 0 })).toEqual({ x: 0, y: 0, lado: 300 });
+    expect(recorteDaFoto(900, 600, { zoom: 2, x: 1, y: 1 })).toEqual({ x: 600, y: 300, lado: 300 });
+    // Fora dos limites: o zoom e a posição ficam presos no que cabe
+    expect(recorteDaFoto(900, 600, { zoom: 10, x: 5, y: -2 })).toEqual({
+      x: 900 - 600 / ZOOM_MAXIMO,
+      y: 0,
+      lado: 600 / ZOOM_MAXIMO,
+    });
+    expect(recorteDaFoto(900, 600, { zoom: 0.2, x: 0.5, y: 0.5 })).toEqual({ x: 150, y: 0, lado: 600 });
+  });
+
+  it('o zoom aproxima em volta do meio do círculo, sem escorregar para o lado', () => {
+    const centro = ({ x, y, lado }: { x: number; y: number; lado: number }) => [x + lado / 2, y + lado / 2];
+    const antes = { zoom: 1, x: 0.2, y: 0 };
+    const depois = comZoom(1000, 600, antes, 3);
+    expect(depois.zoom).toBe(3);
+    const [cx0, cy0] = centro(recorteDaFoto(1000, 600, antes));
+    const [cx1, cy1] = centro(recorteDaFoto(1000, 600, depois));
+    expect(cx1).toBeCloseTo(cx0);
+    expect(cy1).toBeCloseTo(cy0);
   });
 });

@@ -38,16 +38,92 @@ type Segmentador = {
   };
 };
 
+/**
+ * Enquadramento escolhido pela pessoa na janela "Ajustar foto":
+ * - zoom: 1 = o maior quadrado que cabe na foto; 3 = um terço do lado;
+ * - x e y: onde o quadrado fica na sobra da foto (0 = esquerda/topo, 1 = direita/base).
+ */
+export interface Enquadramento {
+  zoom: number;
+  x: number;
+  y: number;
+}
+
+export const ZOOM_MAXIMO = 3;
+
+/** Verde do círculo (degradê da marca), o mesmo na prévia do ajuste e na foto final */
+export const DEGRADE_DO_CIRCULO = ['#9bd24f', '#7ab52f'] as const;
+
+/** Quadrado da foto original que vai para o círculo (em px da foto) */
+export interface Recorte {
+  x: number;
+  y: number;
+  lado: number;
+}
+
+const entre = (valor: number, minimo: number, maximo: number) => Math.min(maximo, Math.max(minimo, valor));
+
+/**
+ * Recorte padrão, sem ajuste: o maior quadrado do centro, um pouco acima do meio
+ * (onde costuma estar o rosto). Com enquadramento, o quadrado encolhe com o zoom e
+ * anda dentro da sobra da foto, sem nunca sair dela.
+ */
+export function recorteDaFoto(largura: number, altura: number, enquadramento?: Enquadramento): Recorte {
+  const maior = Math.min(largura, altura);
+  if (!enquadramento) {
+    return {
+      x: (largura - maior) / 2,
+      y: Math.max(0, (altura - maior) / 2 - maior * 0.08),
+      lado: maior,
+    };
+  }
+  const lado = maior / entre(enquadramento.zoom, 1, ZOOM_MAXIMO);
+  return {
+    x: (largura - lado) * entre(enquadramento.x, 0, 1),
+    y: (altura - lado) * entre(enquadramento.y, 0, 1),
+    lado,
+  };
+}
+
+/**
+ * Muda o zoom mantendo o centro do recorte onde está (a foto aproxima em volta
+ * do que está no meio do círculo, sem escorregar para o lado)
+ */
+export function comZoom(largura: number, altura: number, atual: Enquadramento, zoom: number): Enquadramento {
+  const antes = recorteDaFoto(largura, altura, atual);
+  const lado = Math.min(largura, altura) / entre(zoom, 1, ZOOM_MAXIMO);
+  const posicao = (centro: number, total: number) => {
+    const sobra = total - lado;
+    return sobra > 0 ? entre((centro - lado / 2) / sobra, 0, 1) : 0.5;
+  };
+  return {
+    zoom: entre(zoom, 1, ZOOM_MAXIMO),
+    x: posicao(antes.x + antes.lado / 2, largura),
+    y: posicao(antes.y + antes.lado / 2, altura),
+  };
+}
+
+/** O enquadramento que reproduz o recorte padrão (ponto de partida da janela de ajuste) */
+export function enquadramentoPadrao(largura: number, altura: number): Enquadramento {
+  const { x, y, lado } = recorteDaFoto(largura, altura);
+  const sobraX = largura - lado;
+  const sobraY = altura - lado;
+  return { zoom: 1, x: sobraX > 0 ? x / sobraX : 0.5, y: sobraY > 0 ? y / sobraY : 0.5 };
+}
+
 export class ServicoFotoPadronizada {
   private segmentador: Promise<Segmentador | null> | null = null;
 
-  /** Recebe a foto escolhida e devolve a imagem no padrão (WebP, com fundo transparente fora do círculo) */
-  async padronizar(arquivo: File): Promise<Blob> {
+  /**
+   * Recebe a foto escolhida e devolve a imagem no padrão (WebP, com fundo
+   * transparente fora do círculo). Sem enquadramento, usa o recorte padrão.
+   */
+  async padronizar(arquivo: File, enquadramento?: Enquadramento): Promise<Blob> {
     if (!arquivo.type.startsWith('image/')) throw new Error('Escolha um arquivo de imagem.');
     const imagem = await createImageBitmap(arquivo);
     try {
       const mascara = await this.mascaraDaPessoa(imagem);
-      const canvas = await this.montar(imagem, mascara);
+      const canvas = await this.montar(imagem, mascara, recorteDaFoto(imagem.width, imagem.height, enquadramento));
       return await new Promise<Blob>((resolve, reject) =>
         canvas.toBlob(
           (b) => (b ? resolve(b) : reject(new Error('Não foi possível processar a foto.'))),
@@ -108,7 +184,11 @@ export class ServicoFotoPadronizada {
   }
 
   /** Monta a imagem final: círculo verde com textura e a pessoa por cima */
-  private async montar(imagem: ImageBitmap, mascara: HTMLCanvasElement | null): Promise<HTMLCanvasElement> {
+  private async montar(
+    imagem: ImageBitmap,
+    mascara: HTMLCanvasElement | null,
+    { x, y, lado }: Recorte,
+  ): Promise<HTMLCanvasElement> {
     const canvas = document.createElement('canvas');
     canvas.width = LADO;
     canvas.height = LADO;
@@ -120,8 +200,8 @@ export class ServicoFotoPadronizada {
     contexto.arc(CENTRO, CENTRO, RAIO, 0, Math.PI * 2);
     contexto.clip();
     const gradiente = contexto.createLinearGradient(0, 0, LADO, LADO);
-    gradiente.addColorStop(0, '#9bd24f');
-    gradiente.addColorStop(1, '#7ab52f');
+    gradiente.addColorStop(0, DEGRADE_DO_CIRCULO[0]);
+    gradiente.addColorStop(1, DEGRADE_DO_CIRCULO[1]);
     contexto.fillStyle = gradiente;
     contexto.fillRect(0, 0, LADO, LADO);
     const textura = await this.carregarTextura();
@@ -134,10 +214,7 @@ export class ServicoFotoPadronizada {
     }
     contexto.restore();
 
-    // 2. A pessoa: recorte quadrado do centro da foto, com o fundo tirado pela máscara
-    const lado = Math.min(imagem.width, imagem.height);
-    const x = (imagem.width - lado) / 2;
-    const y = Math.max(0, (imagem.height - lado) / 2 - lado * 0.08); // um pouco acima do centro: o rosto
+    // 2. A pessoa: o recorte quadrado da foto, com o fundo tirado pela máscara
     const pessoa = document.createElement('canvas');
     pessoa.width = LADO;
     pessoa.height = LADO;
@@ -165,8 +242,8 @@ export class ServicoFotoPadronizada {
    * Padroniza e envia ao Storage (bucket público das fotos). `pasta` separa as
    * fotos de alunos (raiz) das da equipe ("equipe"). Devolve a URL pública.
    */
-  async enviar(arquivo: File, pasta = ''): Promise<string> {
-    const blob = await this.padronizar(arquivo);
+  async enviar(arquivo: File, pasta = '', enquadramento?: Enquadramento): Promise<string> {
+    const blob = await this.padronizar(arquivo, enquadramento);
     const caminho = `${pasta ? `${pasta}/` : ''}${crypto.randomUUID()}.webp`;
     const { error } = await supabase.storage
       .from(BUCKET_FOTOS_ALUNOS)
@@ -185,8 +262,9 @@ export class ServicoFotoPadronizada {
     pasta: string,
     gravar: (url: string) => Promise<void>,
     fotoAntiga: string | null,
+    enquadramento?: Enquadramento,
   ): Promise<string> {
-    const url = await this.enviar(arquivo, pasta);
+    const url = await this.enviar(arquivo, pasta, enquadramento);
     try {
       await gravar(url);
     } catch (erro) {
